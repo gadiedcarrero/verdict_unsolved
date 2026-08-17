@@ -91,29 +91,9 @@ MANIFEST: list[tuple[str, str, str]] = [
         "drawer" + STYLE_SUFFIX + OBJECT_SUFFIX,
         "object",
     ),
-    (
-        "layers/archivadores-cajas.png",
-        "A stack of old metal filing cabinets and cardboard boxes" + STYLE_SUFFIX + OBJECT_SUFFIX,
-        "object",
-    ),
-    (
-        "layers/tablero-vacio.png",
-        "An almost empty cork bulletin board with a couple of pins and a thread"
-        + STYLE_SUFFIX
-        + OBJECT_SUFFIX,
-        "object",
-    ),
-    (
-        "layers/puerta-cristal.png",
-        "A frosted glass office door with a brass doorknob" + STYLE_SUFFIX + OBJECT_SUFFIX,
-        "object",
-    ),
-    (
-        "layers/ventanas-lluvia-neon.png",
-        "A tall office window streaked with rain at night, glowing with colorful "
-        "neon city light outside" + STYLE_SUFFIX + OBJECT_SUFFIX,
-        "object",
-    ),
+    # Nota: cabinets, corkboard, puerta y ventanas ya no son capas separadas —
+    # quedan pintadas directamente en el fondo (backgrounds/oficina-noche-lluvia.png)
+    # porque son parte fija del cuarto, no objetos interactivos independientes.
     (
         "layers/lampara-cenicero-cafe.png",
         "A vintage desk lamp next to an ashtray and a cold cup of coffee"
