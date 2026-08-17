@@ -1,7 +1,7 @@
 {
   "id": "oficina-llamada",
   "act": 1,
-  "background": "backgrounds/oficina-noche-lluvia.webp",
+  "background": "backgrounds/oficina-noche-lluvia.png",
   "layers": [
     { "id": "ventanas", "assetPath": "layers/ventanas-lluvia-neon.png", "x": 58, "y": 4, "width": 38, "height": 32, "zIndex": 1 },
     { "id": "telefono", "assetPath": "layers/telefono.png", "x": 7, "y": 54, "width": 13, "height": 16, "zIndex": 2 },

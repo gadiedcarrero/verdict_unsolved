@@ -1,7 +1,7 @@
 {
   "id": "oficina-acto2",
   "act": 2,
-  "background": "backgrounds/oficina-noche-lluvia.webp",
+  "background": "backgrounds/oficina-noche-lluvia.png",
   "layers": [
     { "id": "ventanas", "assetPath": "layers/ventanas-lluvia-neon.png", "x": 58, "y": 4, "width": 38, "height": 32, "zIndex": 1 },
     { "id": "puerta", "assetPath": "layers/puerta-cristal.png", "x": 88, "y": 8, "width": 10, "height": 62, "zIndex": 1 },
