@@ -1,0 +1,20 @@
+{
+  "id": "oficina-llamada",
+  "act": 1,
+  "background": "backgrounds/oficina-noche-lluvia.webp",
+  "layers": [
+    { "id": "ventanas", "assetPath": "layers/ventanas-lluvia-neon.png", "x": 58, "y": 4, "width": 38, "height": 32, "zIndex": 1 },
+    { "id": "telefono", "assetPath": "layers/telefono.png", "x": 7, "y": 54, "width": 13, "height": 16, "zIndex": 2 },
+    { "id": "rueda", "assetPath": "layers/rueda-silla-parcial.png", "x": 34, "y": 91, "width": 21, "height": 8, "zIndex": 4 }
+  ],
+  "hotspots": [
+    {
+      "id": "telefono-llamada",
+      "label": "Teléfono (llamada en curso)",
+      "area": { "x": 7, "y": 54, "width": 13, "height": 16 },
+      "onInteract": [{ "type": "dialogue", "nodeId": "director-respuesta" }],
+      "repeatable": true
+    }
+  ],
+  "onEnter": [{ "type": "dialogue", "nodeId": "lena-1" }]
+}

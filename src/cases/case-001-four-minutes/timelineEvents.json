@@ -1,0 +1,45 @@
+[
+  {
+    "id": "timeline-marcos-office-exit",
+    "timestamp": "22:10",
+    "kind": "event",
+    "label": "Marcos afirma que Daniel salió de la oficina",
+    "relatedEvidenceId": "evidence-marcos-statement"
+  },
+  {
+    "id": "timeline-tomas-login",
+    "timestamp": "22:23",
+    "kind": "access",
+    "label": "Tomás Rivas inicia sesión en el sistema de cámaras",
+    "relatedEvidenceId": "evidence-camera-system-login"
+  },
+  {
+    "id": "timeline-camera-gap",
+    "timestamp": "22:24",
+    "endTimestamp": "22:28",
+    "kind": "camera",
+    "label": "Segmento de cámara del estacionamiento ausente",
+    "relatedEvidenceId": "evidence-camera-gap"
+  },
+  {
+    "id": "timeline-elevator-camera",
+    "timestamp": "22:27",
+    "kind": "camera",
+    "label": "Cámara del ascensor registra a Daniel",
+    "relatedEvidenceId": "evidence-elevator-camera"
+  },
+  {
+    "id": "timeline-vehicle-exit",
+    "timestamp": "22:31",
+    "kind": "event",
+    "label": "El vehículo de Daniel sale del estacionamiento",
+    "relatedEvidenceId": "evidence-parking-log"
+  },
+  {
+    "id": "timeline-accident-time",
+    "timestamp": "22:48",
+    "kind": "event",
+    "label": "Hora estimada del accidente según el informe policial",
+    "relatedEvidenceId": "evidence-police-report"
+  }
+]

@@ -1,0 +1,8 @@
+[
+  {
+    "id": "location-corporate-parking-garage",
+    "name": "Estacionamiento corporativo",
+    "description": "Estacionamiento subterráneo del edificio donde trabajaba Daniel Vargas, nivel B2. Cuenta con control de acceso vehicular y cámaras de seguridad administradas por Tomás Rivas.",
+    "relatedEntityIds": ["character-daniel-vargas", "character-tomas-rivas"]
+  }
+]

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="620" viewBox="0 0 480 620">
+  <rect width="480" height="620" fill="#141a23"/>
+  <rect x="16" y="16" width="448" height="588" fill="none" stroke="#3c4856" stroke-width="2"/>
+  <rect x="16" y="16" width="448" height="72" fill="#1b232f"/>
+  <text x="40" y="60" fill="#e0a636" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="700">INFORME POLICIAL</text>
+  <text x="40" y="128" fill="#b8c1cc" font-family="Helvetica, Arial, sans-serif" font-size="13">CASO: DANIEL VARGAS</text>
+  <text x="40" y="152" fill="#b8c1cc" font-family="Helvetica, Arial, sans-serif" font-size="13">CLASIFICACIÓN: ACCIDENTE DE TRÁNSITO</text>
+  <text x="40" y="176" fill="#6b7789" font-family="Helvetica, Arial, sans-serif" font-size="13">HORA ESTIMADA: 22:48</text>
+  <g stroke="#29333f" stroke-width="1">
+    <line x1="40" y1="220" x2="440" y2="220"/>
+    <line x1="40" y1="244" x2="440" y2="244"/>
+    <line x1="40" y1="268" x2="440" y2="268"/>
+    <line x1="40" y1="292" x2="380" y2="292"/>
+    <line x1="40" y1="336" x2="440" y2="336"/>
+    <line x1="40" y1="360" x2="440" y2="360"/>
+    <line x1="40" y1="384" x2="320" y2="384"/>
+  </g>
+  <rect x="320" y="440" width="120" height="120" fill="none" stroke="#e0a636" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="336" y="505" fill="#e0a636" font-family="Helvetica, Arial, sans-serif" font-size="12">SELLO</text>
+</svg>

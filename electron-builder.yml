@@ -1,0 +1,20 @@
+appId: com.verdictunsolved.app
+productName: Verdict Unsolved
+directories:
+  output: release
+files:
+  - out/**/*
+  - package.json
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.adventure-games
+win:
+  target:
+    - nsis
+    - portable
+linux:
+  target:
+    - AppImage
+  category: Game

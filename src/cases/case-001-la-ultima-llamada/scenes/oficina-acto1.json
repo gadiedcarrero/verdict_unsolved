@@ -1,0 +1,55 @@
+{
+  "id": "oficina-acto1",
+  "act": 1,
+  "background": "backgrounds/oficina-noche-lluvia.webp",
+  "layers": [
+    { "id": "ventanas", "assetPath": "layers/ventanas-lluvia-neon.png", "x": 58, "y": 4, "width": 38, "height": 32, "zIndex": 1 },
+    { "id": "puerta", "assetPath": "layers/puerta-cristal.png", "x": 88, "y": 8, "width": 10, "height": 62, "zIndex": 1 },
+    { "id": "tablero", "assetPath": "layers/tablero-vacio.png", "x": 78, "y": 14, "width": 17, "height": 36, "zIndex": 1 },
+    { "id": "archivadores", "assetPath": "layers/archivadores-cajas.png", "x": 3, "y": 18, "width": 16, "height": 42, "zIndex": 1 },
+    { "id": "lampara-cenicero-cafe", "assetPath": "layers/lampara-cenicero-cafe.png", "x": 63, "y": 48, "width": 16, "height": 16, "zIndex": 2 },
+    { "id": "computadora", "assetPath": "layers/computadora-apagada.png", "x": 37, "y": 44, "width": 23, "height": 21, "zIndex": 2 },
+    { "id": "telefono", "assetPath": "layers/telefono.png", "x": 7, "y": 54, "width": 13, "height": 16, "zIndex": 2 },
+    { "id": "fotografia", "assetPath": "layers/fotografia-boca-abajo.png", "x": 24, "y": 60, "width": 11, "height": 9, "zIndex": 3 },
+    { "id": "sobre", "assetPath": "layers/sobre-alquiler.png", "x": 49, "y": 70, "width": 9, "height": 7, "zIndex": 3 },
+    { "id": "cajon", "assetPath": "layers/cajon-cerrado.png", "x": 39, "y": 75, "width": 13, "height": 11, "zIndex": 2 },
+    { "id": "rueda", "assetPath": "layers/rueda-silla-parcial.png", "x": 34, "y": 91, "width": 21, "height": 8, "zIndex": 4 }
+  ],
+  "hotspots": [
+    {
+      "id": "fotografia",
+      "label": "Fotografía boca abajo",
+      "area": { "x": 24, "y": 60, "width": 11, "height": 9 },
+      "onInteract": [{ "type": "dialogue", "nodeId": "photo-1" }],
+      "repeatable": true
+    },
+    {
+      "id": "sobre",
+      "label": "Sobre sin abrir",
+      "area": { "x": 49, "y": 70, "width": 9, "height": 7 },
+      "onInteract": [{ "type": "dialogue", "nodeId": "sobre-1" }],
+      "repeatable": true
+    },
+    {
+      "id": "cajon",
+      "label": "Cajón cerrado",
+      "area": { "x": 39, "y": 75, "width": 13, "height": 11 },
+      "onInteract": [{ "type": "dialogue", "nodeId": "cajon-1" }],
+      "repeatable": true
+    },
+    {
+      "id": "computadora",
+      "label": "Computadora",
+      "area": { "x": 37, "y": 44, "width": 23, "height": 21 },
+      "onInteract": [{ "type": "dialogue", "nodeId": "zero-network-boot" }],
+      "repeatable": true
+    },
+    {
+      "id": "telefono",
+      "label": "Teléfono",
+      "area": { "x": 7, "y": 54, "width": 13, "height": 16 },
+      "onInteract": [{ "type": "dialogue", "nodeId": "telefono-idle" }],
+      "repeatable": true
+    }
+  ]
+}

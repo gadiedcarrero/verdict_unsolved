@@ -1,0 +1,38 @@
+[
+  {
+    "id": "ghost",
+    "name": "Mara Vega",
+    "codename": "Ghost",
+    "cost": 450,
+    "infiltration": "alta",
+    "technique": "media",
+    "resistance": "baja",
+    "trustInitial": 20,
+    "advantage": "Reduce la detección y puede esconderse durante la infiltración.",
+    "disadvantage": "No puede cargar simultáneamente a Daniel y todo el equipo."
+  },
+  {
+    "id": "patch",
+    "name": "Noah Mercer",
+    "codename": "Patch",
+    "cost": 300,
+    "infiltration": "baja",
+    "technique": "alta",
+    "resistance": "baja",
+    "trustInitial": 45,
+    "advantage": "Instala un puente físico que simplifica el hackeo interior.",
+    "disadvantage": "Puede entrar en pánico durante un cierre de seguridad."
+  },
+  {
+    "id": "rook",
+    "name": "Isaac Hale",
+    "codename": "Rook",
+    "cost": 375,
+    "infiltration": "baja",
+    "technique": "baja",
+    "resistance": "alta",
+    "trustInitial": 45,
+    "advantage": "Puede rescatar a Daniel sin abandonar equipo esencial.",
+    "disadvantage": "Genera más ruido y aumenta la probabilidad de patrulla."
+  }
+]

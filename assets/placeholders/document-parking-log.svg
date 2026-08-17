@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="620" viewBox="0 0 480 620">
+  <rect width="480" height="620" fill="#141a23"/>
+  <rect x="16" y="16" width="448" height="588" fill="none" stroke="#3c4856" stroke-width="2"/>
+  <rect x="16" y="16" width="448" height="72" fill="#1b232f"/>
+  <text x="40" y="60" fill="#e0a636" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="700">REGISTRO DE ESTACIONAMIENTO</text>
+  <text x="40" y="128" fill="#b8c1cc" font-family="monospace" font-size="13">VEHÍCULO   PLACA     ENTRADA   SALIDA</text>
+  <g font-family="monospace" font-size="13" fill="#6b7789">
+    <text x="40" y="156">SEDAN-04   XJ-1187   08:02     —</text>
+    <text x="40" y="180">SEDAN-11   KP-7742   08:15     18:40</text>
+    <text x="40" y="204" fill="#e0a636">SEDAN-22   HT-3390   08:47     22:31</text>
+    <text x="40" y="228">SEDAN-07   MZ-5521   09:03     19:12</text>
+  </g>
+  <line x1="40" y1="260" x2="440" y2="260" stroke="#29333f"/>
+  <text x="40" y="290" fill="#b8c1cc" font-family="Helvetica, Arial, sans-serif" font-size="13">Vehículo asignado a: D. Vargas</text>
+  <text x="40" y="314" fill="#b8c1cc" font-family="Helvetica, Arial, sans-serif" font-size="13">Salida registrada: 22:31</text>
+</svg>

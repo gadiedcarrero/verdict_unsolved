@@ -1,0 +1,104 @@
+[
+  {
+    "id": "evidence-police-report",
+    "title": "Informe policial",
+    "description": "Informe oficial que concluye que la muerte de Daniel Vargas fue un accidente de tránsito. Hora estimada del accidente: 22:48.",
+    "source": "Departamento de Policía — Unidad de Tránsito",
+    "discovered": true,
+    "tags": ["documento", "oficial"],
+    "relatedEntityIds": ["character-daniel-vargas"],
+    "assetPath": "/placeholders/document-police-report.svg"
+  },
+  {
+    "id": "evidence-parking-log",
+    "title": "Registro del estacionamiento",
+    "description": "Registro automatizado de entradas y salidas del estacionamiento corporativo. El vehículo de Daniel sale a las 22:31.",
+    "source": "Sistema de control de acceso vehicular",
+    "discovered": true,
+    "tags": ["registro", "cronología"],
+    "relatedEntityIds": ["character-daniel-vargas"],
+    "assetPath": "/placeholders/document-parking-log.svg"
+  },
+  {
+    "id": "evidence-vehicle-photo",
+    "title": "Fotografía del vehículo",
+    "description": "Fotografía del vehículo de Daniel Vargas, tomada en el lugar del accidente.",
+    "source": "Expediente policial",
+    "discovered": true,
+    "tags": ["fotografía"],
+    "relatedEntityIds": ["character-daniel-vargas"],
+    "assetPath": "/placeholders/photo-vehicle.svg"
+  },
+  {
+    "id": "evidence-marcos-statement",
+    "title": "Declaración de Marcos Leiva",
+    "description": "Marcos declara que Daniel abandonó la oficina solo a las 22:10.",
+    "source": "Entrevista — Marcos Leiva",
+    "discovered": true,
+    "tags": ["declaración", "cronología"],
+    "relatedEntityIds": ["character-marcos-leiva", "character-daniel-vargas"]
+  },
+  {
+    "id": "evidence-elevator-camera",
+    "title": "Cámara del ascensor",
+    "description": "Daniel aparece en la cámara del ascensor a las 22:27.",
+    "source": "Sistema de cámaras — Ascensor",
+    "discovered": true,
+    "tags": ["cámara", "cronología"],
+    "relatedEntityIds": ["character-daniel-vargas"]
+  },
+  {
+    "id": "evidence-camera-gap",
+    "title": "Segmento de cámara ausente",
+    "description": "El segmento de la cámara del estacionamiento entre las 22:24 y las 22:28 falta en la grabación.",
+    "source": "Sistema de cámaras — Estacionamiento",
+    "discovered": true,
+    "tags": ["cámara", "contradicción"],
+    "relatedEntityIds": ["character-tomas-rivas"]
+  },
+  {
+    "id": "evidence-camera-system-login",
+    "title": "Registro administrativo del sistema de cámaras",
+    "description": "Tomás Rivas inició sesión en el sistema de cámaras a las 22:23, un minuto antes de que comience el segmento ausente.",
+    "source": "Registro administrativo del sistema de seguridad",
+    "discovered": true,
+    "tags": ["registro", "acceso"],
+    "relatedEntityIds": ["character-tomas-rivas"]
+  },
+  {
+    "id": "evidence-recovered-message",
+    "title": "Mensaje recuperado a Lucía Mora",
+    "description": "Mensaje de Daniel a Lucía la noche de su muerte: «Si mañana no respondo, busca la carpeta Marea».",
+    "source": "Recuperación de mensajes — Teléfono de Lucía Mora",
+    "discovered": true,
+    "tags": ["mensaje", "recuperado"],
+    "relatedEntityIds": ["character-daniel-vargas", "character-lucia-mora"]
+  },
+  {
+    "id": "evidence-shell-company-transfers",
+    "title": "Transferencias a empresa ficticia",
+    "description": "Transferencias que vinculan una empresa ficticia con Tomás Rivas.",
+    "source": "Análisis de transacciones bancarias",
+    "discovered": true,
+    "tags": ["financiero", "motivo"],
+    "relatedEntityIds": ["character-tomas-rivas"]
+  },
+  {
+    "id": "evidence-elena-photo-metadata",
+    "title": "Metadatos de fotografía de Elena",
+    "description": "Los metadatos de una fotografía de Elena demuestran que estuvo en el apartamento de Daniel después de la muerte.",
+    "source": "Metadatos EXIF — Fotografía de Elena Vargas",
+    "discovered": true,
+    "tags": ["metadatos", "contradicción"],
+    "relatedEntityIds": ["character-elena-vargas"]
+  },
+  {
+    "id": "evidence-mechanical-diagnosis",
+    "title": "Diagnóstico mecánico",
+    "description": "El daño en el sistema de frenos es incompatible con desgaste normal.",
+    "source": "Peritaje mecánico independiente",
+    "discovered": true,
+    "tags": ["pericia", "físico"],
+    "relatedEntityIds": ["character-daniel-vargas"]
+  }
+]

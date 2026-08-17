@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="427" viewBox="0 0 640 427">
+  <rect width="640" height="427" fill="#0a0d12"/>
+  <rect x="0" y="0" width="640" height="427" fill="none" stroke="#29333f" stroke-width="2"/>
+  <rect x="120" y="200" width="400" height="110" rx="14" fill="#1b232f" stroke="#3c4856" stroke-width="2"/>
+  <rect x="150" y="170" width="150" height="50" rx="10" fill="#1b232f" stroke="#3c4856" stroke-width="2"/>
+  <circle cx="190" cy="312" r="26" fill="#0a0d12" stroke="#6b7789" stroke-width="4"/>
+  <circle cx="450" cy="312" r="26" fill="#0a0d12" stroke="#6b7789" stroke-width="4"/>
+  <rect x="330" y="222" width="60" height="18" fill="#e0a636" opacity="0.6"/>
+  <text x="24" y="30" fill="#e0a636" font-family="monospace" font-size="14">EVIDENCE // VEHICLE-01</text>
+  <text x="24" y="405" fill="#6b7789" font-family="monospace" font-size="12">LUGAR DEL ACCIDENTE — 22:48</text>
+</svg>

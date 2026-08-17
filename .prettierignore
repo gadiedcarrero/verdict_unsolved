@@ -1,0 +1,7 @@
+node_modules
+out
+release
+dist
+coverage
+pnpm-lock.yaml
+Verdict_Unsolved_Game_Design_Document.md
