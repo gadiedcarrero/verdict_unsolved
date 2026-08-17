@@ -37,12 +37,16 @@ MANIFEST: list[tuple[str, str, str]] = [
     (
         "backgrounds/oficina-noche-lluvia.png",
         "Wide first-person view from behind a private investigator's desk at "
-        "night: a black rotary telephone on the left, a dark computer monitor "
-        "at the center, a desk lamp with an ashtray and a cold cup of coffee, "
-        "a photograph lying face down, an unopened envelope, a closed wooden "
-        "drawer, metal filing cabinets and cardboard boxes against the wall, "
-        "an almost-empty cork board, a frosted glass office door, three tall "
-        "windows streaked with rain and glowing with neon city light outside"
+        "night, showing only the empty room shell: a completely bare wooden "
+        "desk surface with absolutely nothing on top of it (no phone, no "
+        "computer, no lamp, no papers, no cup, no photograph, no envelope — "
+        "the desk is empty, all of those props are added later as separate "
+        "layers), metal filing cabinets and cardboard boxes against the wall, "
+        "an almost-empty cork board, a plain frosted glass office door with "
+        "completely blank glass (absolutely no text, letters, numbers or "
+        "lettering painted on the glass), three tall windows streaked with "
+        "rain and glowing with neon city light outside. Empty desk surface "
+        "is critical — do not place any object on it."
         + STYLE_SUFFIX,
         "background",
     ),
@@ -81,7 +85,10 @@ MANIFEST: list[tuple[str, str, str]] = [
     ),
     (
         "layers/cajon-cerrado.png",
-        "A closed wooden desk drawer front with a small brass keyhole" + STYLE_SUFFIX + OBJECT_SUFFIX,
+        "A flat rectangular wooden desk drawer front panel with a small brass "
+        "handle and keyhole, viewed straight-on like a texture swatch, no "
+        "sides or legs or perspective depth, just the flat front face of the "
+        "drawer" + STYLE_SUFFIX + OBJECT_SUFFIX,
         "object",
     ),
     (
