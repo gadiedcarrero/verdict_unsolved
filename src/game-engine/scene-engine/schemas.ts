@@ -2,8 +2,7 @@ import { z } from 'zod';
 
 /**
  * Motor de datos para casos tipo "aventura por capas" (Caso 001 "La última
- * llamada" en adelante), paralelo al motor de `case-loader` usado por
- * "Four Minutes". Ver docs/case-001-la-ultima-llamada/01-mapeo-escenas.md.
+ * llamada" en adelante). Ver docs/case-001-la-ultima-llamada/01-mapeo-escenas.md.
  */
 
 export const SceneLayerSchema = z.object({
