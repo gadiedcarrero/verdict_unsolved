@@ -1,5 +1,13 @@
 """Genera assets de arte para un caso usando gpt-image-1 (OpenAI).
 
+NOTA (2026-08-17): la generación de arte pasó a manejarse a mano fuera de
+este script — el MANIFEST de abajo quedó desactualizado respecto a los
+assets reales en assets/cases/case-001-la-ultima-llamada/ (algunos props
+ahora vienen pintados en el fondo, otros se reemplazaron por arte generado
+aparte). Se deja como referencia de la técnica (prompt + transparencia +
+resolución de la API key), no para correrlo tal cual sin revisar el
+MANIFEST primero.
+
 Reutiliza la API key ya configurada en el proyecto hermano PressForge Studio
 (../ç en el escritorio) en vez de duplicarla en este repo. La key nunca se
 imprime ni se guarda en este proyecto.

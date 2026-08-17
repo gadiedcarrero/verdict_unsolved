@@ -6,10 +6,13 @@ import { PlaceholderLayer } from './PlaceholderLayer';
 export function SceneViewer({
   scene,
   transitioning,
+  layerOverrides,
   onInteract,
 }: {
   scene: Scene;
   transitioning: boolean;
+  /** assetPath alternativo por layer id (p. ej. el teléfono cambia de imagen mientras suena). */
+  layerOverrides?: Record<string, string> | undefined;
   onInteract: (hotspot: HotspotData) => void;
 }): JSX.Element {
   return (
@@ -21,7 +24,7 @@ export function SceneViewer({
         .map((layer) => (
           <PlaceholderLayer
             key={layer.id}
-            assetPath={layer.assetPath}
+            assetPath={layerOverrides?.[layer.id] ?? layer.assetPath}
             className="absolute object-contain"
             style={{
               left: `${layer.x}%`,

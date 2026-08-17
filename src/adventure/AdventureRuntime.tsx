@@ -19,6 +19,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
   useAdventureRuntimeStore((s) => s.activeDialogueNodeId);
   const activeInterfaceId = useAdventureRuntimeStore((s) => s.activeInterfaceId);
   const transitioning = useAdventureRuntimeStore((s) => s.transitioning);
+  const ringState = useAdventureRuntimeStore((s) => s.ringState);
   const interactHotspot = useAdventureRuntimeStore((s) => s.interactHotspot);
   const advance = useAdventureRuntimeStore((s) => s.advance);
   const selectChoice = useAdventureRuntimeStore((s) => s.selectChoice);
@@ -53,6 +54,12 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
 
   const scene = getActiveScene();
   const activeNode = getActiveNode();
+  // El teléfono muestra la pantalla de llamada entrante mientras suena, en
+  // vez de una capa fija — ver docs/case-001-la-ultima-llamada/01-mapeo-escenas.md.
+  const layerOverrides =
+    ringState === 'ringing' && currentSceneId === 'oficina-acto1'
+      ? { telefono: 'layers/telefono-llamada-entrante.png' }
+      : undefined;
 
   if (!scene) {
     return (
@@ -71,7 +78,12 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
       >
         Salir
       </button>
-      <SceneViewer scene={scene} transitioning={transitioning} onInteract={interactHotspot} />
+      <SceneViewer
+        scene={scene}
+        transitioning={transitioning}
+        layerOverrides={layerOverrides}
+        onInteract={interactHotspot}
+      />
       {activeInterfaceId ? (
         <InterfaceHost interfaceId={activeInterfaceId} />
       ) : (
