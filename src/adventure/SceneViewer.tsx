@@ -1,4 +1,4 @@
-import type { JSX } from 'react';
+import { useState, type JSX } from 'react';
 import type { Hotspot as HotspotData, Scene } from '../game-engine/scene-engine/schemas';
 import { HotspotArea } from './Hotspot';
 import { PlaceholderLayer } from './PlaceholderLayer';
@@ -15,6 +15,11 @@ export function SceneViewer({
   layerOverrides?: Record<string, string> | undefined;
   onInteract: (hotspot: HotspotData) => void;
 }): JSX.Element {
+  // Id del hotspot bajo el cursor: si coincide con el id de una capa, esa
+  // capa se ilumina (drop-shadow sobre su propia silueta transparente) en
+  // vez de dibujar un rectángulo alrededor del hotspot.
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-graphite-950">
       <PlaceholderLayer assetPath={scene.background} className="absolute inset-0 h-full w-full object-cover" />
@@ -25,6 +30,7 @@ export function SceneViewer({
           <PlaceholderLayer
             key={layer.id}
             assetPath={layerOverrides?.[layer.id] ?? layer.assetPath}
+            glow={hoveredId === layer.id}
             className="absolute object-contain"
             style={{
               left: `${layer.x}%`,
@@ -37,7 +43,12 @@ export function SceneViewer({
         ))}
 
       {scene.hotspots.map((hotspot) => (
-        <HotspotArea key={hotspot.id} hotspot={hotspot} onInteract={onInteract} />
+        <HotspotArea
+          key={hotspot.id}
+          hotspot={hotspot}
+          onInteract={onInteract}
+          onHoverChange={(hovering) => setHoveredId(hovering ? hotspot.id : null)}
+        />
       ))}
 
       <div

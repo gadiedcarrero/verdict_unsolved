@@ -5,8 +5,8 @@
   "layers": [
     { "id": "telefono", "assetPath": "layers/telefono.png", "x": 16, "y": 66, "width": 13, "height": 14, "zIndex": 2 },
     { "id": "fotografia", "assetPath": "layers/fotografia-unidad-cero.png", "x": 30, "y": 74, "width": 10, "height": 8, "zIndex": 3 },
-    { "id": "sobre", "assetPath": "layers/sobre-alquiler.png", "x": 45, "y": 78, "width": 10, "height": 7, "zIndex": 3 },
-    { "id": "cenicero", "assetPath": "layers/cenicero-cigarrillo.png", "x": 68, "y": 70, "width": 12, "height": 10, "zIndex": 2 },
+    { "id": "sobre", "assetPath": "layers/sobre-alquiler.png", "x": 42, "y": 73, "width": 16, "height": 12, "zIndex": 3 },
+    { "id": "cenicero", "assetPath": "layers/cenicero-cigarrillo.png", "x": 63, "y": 58, "width": 11, "height": 9, "zIndex": 2 },
     { "id": "computadora", "assetPath": "layers/computadora-encendida.png", "x": 36, "y": 33, "width": 27, "height": 48, "zIndex": 2 },
     { "id": "rueda", "assetPath": "layers/rueda-silla-parcial.png", "x": 36, "y": 90, "width": 18, "height": 10, "zIndex": 4 }
   ],
@@ -35,7 +35,7 @@
     {
       "id": "sobre",
       "label": "Sobre del alquiler",
-      "area": { "x": 45, "y": 78, "width": 10, "height": 7 },
+      "area": { "x": 42, "y": 73, "width": 16, "height": 12 },
       "onInteract": [{ "type": "dialogue", "nodeId": "sobre-2" }],
       "repeatable": true
     },
