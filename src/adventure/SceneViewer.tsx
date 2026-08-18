@@ -45,13 +45,27 @@ export function SceneViewer({
 
   return (
     <div ref={containerRef} className="flex h-full w-full items-center justify-center bg-graphite-950">
-      <div ref={stageRef} className="relative overflow-hidden bg-graphite-950" style={{ width, height }}>
+      <div
+        ref={stageRef}
+        className="relative overflow-hidden bg-graphite-950"
+        style={{ width, height, backgroundColor: activeBackground?.backgroundColor }}
+      >
         {activeBackground ? (
-          <PlaceholderLayer
-            gameId={gameId}
-            assetPath={activeBackground.assetPath}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+          activeBackground.imageWidthPercent ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <PlaceholderLayer
+                gameId={gameId}
+                assetPath={activeBackground.assetPath}
+                style={{ width: `${activeBackground.imageWidthPercent}%` }}
+              />
+            </div>
+          ) : (
+            <PlaceholderLayer
+              gameId={gameId}
+              assetPath={activeBackground.assetPath}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          )
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-xs tracking-widest text-graphite-600 uppercase">
             Sin fondo — agregá uno en el editor
