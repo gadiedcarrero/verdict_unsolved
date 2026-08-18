@@ -1,13 +1,18 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { app, ipcMain } from 'electron';
 
-const SCENES_DIR = 'src/cases/case-001-la-ultima-llamada/scenes';
-const STRINGS_FILE = 'src/cases/case-001-la-ultima-llamada/locales/es.json';
+const CASE_DIR = 'src/cases/case-001-la-ultima-llamada';
+const SCENES_DIR = `${CASE_DIR}/scenes`;
+const STRINGS_FILE = `${CASE_DIR}/locales/es.json`;
+const CHARACTERS_FILE = `${CASE_DIR}/characters.json`;
+const PORTRAITS_DIR = 'assets/cases/case-001-la-ultima-llamada/portraits';
 
 // Lista blanca deliberada: evita que el editor visual escriba fuera de las
 // escenas conocidas. Sumar el id acá al crear una escena nueva.
 const KNOWN_SCENE_IDS = new Set(['oficina-acto1', 'oficina-acto2', 'oficina-llamada']);
+const CHARACTER_ID_PATTERN = /^[a-z0-9-]+$/;
+const EXT_PATTERN = /^[a-z0-9]{1,5}$/i;
 
 function isStringRecord(value: unknown): value is Record<string, string> {
   return (
@@ -43,6 +48,54 @@ export function registerSceneEditorHandlers(): void {
           await mergeStrings(stringsPatch);
         }
         return { ok: true };
+      } catch (error) {
+        return { ok: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    },
+  );
+
+  ipcMain.handle('scene-editor:save-characters', async (_event, characters: unknown, stringsPatch: unknown) => {
+    if (app.isPackaged) {
+      return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
+    }
+    if (!Array.isArray(characters)) {
+      return { ok: false, error: 'Formato de personajes inválido.' };
+    }
+    try {
+      const filePath = join(app.getAppPath(), CHARACTERS_FILE);
+      await writeFile(filePath, `${JSON.stringify(characters, null, 2)}\n`, 'utf-8');
+
+      if (isStringRecord(stringsPatch) && Object.keys(stringsPatch).length > 0) {
+        await mergeStrings(stringsPatch);
+      }
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle(
+    'scene-editor:save-portrait',
+    async (_event, characterId: unknown, ext: unknown, data: unknown) => {
+      if (app.isPackaged) {
+        return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
+      }
+      if (typeof characterId !== 'string' || !CHARACTER_ID_PATTERN.test(characterId)) {
+        return { ok: false, error: `Id de personaje inválido: ${String(characterId)}` };
+      }
+      if (typeof ext !== 'string' || !EXT_PATTERN.test(ext)) {
+        return { ok: false, error: `Extensión de archivo inválida: ${String(ext)}` };
+      }
+      if (!(data instanceof Uint8Array)) {
+        return { ok: false, error: 'Datos de imagen inválidos.' };
+      }
+      try {
+        const dir = join(app.getAppPath(), PORTRAITS_DIR);
+        await mkdir(dir, { recursive: true });
+        const relativePath = `portraits/${characterId}.${ext.toLowerCase()}`;
+        const filePath = join(app.getAppPath(), 'assets/cases/case-001-la-ultima-llamada', relativePath);
+        await writeFile(filePath, Buffer.from(data));
+        return { ok: true, path: relativePath };
       } catch (error) {
         return { ok: false, error: error instanceof Error ? error.message : String(error) };
       }

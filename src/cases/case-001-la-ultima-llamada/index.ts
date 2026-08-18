@@ -1,5 +1,6 @@
 import agents from './agents.json';
 import caseMeta from './case.json';
+import characters from './characters.json';
 import dialoguesScene1 from './dialogues/scene-1.json';
 import dialoguesScene2 from './dialogues/scene-2.json';
 import dialoguesScene3To5 from './dialogues/scene-3-5.json';
@@ -19,4 +20,5 @@ export const adventureCaseBundleRaw = {
   agents,
   equipmentItems,
   strings: esStrings,
+  characters,
 };

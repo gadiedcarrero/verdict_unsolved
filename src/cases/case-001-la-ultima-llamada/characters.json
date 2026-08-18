@@ -1,0 +1,6 @@
+[
+  { "id": "director", "name": "character.director.name", "portrait": null, "color": "#f2b74a" },
+  { "id": "mirror", "name": "character.mirror.name", "portrait": null, "color": "#6ba8c9" },
+  { "id": "lena", "name": "character.lena.name", "portrait": null, "color": "#c98bd6" },
+  { "id": "sistema", "name": "character.sistema.name", "portrait": null, "color": "#8a94a6" }
+]

@@ -1,33 +1,33 @@
 {
   "photo-1": {
     "id": "photo-1",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "Fotografía de Unidad Cero: Adrian, Evelyn, otros tres agentes y Voss al fondo. En el reverso: \"UNIDAD CERO — QUE NADIE QUEDE ATRÁS.\"",
     "next": "photo-2"
   },
   "photo-2": {
     "id": "photo-2",
-    "speaker": "DIRECTOR",
+    "speaker": "director",
     "line": "Eso decíamos.",
     "onShow": [{ "type": "addFlag", "flag": "photoLogged" }]
   },
 
   "cajon-1": {
     "id": "cajon-1",
-    "speaker": "DIRECTOR",
+    "speaker": "director",
     "line": "Ese archivo todavía no."
   },
 
   "zero-network-boot": {
     "id": "zero-network-boot",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "",
     "terminalBlock": "ZERO NETWORK\nESTADO: INACTIVO\nAGENTES ACTIVOS: 0\nFONDOS DISPONIBLES: $1,200\nCASOS ABIERTOS: 0\nASISTENTE MIRROR: EN ESPERA",
     "next": "zero-network-mirror-greeting"
   },
   "zero-network-mirror-greeting": {
     "id": "zero-network-mirror-greeting",
-    "speaker": "MIRROR",
+    "speaker": "mirror",
     "line": "Identidad de operación confirmada. Han transcurrido mil ciento cuarenta y siete días desde la última activación completa.",
     "choices": [
       { "id": "c1", "text": "\"No esperaba volver a usarla.\"", "next": "zero-network-close" },
@@ -37,25 +37,25 @@
   },
   "zero-network-protocol-zero": {
     "id": "zero-network-protocol-zero",
-    "speaker": "MIRROR",
+    "speaker": "mirror",
     "line": "Ninguna. Continúo vigilando.",
     "next": "zero-network-close"
   },
   "zero-network-close": {
     "id": "zero-network-close",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "(Conexión con MIRROR en espera.)"
   },
 
   "telefono-idle": {
     "id": "telefono-idle",
-    "speaker": "DIRECTOR",
+    "speaker": "director",
     "line": "Nadie llama a este número desde hace tres años."
   },
 
   "telefono-ring-choice": {
     "id": "telefono-ring-choice",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "El teléfono suena violentamente. La lámpara parpadea.",
     "choices": [
       { "id": "contestar", "text": "Contestar", "next": "telefono-contestar" },
@@ -65,31 +65,31 @@
   },
   "telefono-sigue-sonando": {
     "id": "telefono-sigue-sonando",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "(El teléfono sigue sonando.)",
     "next": "telefono-ring-choice"
   },
   "telefono-mirror-rastreo": {
     "id": "telefono-mirror-rastreo",
-    "speaker": "MIRROR",
+    "speaker": "mirror",
     "line": "Analizando origen. Protocolo Zero: confirmado.",
     "next": "telefono-ring-choice"
   },
   "telefono-mirror-intervencion": {
     "id": "telefono-mirror-intervencion",
-    "speaker": "MIRROR",
+    "speaker": "mirror",
     "line": "La llamada utiliza Protocolo Zero.",
     "next": "telefono-mirror-intervencion-2"
   },
   "telefono-mirror-intervencion-2": {
     "id": "telefono-mirror-intervencion-2",
-    "speaker": "DIRECTOR",
+    "speaker": "director",
     "line": "(El Director deja de fingir indiferencia.)",
     "onShow": [{ "type": "transitionTo", "sceneId": "oficina-llamada", "fade": "fadeToBlack" }]
   },
   "telefono-contestar": {
     "id": "telefono-contestar",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "",
     "onShow": [{ "type": "transitionTo", "sceneId": "oficina-llamada", "fade": "fadeToBlack" }]
   }

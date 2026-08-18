@@ -1,4 +1,8 @@
 {
+  "character.director.name": "DIRECTOR",
+  "character.mirror.name": "MIRROR",
+  "character.lena.name": "LENA HART",
+  "character.sistema.name": "",
   "hotspot.oficina-acto1.fotografia": "Fotografía boca abajo",
   "hotspot.oficina-acto1.cajon": "Cajón cerrado",
   "hotspot.oficina-acto1.computadora": "Computadora",

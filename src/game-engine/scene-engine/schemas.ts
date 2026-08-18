@@ -55,6 +55,17 @@ export const HotspotSchema = z.object({
   interactable: z.boolean().default(true),
 });
 
+export const CharacterSchema = z.object({
+  id: z.string(),
+  /** Clave de traducción del nombre mostrado (ver locales/es.json). */
+  name: z.string(),
+  /** Ruta a la miniatura del rostro dentro de assets/portraits, o null si no
+   * tiene retrato (p. ej. "sistema" para texto de narrador/interfaz). */
+  portrait: z.string().nullable(),
+  /** Color del nombre y del texto de diálogo, en hex (p. ej. "#e0a636"). */
+  color: z.string(),
+});
+
 export const DialogueChoiceSchema = z.object({
   id: z.string(),
   text: z.string(),
@@ -65,6 +76,8 @@ export const DialogueChoiceSchema = z.object({
 
 export const DialogueNodeSchema = z.object({
   id: z.string(),
+  /** Id de un personaje del roster del caso (characters.json), no el nombre
+   * mostrado — el retrato, color y nombre traducido se resuelven desde ahí. */
   speaker: z.string(),
   portraitExpression: z.string().optional(),
   line: z.string(),
@@ -140,12 +153,14 @@ export const AdventureCaseBundleSchema = z.object({
   equipmentItems: z.array(EquipmentItemSchema),
   /** Diccionario clave → texto en español. Ver docs sobre i18n en el editor. */
   strings: z.record(z.string(), z.string()),
+  characters: z.array(CharacterSchema),
 });
 
 export type SceneLayer = z.infer<typeof SceneLayerSchema>;
 export type InterfaceId = z.infer<typeof InterfaceIdSchema>;
 export type SceneAction = z.infer<typeof SceneActionSchema>;
 export type Hotspot = z.infer<typeof HotspotSchema>;
+export type Character = z.infer<typeof CharacterSchema>;
 export type DialogueChoice = z.infer<typeof DialogueChoiceSchema>;
 export type DialogueNode = z.infer<typeof DialogueNodeSchema>;
 export type Scene = z.infer<typeof SceneSchema>;

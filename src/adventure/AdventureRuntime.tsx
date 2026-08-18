@@ -1,14 +1,17 @@
 import { useEffect, useState, type JSX } from 'react';
+import { CharacterEditorPanel } from './editor/CharacterEditorPanel';
 import type { EditableRect } from './editor/EditableBox';
 import { SceneEditorPanel } from './editor/SceneEditorPanel';
 import { slugify, uniqueId } from './editor/slug';
 import { activeAdventureCaseResult } from '../game-engine/scene-engine/activeAdventureCase';
-import type { Scene } from '../game-engine/scene-engine/schemas';
+import type { Character, Scene } from '../game-engine/scene-engine/schemas';
 import { useSaveStore } from '../game-engine/save-system/save.store';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
 import { DialogueOverlay } from './DialogueOverlay';
 import { InterfaceHost } from './interfaces/InterfaceHost';
 import { SceneViewer } from './SceneViewer';
+
+type EditorTab = 'scene' | 'characters';
 
 export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Element {
   const load = useSaveStore((s) => s.load);
@@ -30,15 +33,24 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
   const getActiveScene = useAdventureRuntimeStore((s) => s.getActiveScene);
   const getActiveNode = useAdventureRuntimeStore((s) => s.getActiveNode);
 
-  // Modo edición: arrastrar/redimensionar objetos, crear zonas nuevas y
-  // guardar todo directo en el JSON fuente (solo en `pnpm dev`).
+  // Modo edición: arrastrar/redimensionar objetos, crear zonas nuevas, editar
+  // el roster de personajes, y guardar todo directo en el JSON fuente (solo
+  // en `pnpm dev`).
   const [editMode, setEditMode] = useState(false);
+  const [editorTab, setEditorTab] = useState<EditorTab>('scene');
+
   const [editedScene, setEditedScene] = useState<Scene | null>(null);
   // Texto (clave → texto en ES) nuevo o editado en esta sesión de edición,
   // pendiente de fundirse con locales/es.json al guardar.
   const [pendingStrings, setPendingStrings] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  const [editedCharacters, setEditedCharacters] = useState<Character[] | null>(null);
+  const [pendingCharacterStrings, setPendingCharacterStrings] = useState<Record<string, string>>({});
+  const [characterSaving, setCharacterSaving] = useState(false);
+  const [characterSaveMessage, setCharacterSaveMessage] = useState<string | null>(null);
+  const [uploadingPortraitId, setUploadingPortraitId] = useState<string | null>(null);
 
   useEffect(() => {
     void load();
@@ -75,6 +87,8 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
   const baseScene = getActiveScene();
   const activeNode = getActiveNode();
   const displayScene = editedScene ?? baseScene;
+  const baseCharacters = bundle.characters;
+  const displayCharacters = editedCharacters ?? baseCharacters;
   // El teléfono muestra la pantalla de llamada entrante mientras suena, en
   // vez de una capa fija — ver docs/case-001-la-ultima-llamada/01-mapeo-escenas.md.
   const layerOverrides =
@@ -198,11 +212,89 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     }
   }
 
-  const strings = { ...bundle.strings, ...pendingStrings };
+  // --- Personajes: retrato, color y nombre válidos para toda la novela, no
+  // solo esta escena. Ver editor/CharacterEditorPanel.tsx.
+  function updateCharacter(characterId: string, patch: Partial<Character>): void {
+    const base = editedCharacters ?? baseCharacters;
+    setEditedCharacters(base.map((c) => (c.id === characterId ? { ...c, ...patch } : c)));
+  }
+
+  function setCharacterNameText(_characterId: string, nameKey: string, text: string): void {
+    setPendingCharacterStrings((prev) => ({ ...prev, [nameKey]: text }));
+  }
+
+  function createCharacter(name: string, nameText: string, color: string): void {
+    const base = editedCharacters ?? baseCharacters;
+    const taken = new Set(base.map((c) => c.id));
+    const id = uniqueId(slugify(name), taken);
+    const nameKey = `character.${id}.name`;
+    setEditedCharacters([...base, { id, name: nameKey, portrait: null, color }]);
+    setPendingCharacterStrings((prev) => ({ ...prev, [nameKey]: nameText }));
+  }
+
+  async function uploadPortrait(characterId: string, file: File): Promise<void> {
+    setUploadingPortraitId(characterId);
+    setCharacterSaveMessage(null);
+    try {
+      const buffer = new Uint8Array(await file.arrayBuffer());
+      const ext = file.name.split('.').pop() || 'png';
+      const result = await window.api.saveCharacterPortrait(characterId, ext, buffer);
+      if (result.ok) {
+        updateCharacter(characterId, { portrait: result.path });
+      } else {
+        setCharacterSaveMessage(`Error subiendo retrato: ${result.error}`);
+      }
+    } catch (error) {
+      setCharacterSaveMessage(`Error subiendo retrato: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setUploadingPortraitId(null);
+    }
+  }
+
+  async function handleSaveCharacters(): Promise<void> {
+    if (!editedCharacters) return;
+    setCharacterSaving(true);
+    setCharacterSaveMessage(null);
+    try {
+      const result = await window.api.saveCharacters(editedCharacters, pendingCharacterStrings);
+      setCharacterSaveMessage(result.ok ? 'Guardado en characters.json.' : `Error: ${result.error}`);
+      if (result.ok) setPendingCharacterStrings({});
+    } catch (error) {
+      setCharacterSaveMessage(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setCharacterSaving(false);
+    }
+  }
+
+  const strings = { ...bundle.strings, ...pendingStrings, ...pendingCharacterStrings };
 
   return (
     <div className="relative h-screen w-screen bg-graphite-950">
       <div className="absolute top-4 right-4 z-10 flex gap-2">
+        {import.meta.env.DEV && editMode && (
+          <div className="flex overflow-hidden rounded border border-graphite-700">
+            <button
+              type="button"
+              onClick={() => setEditorTab('scene')}
+              className={`px-3 py-1 text-[11px] tracking-widest uppercase transition-colors ${
+                editorTab === 'scene' ? 'bg-amber-accent text-graphite-950' : 'text-graphite-400 hover:text-amber-accent'
+              }`}
+            >
+              Escena
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditorTab('characters')}
+              className={`border-l border-graphite-700 px-3 py-1 text-[11px] tracking-widest uppercase transition-colors ${
+                editorTab === 'characters'
+                  ? 'bg-amber-accent text-graphite-950'
+                  : 'text-graphite-400 hover:text-amber-accent'
+              }`}
+            >
+              Personajes
+            </button>
+          </div>
+        )}
         {import.meta.env.DEV && (
           <button
             type="button"
@@ -230,10 +322,10 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
         transitioning={transitioning}
         layerOverrides={layerOverrides}
         onInteract={interactHotspot}
-        editMode={editMode}
+        editMode={editMode && editorTab === 'scene'}
         onObjectRectChange={updateObjectRect}
       >
-        {editMode ? (
+        {editMode && editorTab === 'scene' ? (
           <SceneEditorPanel
             scene={displayScene}
             strings={strings}
@@ -251,10 +343,37 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
             saving={saving}
             saveMessage={saveMessage}
           />
+        ) : editMode && editorTab === 'characters' ? (
+          <CharacterEditorPanel
+            characters={displayCharacters}
+            strings={strings}
+            uploadingId={uploadingPortraitId}
+            onNameTextChange={setCharacterNameText}
+            onColorChange={(id, color) => updateCharacter(id, { color })}
+            onUploadPortrait={(id, file) => void uploadPortrait(id, file)}
+            onCreateCharacter={createCharacter}
+            onSave={() => void handleSaveCharacters()}
+            onDiscard={() => {
+              setEditedCharacters(null);
+              setPendingCharacterStrings({});
+              setCharacterSaveMessage(null);
+            }}
+            hasChanges={editedCharacters !== null}
+            saving={characterSaving}
+            saveMessage={characterSaveMessage}
+          />
         ) : activeInterfaceId ? (
           <InterfaceHost interfaceId={activeInterfaceId} />
         ) : (
-          activeNode && <DialogueOverlay node={activeNode} onAdvance={advance} onChoose={selectChoice} />
+          activeNode && (
+            <DialogueOverlay
+              node={activeNode}
+              characters={displayCharacters}
+              strings={strings}
+              onAdvance={advance}
+              onChoose={selectChoice}
+            />
+          )
         )}
       </SceneViewer>
     </div>

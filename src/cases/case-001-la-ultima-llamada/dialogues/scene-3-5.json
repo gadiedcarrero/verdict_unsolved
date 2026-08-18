@@ -1,19 +1,19 @@
 {
   "acto2-intro": {
     "id": "acto2-intro",
-    "speaker": "DIRECTOR",
+    "speaker": "director",
     "line": "Ahora hay que verificar a Lena, elegir quién entra y con qué."
   },
 
   "telefono-acto2-idle": {
     "id": "telefono-acto2-idle",
-    "speaker": "DIRECTOR",
+    "speaker": "director",
     "line": "La línea con Lena sigue abierta. No hay nada más que decirle todavía."
   },
 
   "mirror-hub": {
     "id": "mirror-hub",
-    "speaker": "MIRROR",
+    "speaker": "mirror",
     "line": "Puedo abrir tres áreas: investigación del cliente, mercado de agentes o la tienda de equipo.",
     "choices": [
       { "id": "investigar", "text": "Investigar a Lena", "next": "mirror-hub-investigar" },
@@ -24,31 +24,31 @@
   },
   "mirror-hub-investigar": {
     "id": "mirror-hub-investigar",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "",
     "onShow": [{ "type": "openInterface", "interfaceId": "mirror-investigation" }]
   },
   "mirror-hub-mercado": {
     "id": "mirror-hub-mercado",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "",
     "onShow": [{ "type": "openInterface", "interfaceId": "agent-market" }]
   },
   "mirror-hub-tienda": {
     "id": "mirror-hub-tienda",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "",
     "onShow": [{ "type": "openInterface", "interfaceId": "equipment-shop" }]
   },
   "mirror-hub-operar": {
     "id": "mirror-hub-operar",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "(Con el agente y el equipo asignados, tocaría iniciar la operación en Halcyon — el Acto III todavía no está construido.)"
   },
 
   "confrontar-lena-1": {
     "id": "confrontar-lena-1",
-    "speaker": "LENA",
+    "speaker": "lena",
     "portraitExpression": "defensiva",
     "line": "Daniel dijo que si mencionaba Acheron antes de que usted aceptara, colgaría. No sabía en quién confiar.",
     "choices": [
@@ -59,7 +59,7 @@
   },
   "confrontar-lena-cierre": {
     "id": "confrontar-lena-cierre",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "(La conversación con Lena termina por ahora.)"
   }
 }

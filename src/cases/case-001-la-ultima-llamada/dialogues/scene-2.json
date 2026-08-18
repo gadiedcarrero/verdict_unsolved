@@ -1,7 +1,7 @@
 {
   "lena-1": {
     "id": "lena-1",
-    "speaker": "LENA",
+    "speaker": "lena",
     "portraitExpression": "asustada",
     "line": "¿Estoy hablando con Zero?",
     "choices": [
@@ -13,13 +13,13 @@
   },
   "lena-cuelga-1": {
     "id": "lena-cuelga-1",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "(Cuelga. El teléfono vuelve a sonar de inmediato.)",
     "next": "lena-cuelga-2"
   },
   "lena-cuelga-2": {
     "id": "lena-cuelga-2",
-    "speaker": "LENA",
+    "speaker": "lena",
     "portraitExpression": "asustada",
     "line": "Daniel dijo que haría eso. Dijo que mencionara Acheron.",
     "onShow": [{ "type": "addFlag", "flag": "rechazo-inicial" }],
@@ -28,25 +28,25 @@
 
   "lena-explica-1": {
     "id": "lena-explica-1",
-    "speaker": "LENA",
+    "speaker": "lena",
     "line": "Daniel desapareció hace cuarenta y ocho horas. La policía cree que se marchó voluntariamente.",
     "next": "lena-explica-2"
   },
   "lena-explica-2": {
     "id": "lena-explica-2",
-    "speaker": "LENA",
+    "speaker": "lena",
     "line": "Recibí un mensaje programado: \"Si vienen por mí, busca a Zero\".",
     "next": "lena-explica-3"
   },
   "lena-explica-3": {
     "id": "lena-explica-3",
-    "speaker": "LENA",
+    "speaker": "lena",
     "line": "Daniel dejó algo en el edificio Halcyon. Van a vaciarlo a las 05:00.",
     "next": "lena-explica-4"
   },
   "lena-explica-4": {
     "id": "lena-explica-4",
-    "speaker": "LENA",
+    "speaker": "lena",
     "line": "Pago ochocientos dólares por recuperar el objeto y cuatrocientos más por encontrar a Daniel. Puedo adelantar trescientos ahora mismo.",
     "choices": [
       { "id": "preguntar", "text": "\"¿A qué se dedicaba Daniel?\"", "next": "lena-profesion" },
@@ -55,7 +55,7 @@
   },
   "lena-profesion": {
     "id": "lena-profesion",
-    "speaker": "LENA",
+    "speaker": "lena",
     "line": "Era periodista independiente.",
     "onShow": [{ "type": "addFlag", "flag": "lena-mintio-profesion" }],
     "next": "lena-pide-entrada"
@@ -63,19 +63,19 @@
 
   "lena-pide-entrada": {
     "id": "lena-pide-entrada",
-    "speaker": "LENA",
+    "speaker": "lena",
     "line": "Necesito que entre usted.",
     "next": "director-rueda"
   },
   "director-rueda": {
     "id": "director-rueda",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "(La cámara baja lentamente hacia la rueda visible y las piernas inmóviles.)",
     "next": "director-respuesta"
   },
   "director-respuesta": {
     "id": "director-respuesta",
-    "speaker": "DIRECTOR",
+    "speaker": "director",
     "line": "Yo ya no entro en edificios. Me aseguro de que los demás salgan.",
     "choices": [
       { "id": "aceptar", "text": "Aceptar el caso", "next": "caso-registrado" },
@@ -85,7 +85,7 @@
 
   "caso-registrado": {
     "id": "caso-registrado",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "",
     "terminalBlock": "CASO 001 REGISTRADO\nLA ÚLTIMA LLAMADA\nGUARDADO CONTINUO ACTIVADO\nLAS DECISIONES NO PUEDEN DESHACERSE",
     "onShow": [
@@ -96,27 +96,27 @@
   },
   "caso-registrado-transicion": {
     "id": "caso-registrado-transicion",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "",
     "onShow": [{ "type": "transitionTo", "sceneId": "oficina-acto2", "fade": "fadeToBlack" }]
   },
 
   "caso-ya-registrado": {
     "id": "caso-ya-registrado",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "(El caso ya está registrado. Por ahora el Acto I de \"La última llamada\" termina aquí — el resto todavía no está construido.)"
   },
 
   "caso-rechazado": {
     "id": "caso-rechazado",
-    "speaker": "MIRROR",
+    "speaker": "mirror",
     "line": "Protocolo Zero solo era conocido por seis personas.",
     "onShow": [{ "type": "addFlag", "flag": "rechazo-registrado" }],
     "next": "caso-rechazado-2"
   },
   "caso-rechazado-2": {
     "id": "caso-rechazado-2",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "(La llamada puede retomarse.)",
     "choices": [
       { "id": "reconsiderar", "text": "Reconsiderar y aceptar", "next": "caso-registrado" },
@@ -125,7 +125,7 @@
   },
   "caso-rechazado-cierre": {
     "id": "caso-rechazado-cierre",
-    "speaker": "SISTEMA",
+    "speaker": "sistema",
     "line": "(El Director vuelve a mirar el teléfono en silencio.)"
   }
 }
