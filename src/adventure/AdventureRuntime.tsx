@@ -35,8 +35,9 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
 
   // Modo edición: arrastrar/redimensionar objetos, crear zonas nuevas, editar
   // el roster de personajes, y guardar todo directo en el JSON fuente (solo
-  // en `pnpm dev`).
-  const [editMode, setEditMode] = useState(false);
+  // en `pnpm dev`). Arranca directo en modo edición en dev — como el editor
+  // de Unity — para no depender de que ya exista una escena jugable.
+  const [editMode, setEditMode] = useState(() => import.meta.env.DEV);
   const [editorTab, setEditorTab] = useState<EditorTab>('scene');
 
   // Qué escena se está editando: puede ser distinta de `currentSceneId`
@@ -107,18 +108,6 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     ringState === 'ringing' && currentSceneId === 'oficina-acto1'
       ? { telefono: 'layers/telefono-llamada-entrante.png' }
       : undefined;
-
-  // Fuera del modo edición sí hace falta una escena real para jugar. En modo
-  // edición no: sin escenas todavía (p. ej. mientras se reconstruye el
-  // contenido de cero) el editor debe seguir mostrando el panel para poder
-  // crear la primera.
-  if (!displayScene && !editMode) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-graphite-950 text-graphite-200">
-        Escena &quot;{currentSceneId}&quot; no encontrada.
-      </div>
-    );
-  }
 
   // Un "objeto" del editor es una capa y su hotspot (si existe) con el mismo
   // id — se mueven juntos porque representan la misma cosa en pantalla. Ver
@@ -487,32 +476,34 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
             )}
           </div>
         </div>
-      ) : (
+      ) : displayScene ? (
         // Modo juego: la escena vuelve a ocupar toda la pantalla, como
         // siempre — el editor no deja rastro.
-        displayScene && (
-          <SceneViewer
-            scene={displayScene}
-            strings={strings}
-            transitioning={transitioning}
-            layerOverrides={layerOverrides}
-            onInteract={interactHotspot}
-          >
-            {activeInterfaceId ? (
-              <InterfaceHost interfaceId={activeInterfaceId} />
-            ) : (
-              activeNode && (
-                <DialogueOverlay
-                  node={activeNode}
-                  characters={displayCharacters}
-                  strings={strings}
-                  onAdvance={advance}
-                  onChoose={selectChoice}
-                />
-              )
-            )}
-          </SceneViewer>
-        )
+        <SceneViewer
+          scene={displayScene}
+          strings={strings}
+          transitioning={transitioning}
+          layerOverrides={layerOverrides}
+          onInteract={interactHotspot}
+        >
+          {activeInterfaceId ? (
+            <InterfaceHost interfaceId={activeInterfaceId} />
+          ) : (
+            activeNode && (
+              <DialogueOverlay
+                node={activeNode}
+                characters={displayCharacters}
+                strings={strings}
+                onAdvance={advance}
+                onChoose={selectChoice}
+              />
+            )
+          )}
+        </SceneViewer>
+      ) : (
+        <div className="flex h-screen w-screen items-center justify-center bg-graphite-950 text-graphite-200">
+          Escena &quot;{currentSceneId}&quot; no encontrada.
+        </div>
       )}
     </div>
   );
