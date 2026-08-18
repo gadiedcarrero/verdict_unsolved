@@ -5,6 +5,7 @@ import { buildEditableObjects } from './editor/editableObjects';
 import { EditableBox, type EditableRect } from './editor/EditableBox';
 import { HotspotArea } from './Hotspot';
 import { MENU_POSITION_CLASSES, MenuButtonView } from './MenuButtonView';
+import { MENU_TITLE_POSITION_CLASSES, MenuTitleView } from './MenuTitleView';
 import { PlaceholderLayer } from './PlaceholderLayer';
 import { useStageSize } from './useStageSize';
 
@@ -104,6 +105,15 @@ export function SceneViewer({
                 onHoverChange={(hovering) => setHoveredId(hovering ? hotspot.id : null)}
               />
             ))}
+
+        {scene.kind === 'menu' && scene.menuTitle && (
+          <div className={MENU_TITLE_POSITION_CLASSES[scene.menuAppearance.position]}>
+            <MenuTitleView
+              title={scene.menuTitle}
+              text={scene.menuTitle.text ? translate(strings, scene.menuTitle.text) : ''}
+            />
+          </div>
+        )}
 
         {scene.kind === 'menu' && (
           <div className={MENU_POSITION_CLASSES[scene.menuAppearance.position]}>

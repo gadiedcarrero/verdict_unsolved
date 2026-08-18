@@ -192,6 +192,16 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
         case 'addMoney':
           useSaveStore.getState().addMoney(action.amount);
           break;
+        case 'continueGame': {
+          const { caseState } = get();
+          if (caseState.registered) {
+            get().transitionToScene(caseState.currentSceneId, 'fade');
+          }
+          break;
+        }
+        case 'quitApp':
+          window.close();
+          break;
       }
     }
   },

@@ -3,6 +3,7 @@ import type { Scene } from '../game-engine/scene-engine/schemas';
 import { translate } from '../i18n/translate';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
 import { MENU_POSITION_CLASSES, MenuButtonView } from './MenuButtonView';
+import { MENU_TITLE_POSITION_CLASSES, MenuTitleView } from './MenuTitleView';
 import { PlaceholderLayer } from './PlaceholderLayer';
 import { useStageSize } from './useStageSize';
 
@@ -39,6 +40,12 @@ export function MenuScene({
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-xs tracking-widest text-graphite-600 uppercase">
             Sin fondo — agregá uno en el editor
+          </div>
+        )}
+
+        {scene.menuTitle && (
+          <div className={MENU_TITLE_POSITION_CLASSES[scene.menuAppearance.position]}>
+            <MenuTitleView title={scene.menuTitle} text={translate(strings, scene.menuTitle.text)} />
           </div>
         )}
 

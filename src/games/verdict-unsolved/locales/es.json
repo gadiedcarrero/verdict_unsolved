@@ -11,5 +11,9 @@
   "hotspot.oficina-acto2.telefono": "Teléfono",
   "hotspot.oficina-acto2.fotografia": "Fotografía de Unidad Cero",
   "hotspot.oficina-acto2.cajon": "Cajón cerrado",
-  "hotspot.oficina-llamada.telefono-llamada": "Teléfono (llamada en curso)"
+  "hotspot.oficina-llamada.telefono-llamada": "Teléfono (llamada en curso)",
+  "menu.menu-inicio.title": "VERDICT: UNSOLVED",
+  "menu.menu-inicio.nueva-partida": "Nueva Partida",
+  "menu.menu-inicio.continuar": "Continuar",
+  "menu.menu-inicio.salir": "Salir"
 }

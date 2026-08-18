@@ -1,7 +1,7 @@
 {
   "id": "menu-inicio",
   "act": 0,
-  "kind": "standard",
+  "kind": "menu",
   "backgrounds": [
     {
       "id": "bg-1",
@@ -10,5 +10,36 @@
   ],
   "layers": [],
   "hotspots": [],
-  "introSkippable": true
+  "introSkippable": true,
+  "menuTitle": {
+    "text": "menu.menu-inicio.title",
+    "fontFamily": "serif",
+    "fontSize": 56,
+    "color": "#e6eaef"
+  },
+  "menuButtons": [
+    {
+      "id": "nueva-partida",
+      "label": "menu.menu-inicio.nueva-partida",
+      "onClick": []
+    },
+    {
+      "id": "continuar",
+      "label": "menu.menu-inicio.continuar",
+      "onClick": [{ "type": "continueGame" }]
+    },
+    {
+      "id": "salir",
+      "label": "menu.menu-inicio.salir",
+      "onClick": [{ "type": "quitApp" }]
+    }
+  ],
+  "menuAppearance": {
+    "position": "center",
+    "buttonStyle": "bordered",
+    "fontFamily": "sans",
+    "fontSize": 16,
+    "fontColor": "#e6eaef",
+    "hoverColor": "#e0a636"
+  }
 }

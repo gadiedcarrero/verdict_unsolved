@@ -6,10 +6,12 @@ import type {
   MenuButtonStyle,
   MenuFontFamily,
   MenuPosition,
+  MenuTitle,
   Scene,
   SceneKind,
 } from '../../game-engine/scene-engine/schemas';
 import { gameAssetUrl } from '../gameAssetUrl';
+import { MENU_BUTTON_ACTION_CONTINUE, MENU_BUTTON_ACTION_QUIT } from '../menuButtonActions';
 import type { EditableObject } from './editableObjects';
 import { buildEditableObjects } from './editableObjects';
 import type { EditableRect } from './EditableBox';
@@ -354,7 +356,15 @@ function MenuButtonFields({
   onTargetChange: (sceneId: string) => void;
   onRemove: () => void;
 }): JSX.Element {
-  const targetSceneId = button.onClick.find((action) => action.type === 'transitionTo')?.sceneId ?? '';
+  const firstAction = button.onClick[0];
+  const selectValue =
+    firstAction?.type === 'transitionTo'
+      ? firstAction.sceneId
+      : firstAction?.type === 'continueGame'
+        ? MENU_BUTTON_ACTION_CONTINUE
+        : firstAction?.type === 'quitApp'
+          ? MENU_BUTTON_ACTION_QUIT
+          : '';
 
   return (
     <div className="mb-2 border-b border-graphite-800 pb-2">
@@ -378,16 +388,14 @@ function MenuButtonFields({
         />
       </label>
       <label className="flex flex-col">
-        <span className="text-[9px] text-graphite-500 uppercase">Al hacer clic, ir a</span>
-        <select
-          value={targetSceneId}
-          onChange={(event) => onTargetChange(event.target.value)}
-          className={inputClassName}
-        >
+        <span className="text-[9px] text-graphite-500 uppercase">Al hacer clic</span>
+        <select value={selectValue} onChange={(event) => onTargetChange(event.target.value)} className={inputClassName}>
           <option value="">(sin definir)</option>
+          <option value={MENU_BUTTON_ACTION_CONTINUE}>Continuar partida guardada</option>
+          <option value={MENU_BUTTON_ACTION_QUIT}>Salir del juego</option>
           {sceneOptions.map((option) => (
             <option key={option.id} value={option.id}>
-              {option.id}
+              Ir a escena: {option.id}
             </option>
           ))}
         </select>
@@ -436,11 +444,86 @@ function CreateMenuButtonForm({ onCreate }: { onCreate: (name: string, labelText
   );
 }
 
+function MenuTitleSettings({
+  scene,
+  strings,
+  onSetEnabled,
+  onTextChange,
+  onChangeAppearance,
+}: {
+  scene: Scene;
+  strings: Record<string, string>;
+  onSetEnabled: (enabled: boolean) => void;
+  onTextChange: (labelKey: string, text: string) => void;
+  onChangeAppearance: (patch: Partial<Omit<MenuTitle, 'text'>>) => void;
+}): JSX.Element {
+  const title = scene.menuTitle;
+
+  return (
+    <div className="mb-3 border-b border-graphite-800 pb-3">
+      <label className="mb-2 flex items-center gap-1 text-[9px] text-graphite-400">
+        <input type="checkbox" checked={title !== null} onChange={(event) => onSetEnabled(event.target.checked)} />
+        Mostrar título
+      </label>
+      {title && (
+        <>
+          <label className="mb-2 flex flex-col">
+            <span className="text-[9px] text-graphite-500 uppercase">Texto</span>
+            <input
+              type="text"
+              value={strings[title.text] ?? translate(strings, title.text)}
+              onChange={(event) => onTextChange(title.text, event.target.value)}
+              className={inputClassName}
+            />
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            <label className="flex flex-col">
+              <span className="text-[9px] text-graphite-500 uppercase">Tipografía</span>
+              <select
+                value={title.fontFamily}
+                onChange={(event) => onChangeAppearance({ fontFamily: event.target.value as MenuFontFamily })}
+                className={inputClassName}
+              >
+                <option value="sans">Sans</option>
+                <option value="serif">Serif</option>
+                <option value="mono">Monoespaciada</option>
+              </select>
+            </label>
+            <label className="flex flex-col">
+              <span className="text-[9px] text-graphite-500 uppercase">Tamaño</span>
+              <input
+                type="number"
+                min={12}
+                max={120}
+                value={title.fontSize}
+                onChange={(event) => onChangeAppearance({ fontSize: Number(event.target.value) })}
+                className={inputClassName}
+              />
+            </label>
+            <label className="flex flex-col">
+              <span className="text-[9px] text-graphite-500 uppercase">Color</span>
+              <input
+                type="color"
+                value={title.color}
+                onChange={(event) => onChangeAppearance({ color: event.target.value })}
+                className="h-7 w-full cursor-pointer rounded border border-graphite-700 bg-graphite-900"
+              />
+            </label>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function MenuSettings({
   scene,
   strings,
   sceneOptions,
   onChangeAppearance,
+  onSetTitleEnabled,
+  onTitleTextChange,
+  onChangeTitleAppearance,
   onAddButton,
   onRemoveButton,
   onButtonLabelTextChange,
@@ -450,6 +533,9 @@ function MenuSettings({
   strings: Record<string, string>;
   sceneOptions: { id: string; act: number }[];
   onChangeAppearance: (patch: Partial<MenuAppearance>) => void;
+  onSetTitleEnabled: (enabled: boolean) => void;
+  onTitleTextChange: (labelKey: string, text: string) => void;
+  onChangeTitleAppearance: (patch: Partial<Omit<MenuTitle, 'text'>>) => void;
   onAddButton: (name: string, labelText: string) => void;
   onRemoveButton: (buttonId: string) => void;
   onButtonLabelTextChange: (labelKey: string, text: string) => void;
@@ -461,6 +547,16 @@ function MenuSettings({
     <div className="mb-3 border-b border-graphite-800 pb-3">
       <p className="mb-2 text-[10px] font-semibold tracking-widest text-graphite-300 uppercase">Menú</p>
 
+      <p className="mb-2 text-[9px] font-semibold tracking-widest text-graphite-400 uppercase">Título</p>
+      <MenuTitleSettings
+        scene={scene}
+        strings={strings}
+        onSetEnabled={onSetTitleEnabled}
+        onTextChange={onTitleTextChange}
+        onChangeAppearance={onChangeTitleAppearance}
+      />
+
+      <p className="mb-2 text-[9px] font-semibold tracking-widest text-graphite-400 uppercase">Estilo de botones</p>
       <label className="mb-2 flex flex-col">
         <span className="text-[9px] text-graphite-500 uppercase">Posición de los botones</span>
         <select
@@ -674,6 +770,9 @@ export function SceneEditorPanel({
   onChangeIntroSkippable,
   onChangeIntroCompleteTarget,
   onChangeMenuAppearance,
+  onSetMenuTitleEnabled,
+  onMenuTitleTextChange,
+  onChangeMenuTitleAppearance,
   onAddMenuButton,
   onRemoveMenuButton,
   onMenuButtonLabelTextChange,
@@ -701,6 +800,9 @@ export function SceneEditorPanel({
   onChangeIntroSkippable: (skippable: boolean) => void;
   onChangeIntroCompleteTarget: (sceneId: string) => void;
   onChangeMenuAppearance: (patch: Partial<MenuAppearance>) => void;
+  onSetMenuTitleEnabled: (enabled: boolean) => void;
+  onMenuTitleTextChange: (labelKey: string, text: string) => void;
+  onChangeMenuTitleAppearance: (patch: Partial<Omit<MenuTitle, 'text'>>) => void;
   onAddMenuButton: (name: string, labelText: string) => void;
   onRemoveMenuButton: (buttonId: string) => void;
   onMenuButtonLabelTextChange: (labelKey: string, text: string) => void;
@@ -763,6 +865,9 @@ export function SceneEditorPanel({
               strings={strings}
               sceneOptions={sceneOptions}
               onChangeAppearance={onChangeMenuAppearance}
+              onSetTitleEnabled={onSetMenuTitleEnabled}
+              onTitleTextChange={onMenuTitleTextChange}
+              onChangeTitleAppearance={onChangeMenuTitleAppearance}
               onAddButton={onAddMenuButton}
               onRemoveButton={onRemoveMenuButton}
               onButtonLabelTextChange={onMenuButtonLabelTextChange}

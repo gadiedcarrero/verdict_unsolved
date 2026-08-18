@@ -10,6 +10,7 @@ import { useAdventureRuntimeStore } from './adventureRuntime.store';
 import { DialogueOverlay } from './DialogueOverlay';
 import { InterfaceHost } from './interfaces/InterfaceHost';
 import { IntroScene } from './IntroScene';
+import { MENU_BUTTON_ACTION_CONTINUE, MENU_BUTTON_ACTION_QUIT } from './menuButtonActions';
 import { MenuScene } from './MenuScene';
 import { SceneViewer } from './SceneViewer';
 
@@ -331,15 +332,44 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setEditedScene({ ...base, menuButtons: base.menuButtons.filter((b) => b.id !== buttonId) });
   }
 
-  function updateMenuButtonTarget(buttonId: string, sceneId: string): void {
+  function updateMenuButtonTarget(buttonId: string, value: string): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
+    const onClick: Scene['menuButtons'][number]['onClick'] =
+      value === ''
+        ? []
+        : value === MENU_BUTTON_ACTION_CONTINUE
+          ? [{ type: 'continueGame' }]
+          : value === MENU_BUTTON_ACTION_QUIT
+            ? [{ type: 'quitApp' }]
+            : [{ type: 'transitionTo', sceneId: value, fade: 'fade' }];
     setEditedScene({
       ...base,
-      menuButtons: base.menuButtons.map((b) =>
-        b.id === buttonId ? { ...b, onClick: sceneId ? [{ type: 'transitionTo', sceneId, fade: 'fade' }] : [] } : b,
-      ),
+      menuButtons: base.menuButtons.map((b) => (b.id === buttonId ? { ...b, onClick } : b)),
     });
+  }
+
+  // Título del menú: `menuTitle` es toda-o-nada (null = sin título), así que
+  // activarlo crea el objeto con defaults y una clave de traducción propia.
+  function setMenuTitleEnabled(enabled: boolean): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    if (!enabled) {
+      setEditedScene({ ...base, menuTitle: null });
+      return;
+    }
+    const titleKey = `menu.${base.id}.title`;
+    setEditedScene({
+      ...base,
+      menuTitle: { text: titleKey, fontFamily: 'serif', fontSize: 48, color: '#e6eaef' },
+    });
+    setPendingStrings((prev) => (titleKey in prev ? prev : { ...prev, [titleKey]: base.id }));
+  }
+
+  function updateMenuTitleAppearance(patch: Partial<Omit<NonNullable<Scene['menuTitle']>, 'text'>>): void {
+    const base = editedScene ?? baseScene;
+    if (!base?.menuTitle) return;
+    setEditedScene({ ...base, menuTitle: { ...base.menuTitle, ...patch } });
   }
 
   // Crea una escena mínima (sin fondos/objetos todavía) y recarga la app
@@ -355,6 +385,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       layers: [],
       hotspots: [],
       introSkippable: true,
+      menuTitle: null,
       menuButtons: [],
       menuAppearance: DEFAULT_MENU_APPEARANCE,
     };
@@ -542,6 +573,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onChangeIntroSkippable={updateIntroSkippable}
                   onChangeIntroCompleteTarget={updateIntroCompleteTarget}
                   onChangeMenuAppearance={updateMenuAppearance}
+                  onSetMenuTitleEnabled={setMenuTitleEnabled}
+                  onMenuTitleTextChange={setLabelText}
+                  onChangeMenuTitleAppearance={updateMenuTitleAppearance}
                   onAddMenuButton={addMenuButton}
                   onRemoveMenuButton={removeMenuButton}
                   onMenuButtonLabelTextChange={setLabelText}

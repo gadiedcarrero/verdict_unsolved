@@ -34,6 +34,11 @@ export const SceneActionSchema = z.discriminatedUnion('type', [
   }),
   z.object({ type: z.literal('openInterface'), interfaceId: InterfaceIdSchema }),
   z.object({ type: z.literal('addMoney'), amount: z.number() }),
+  /** Botón de menú "Continuar": retoma la partida guardada en la escena
+   * donde estaba, o no hace nada si todavía no hay ninguna registrada. */
+  z.object({ type: z.literal('continueGame') }),
+  /** Botón de menú "Salir": cierra la ventana (y la app, salvo en macOS). */
+  z.object({ type: z.literal('quitApp') }),
 ]);
 
 export const HotspotSchema = z.object({
@@ -134,6 +139,14 @@ export const MenuAppearanceSchema = z.object({
   hoverColor: z.string().default('#e0a636'),
 });
 
+export const MenuTitleSchema = z.object({
+  /** Clave de traducción (igual que MenuButton.label), no el texto en sí. */
+  text: z.string(),
+  fontFamily: MenuFontFamilySchema.default('serif'),
+  fontSize: z.number().default(48),
+  color: z.string().default('#e6eaef'),
+});
+
 export const SceneSchema = z.object({
   id: z.string(),
   act: z.number(),
@@ -156,6 +169,9 @@ export const SceneSchema = z.object({
   /** Solo `kind: "intro"`: acciones al terminar la secuencia (por tiempo) o
    * al saltarla con el botón — típicamente un `transitionTo` al menú. */
   onIntroComplete: z.array(SceneActionSchema).optional(),
+  /** Solo `kind: "menu"`: título mostrado arriba de los botones, alineado
+   * con `menuAppearance.position`. `null`/ausente = sin título. */
+  menuTitle: MenuTitleSchema.nullable().default(null),
   /** Solo `kind: "menu"`: los botones del menú, en orden. */
   menuButtons: z.array(MenuButtonSchema).default([]),
   /** Solo `kind: "menu"`: posición y estilo visual de los botones. */
@@ -236,6 +252,7 @@ export type MenuPosition = z.infer<typeof MenuPositionSchema>;
 export type MenuButtonStyle = z.infer<typeof MenuButtonStyleSchema>;
 export type MenuFontFamily = z.infer<typeof MenuFontFamilySchema>;
 export type MenuAppearance = z.infer<typeof MenuAppearanceSchema>;
+export type MenuTitle = z.infer<typeof MenuTitleSchema>;
 export type Character = z.infer<typeof CharacterSchema>;
 export type DialogueChoice = z.infer<typeof DialogueChoiceSchema>;
 export type DialogueNode = z.infer<typeof DialogueNodeSchema>;
