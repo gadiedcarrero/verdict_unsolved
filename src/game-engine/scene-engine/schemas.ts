@@ -5,6 +5,9 @@ import { z } from 'zod';
  * llamada" en adelante). Ver docs/verdict-unsolved/01-mapeo-escenas.md.
  */
 
+/** Compartida por la tipografía de menús, títulos y tooltips de hotspot. */
+export const FontFamilySchema = z.enum(['sans', 'serif', 'mono']);
+
 export const SceneLayerSchema = z.object({
   id: z.string(),
   /** Ruta relativa dentro de assets/layers o assets/backgrounds. Si el
@@ -41,23 +44,56 @@ export const SceneActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('quitApp') }),
 ]);
 
+/** Tipografía completa — usada para los defaults generales del sitio
+ * (SiteSettings). Cada campo tiene su propio default razonable. */
+export const TextStyleSchema = z.object({
+  fontFamily: FontFamilySchema.default('sans'),
+  fontSize: z.number().default(10),
+  color: z.string().default('#e6eaef'),
+});
+
+/** Igual que TextStyleSchema pero todo opcional — un override parcial que
+ * pisa solo los campos presentes, el resto sigue viniendo del default
+ * general del sitio. Ver resolveTextStyle en src/adventure/textStyle.ts. */
+export const TextStyleOverrideSchema = z.object({
+  fontFamily: FontFamilySchema.optional(),
+  fontSize: z.number().optional(),
+  color: z.string().optional(),
+});
+
+export const PolygonPointSchema = z.object({ x: z.number(), y: z.number() });
+
+export const HotspotShapeSchema = z.enum(['rect', 'polygon']);
+
 export const HotspotSchema = z.object({
   id: z.string(),
   /** Clave de traducción (ver locales/es.json del caso), no el texto en sí —
    * así el nombre que aparece al pasar el mouse puede traducirse a otros
    * idiomas más adelante sin tocar la escena. */
   label: z.string(),
+  /** Bounding box — para "polygon" es el rectángulo que contiene a
+   * `points` (se recalcula solo al editar la forma); para "rect" es el
+   * área real clickeable. */
   area: z.object({
     x: z.number(),
     y: z.number(),
     width: z.number(),
     height: z.number(),
   }),
+  /** "rect" = rectángulo de siempre. "polygon" = forma libre trazada a
+   * click en el editor (como un path de Illustrator), para objetos
+   * irregulares — usa `points` en vez de `area` para el área real. */
+  shape: HotspotShapeSchema.default('rect'),
+  /** Solo `shape: "polygon"`: vértices en % del stage, en orden. */
+  points: z.array(PolygonPointSchema).optional(),
   onInteract: z.array(SceneActionSchema),
   repeatable: z.boolean().default(true),
   /** Si es false, la zona existe (para referencia/edición) pero no responde
    * al mouse durante la partida — p. ej. un objeto decorativo marcado. */
   interactable: z.boolean().default(true),
+  /** Pisa, campo a campo, la tipografía general del sitio
+   * (SiteSettings.hotspotLabelStyle) para el tooltip de esta zona. */
+  labelStyle: TextStyleOverrideSchema.optional(),
 });
 
 export const CharacterSchema = z.object({
@@ -124,14 +160,13 @@ export const MenuButtonSchema = z.object({
 
 export const MenuPositionSchema = z.enum(['left', 'center', 'right']);
 export const MenuButtonStyleSchema = z.enum(['bordered', 'frameless', 'filled']);
-export const MenuFontFamilySchema = z.enum(['sans', 'serif', 'mono']);
 
 export const MenuAppearanceSchema = z.object({
   /** Dónde se agrupan los botones en el stage. */
   position: MenuPositionSchema.default('center'),
   /** "bordered" = cuadrado con marco, "frameless" = solo texto, "filled" = relleno sólido. */
   buttonStyle: MenuButtonStyleSchema.default('bordered'),
-  fontFamily: MenuFontFamilySchema.default('sans'),
+  fontFamily: FontFamilySchema.default('sans'),
   fontSize: z.number().default(16),
   /** Color del texto/marco en reposo, en hex. */
   fontColor: z.string().default('#e6eaef'),
@@ -142,7 +177,7 @@ export const MenuAppearanceSchema = z.object({
 export const MenuTitleSchema = z.object({
   /** Clave de traducción (igual que MenuButton.label), no el texto en sí. */
   text: z.string(),
-  fontFamily: MenuFontFamilySchema.default('serif'),
+  fontFamily: FontFamilySchema.default('serif'),
   fontSize: z.number().default(48),
   color: z.string().default('#e6eaef'),
 });
@@ -228,6 +263,14 @@ export const EquipmentItemSchema = z.object({
   riskLabel: z.string(),
 });
 
+/** Ajustes generales del sitio/juego — hoy solo la tipografía por defecto
+ * del tooltip de hotspot, pero es el lugar para sumar más defaults
+ * generales (que cada objeto puede seguir pisando puntualmente) más
+ * adelante. */
+export const SiteSettingsSchema = z.object({
+  hotspotLabelStyle: TextStyleSchema.default({ fontFamily: 'sans', fontSize: 10, color: '#e6eaef' }),
+});
+
 export const AdventureCaseBundleSchema = z.object({
   case: AdventureCaseMetaSchema,
   scenes: z.array(SceneSchema),
@@ -239,18 +282,24 @@ export const AdventureCaseBundleSchema = z.object({
   /** Diccionario clave → texto en español. Ver docs sobre i18n en el editor. */
   strings: z.record(z.string(), z.string()),
   characters: z.array(CharacterSchema),
+  siteSettings: SiteSettingsSchema.default({ hotspotLabelStyle: { fontFamily: 'sans', fontSize: 10, color: '#e6eaef' } }),
 });
 
 export type SceneLayer = z.infer<typeof SceneLayerSchema>;
 export type InterfaceId = z.infer<typeof InterfaceIdSchema>;
 export type SceneAction = z.infer<typeof SceneActionSchema>;
 export type Hotspot = z.infer<typeof HotspotSchema>;
+export type HotspotShape = z.infer<typeof HotspotShapeSchema>;
+export type PolygonPoint = z.infer<typeof PolygonPointSchema>;
+export type TextStyle = z.infer<typeof TextStyleSchema>;
+export type TextStyleOverride = z.infer<typeof TextStyleOverrideSchema>;
+export type SiteSettings = z.infer<typeof SiteSettingsSchema>;
 export type SceneBackground = z.infer<typeof SceneBackgroundSchema>;
 export type SceneKind = z.infer<typeof SceneKindSchema>;
 export type MenuButton = z.infer<typeof MenuButtonSchema>;
 export type MenuPosition = z.infer<typeof MenuPositionSchema>;
 export type MenuButtonStyle = z.infer<typeof MenuButtonStyleSchema>;
-export type MenuFontFamily = z.infer<typeof MenuFontFamilySchema>;
+export type FontFamily = z.infer<typeof FontFamilySchema>;
 export type MenuAppearance = z.infer<typeof MenuAppearanceSchema>;
 export type MenuTitle = z.infer<typeof MenuTitleSchema>;
 export type Character = z.infer<typeof CharacterSchema>;

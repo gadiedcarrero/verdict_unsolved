@@ -1,14 +1,16 @@
 import { useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { translate } from '../../i18n/translate';
 import type {
+  FontFamily,
+  HotspotShape,
   MenuAppearance,
   MenuButton,
   MenuButtonStyle,
-  MenuFontFamily,
   MenuPosition,
   MenuTitle,
   Scene,
   SceneKind,
+  TextStyleOverride,
 } from '../../game-engine/scene-engine/schemas';
 import { gameAssetUrl } from '../gameAssetUrl';
 import { MENU_BUTTON_ACTION_CONTINUE, MENU_BUTTON_ACTION_QUIT } from '../menuButtonActions';
@@ -481,7 +483,7 @@ function MenuTitleSettings({
               <span className="text-[9px] text-graphite-500 uppercase">Tipografía</span>
               <select
                 value={title.fontFamily}
-                onChange={(event) => onChangeAppearance({ fontFamily: event.target.value as MenuFontFamily })}
+                onChange={(event) => onChangeAppearance({ fontFamily: event.target.value as FontFamily })}
                 className={inputClassName}
               >
                 <option value="sans">Sans</option>
@@ -587,7 +589,7 @@ function MenuSettings({
         <span className="text-[9px] text-graphite-500 uppercase">Tipografía</span>
         <select
           value={appearance.fontFamily}
-          onChange={(event) => onChangeAppearance({ fontFamily: event.target.value as MenuFontFamily })}
+          onChange={(event) => onChangeAppearance({ fontFamily: event.target.value as FontFamily })}
           className={inputClassName}
         >
           <option value="sans">Sans</option>
@@ -651,19 +653,27 @@ function ObjectFields({
   onRectChange,
   onInteractableChange,
   onLabelTextChange,
+  onLabelStyleChange,
+  onResetShape,
 }: {
   object: EditableObject;
   strings: Record<string, string>;
   onRectChange: (rect: EditableRect) => void;
   onInteractableChange: (interactable: boolean) => void;
   onLabelTextChange: (text: string) => void;
+  onLabelStyleChange: (patch: Partial<TextStyleOverride> | null) => void;
+  onResetShape: () => void;
 }): JSX.Element {
+  const hasCustomStyle = object.labelStyle !== undefined;
+  const isPolygon = object.shape === 'polygon';
+
   return (
     <div className="mb-2 border-b border-graphite-800 pb-2">
       <div className="mb-1 flex items-center justify-between gap-2">
         <p className="truncate text-graphite-100">
           {object.id}
           {object.kind === 'zone' && <span className="ml-1 text-sky-400">· zona</span>}
+          {isPolygon && <span className="ml-1 text-amber-accent">· forma libre</span>}
         </p>
         <label className="flex shrink-0 items-center gap-1 text-[9px] text-graphite-400">
           <input type="checkbox" checked={object.interactable} onChange={(event) => onInteractableChange(event.target.checked)} />
@@ -672,31 +682,94 @@ function ObjectFields({
       </div>
 
       {object.labelKey && (
-        <label className="mb-1 flex flex-col">
-          <span className="text-[9px] text-graphite-500 uppercase">Texto al pasar el mouse</span>
-          <input
-            type="text"
-            value={strings[object.labelKey] ?? translate(strings, object.labelKey)}
-            onChange={(event) => onLabelTextChange(event.target.value)}
-            className={inputClassName}
-          />
-        </label>
-      )}
-
-      <div className="grid grid-cols-4 gap-1">
-        {(['x', 'y', 'width', 'height'] as const).map((key) => (
-          <label key={key} className="flex flex-col">
-            <span className="text-[9px] text-graphite-500 uppercase">{key}</span>
+        <>
+          <label className="mb-1 flex flex-col">
+            <span className="text-[9px] text-graphite-500 uppercase">Texto al pasar el mouse</span>
             <input
-              type="number"
-              step={0.5}
-              value={Math.round(object.rect[key] * 10) / 10}
-              onChange={(event) => onRectChange({ ...object.rect, [key]: Number(event.target.value) })}
+              type="text"
+              value={strings[object.labelKey] ?? translate(strings, object.labelKey)}
+              onChange={(event) => onLabelTextChange(event.target.value)}
               className={inputClassName}
             />
           </label>
-        ))}
-      </div>
+
+          <label className="mb-1 flex items-center gap-1 text-[9px] text-graphite-400">
+            <input
+              type="checkbox"
+              checked={hasCustomStyle}
+              onChange={(event) => onLabelStyleChange(event.target.checked ? {} : null)}
+            />
+            Estilo propio (pisa los ajustes generales)
+          </label>
+          {hasCustomStyle && (
+            <div className="mb-1 grid grid-cols-3 gap-1">
+              <label className="flex flex-col">
+                <span className="text-[9px] text-graphite-500 uppercase">Fuente</span>
+                <select
+                  value={object.labelStyle?.fontFamily ?? ''}
+                  onChange={(event) =>
+                    onLabelStyleChange({ fontFamily: (event.target.value || undefined) as FontFamily | undefined })
+                  }
+                  className={inputClassName}
+                >
+                  <option value="">(general)</option>
+                  <option value="sans">Sans</option>
+                  <option value="serif">Serif</option>
+                  <option value="mono">Mono</option>
+                </select>
+              </label>
+              <label className="flex flex-col">
+                <span className="text-[9px] text-graphite-500 uppercase">Tamaño</span>
+                <input
+                  type="number"
+                  min={8}
+                  max={48}
+                  placeholder="general"
+                  value={object.labelStyle?.fontSize ?? ''}
+                  onChange={(event) =>
+                    onLabelStyleChange({ fontSize: event.target.value === '' ? undefined : Number(event.target.value) })
+                  }
+                  className={inputClassName}
+                />
+              </label>
+              <label className="flex flex-col">
+                <span className="text-[9px] text-graphite-500 uppercase">Color</span>
+                <input
+                  type="color"
+                  value={object.labelStyle?.color ?? '#e6eaef'}
+                  onChange={(event) => onLabelStyleChange({ color: event.target.value })}
+                  className="h-6 w-full cursor-pointer rounded border border-graphite-700 bg-graphite-900"
+                />
+              </label>
+            </div>
+          )}
+        </>
+      )}
+
+      {isPolygon ? (
+        <button
+          type="button"
+          onClick={onResetShape}
+          className="mt-1 w-full rounded border border-graphite-700 px-2 py-1 text-[9px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
+        >
+          Reiniciar forma ({object.points?.length ?? 0} puntos)
+        </button>
+      ) : (
+        <div className="grid grid-cols-4 gap-1">
+          {(['x', 'y', 'width', 'height'] as const).map((key) => (
+            <label key={key} className="flex flex-col">
+              <span className="text-[9px] text-graphite-500 uppercase">{key}</span>
+              <input
+                type="number"
+                step={0.5}
+                value={Math.round(object.rect[key] * 10) / 10}
+                onChange={(event) => onRectChange({ ...object.rect, [key]: Number(event.target.value) })}
+                className={inputClassName}
+              />
+            </label>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -704,19 +777,21 @@ function ObjectFields({
 function CreateZoneForm({
   onCreate,
 }: {
-  onCreate: (name: string, labelText: string, interactable: boolean) => void;
+  onCreate: (name: string, labelText: string, interactable: boolean, shape: HotspotShape) => void;
 }): JSX.Element {
   const [name, setName] = useState('');
   const [labelText, setLabelText] = useState('');
   const [interactable, setInteractable] = useState(true);
+  const [shape, setShape] = useState<HotspotShape>('rect');
 
   function submit(): void {
     const trimmedName = name.trim();
     if (!trimmedName) return;
-    onCreate(trimmedName, labelText.trim() || trimmedName, interactable);
+    onCreate(trimmedName, labelText.trim() || trimmedName, interactable, shape);
     setName('');
     setLabelText('');
     setInteractable(true);
+    setShape('rect');
   }
 
   return (
@@ -735,6 +810,13 @@ function CreateZoneForm({
           className={inputClassName}
         />
       </label>
+      <label className="mb-1 flex flex-col">
+        <span className="text-[9px] text-graphite-500 uppercase">Forma</span>
+        <select value={shape} onChange={(event) => setShape(event.target.value as HotspotShape)} className={inputClassName}>
+          <option value="rect">Rectángulo</option>
+          <option value="polygon">Libre (a click, como un path)</option>
+        </select>
+      </label>
       <label className="mb-2 flex items-center gap-1 text-[9px] text-graphite-400">
         <input type="checkbox" checked={interactable} onChange={(event) => setInteractable(event.target.checked)} />
         interactuable
@@ -746,6 +828,25 @@ function CreateZoneForm({
         className="w-full rounded border border-sky-400 px-2 py-1 text-[10px] font-semibold tracking-widest text-sky-400 uppercase transition-colors hover:bg-sky-400 hover:text-graphite-950 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-sky-400"
       >
         Crear
+      </button>
+    </div>
+  );
+}
+
+function PolygonDraftStatus({ pointCount, onCancel }: { pointCount: number; onCancel: () => void }): JSX.Element {
+  return (
+    <div className="mb-3 rounded border border-amber-accent/40 bg-graphite-900/60 p-2">
+      <p className="mb-1 text-[10px] font-semibold tracking-widest text-amber-accent uppercase">Trazando forma</p>
+      <p className="mb-2 text-[9px] text-graphite-400">
+        Hacé click sobre la escena para agregar puntos ({pointCount} hasta ahora). Click cerca del primer punto (con
+        al menos 3) para cerrar la forma.
+      </p>
+      <button
+        type="button"
+        onClick={onCancel}
+        className="w-full rounded border border-graphite-700 px-2 py-1 text-[10px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
+      >
+        Cancelar
       </button>
     </div>
   );
@@ -780,7 +881,11 @@ export function SceneEditorPanel({
   onObjectRectChange,
   onToggleInteractable,
   onLabelTextChange,
+  onLabelStyleChange,
   onCreateZone,
+  polygonDraftPointCount,
+  onCancelPolygonDraft,
+  onResetShape,
 }: {
   gameId: string;
   scene: Scene | null;
@@ -810,7 +915,12 @@ export function SceneEditorPanel({
   onObjectRectChange: (objectId: string, rect: EditableRect) => void;
   onToggleInteractable: (objectId: string, interactable: boolean) => void;
   onLabelTextChange: (labelKey: string, text: string) => void;
-  onCreateZone: (name: string, labelText: string, interactable: boolean) => void;
+  onLabelStyleChange: (objectId: string, patch: Partial<TextStyleOverride> | null) => void;
+  onCreateZone: (name: string, labelText: string, interactable: boolean, shape: HotspotShape) => void;
+  /** No null mientras se está trazando una zona de forma libre nueva. */
+  polygonDraftPointCount: number | null;
+  onCancelPolygonDraft: () => void;
+  onResetShape: (objectId: string) => void;
 }): JSX.Element {
   return (
     <div className="text-xs text-graphite-200">
@@ -881,7 +991,11 @@ export function SceneEditorPanel({
                 aprietes Guardar.
               </p>
 
-              <CreateZoneForm onCreate={onCreateZone} />
+              {polygonDraftPointCount !== null ? (
+                <PolygonDraftStatus pointCount={polygonDraftPointCount} onCancel={onCancelPolygonDraft} />
+              ) : (
+                <CreateZoneForm onCreate={onCreateZone} />
+              )}
 
               {buildEditableObjects(scene).map((object) => (
                 <ObjectFields
@@ -893,6 +1007,8 @@ export function SceneEditorPanel({
                   onLabelTextChange={(text) =>
                     onLabelTextChange(object.labelKey ?? `hotspot.${scene.id}.${object.id}`, text)
                   }
+                  onLabelStyleChange={(patch) => onLabelStyleChange(object.id, patch)}
+                  onResetShape={() => onResetShape(object.id)}
                 />
               ))}
             </>

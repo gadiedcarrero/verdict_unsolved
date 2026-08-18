@@ -1,29 +1,37 @@
 import { useRef, useState, type JSX, type ReactNode } from 'react';
-import type { Hotspot as HotspotData, Scene } from '../game-engine/scene-engine/schemas';
+import type { Hotspot as HotspotData, PolygonPoint, Scene, SiteSettings } from '../game-engine/scene-engine/schemas';
 import { translate } from '../i18n/translate';
 import { buildEditableObjects } from './editor/editableObjects';
 import { EditableBox, type EditableRect } from './editor/EditableBox';
+import { PolygonPointEditor } from './editor/PolygonPointEditor';
 import { HotspotArea } from './Hotspot';
 import { MENU_POSITION_CLASSES, MenuButtonView } from './MenuButtonView';
 import { MENU_TITLE_POSITION_CLASSES, MenuTitleView } from './MenuTitleView';
 import { PlaceholderLayer } from './PlaceholderLayer';
+import { resolveTextStyle } from './textStyle';
 import { useStageSize } from './useStageSize';
 
 export function SceneViewer({
   gameId,
   scene,
   strings,
+  siteSettings,
   transitioning,
   layerOverrides,
   onInteract,
   children,
   editMode = false,
   onObjectRectChange,
+  onPolygonPointsChange,
+  polygonDraftPoints,
+  onAddPolygonDraftPoint,
+  onClosePolygonDraft,
 }: {
   gameId: string;
   scene: Scene;
   /** Diccionario clave → texto (locales/es.json del caso). */
   strings: Record<string, string>;
+  siteSettings: SiteSettings;
   transitioning: boolean;
   /** assetPath alternativo por layer id (p. ej. el teléfono cambia de imagen mientras suena). */
   layerOverrides?: Record<string, string> | undefined;
@@ -33,6 +41,12 @@ export function SceneViewer({
   /** Modo edición: arrastrar/redimensionar objetos (capa + hotspot con el mismo id, juntos) directamente sobre la escena. */
   editMode?: boolean;
   onObjectRectChange?: (objectId: string, rect: EditableRect) => void;
+  /** Mover un vértice de una zona de forma libre ya creada. */
+  onPolygonPointsChange?: (objectId: string, points: PolygonPoint[]) => void;
+  /** Zona de forma libre en proceso de trazado (ver "Crear zona" en el panel) — no null mientras se están juntando puntos. */
+  polygonDraftPoints?: PolygonPoint[] | null;
+  onAddPolygonDraftPoint?: (point: PolygonPoint) => void;
+  onClosePolygonDraft?: () => void;
 }): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -101,6 +115,7 @@ export function SceneViewer({
                 key={hotspot.id}
                 hotspot={hotspot}
                 strings={strings}
+                labelStyle={resolveTextStyle(siteSettings.hotspotLabelStyle, hotspot.labelStyle)}
                 onInteract={onInteract}
                 onHoverChange={(hovering) => setHoveredId(hovering ? hotspot.id : null)}
               />
@@ -129,16 +144,41 @@ export function SceneViewer({
 
         {editMode &&
           onObjectRectChange &&
-          buildEditableObjects(scene).map((object) => (
-            <EditableBox
-              key={object.id}
-              label={`${object.labelKey ? translate(strings, object.labelKey) : object.id}${object.interactable ? '' : ' · no interactuable'}`}
-              colorClassName={object.kind === 'zone' ? 'border-sky-400' : 'border-amber-accent'}
-              rect={object.rect}
-              stageRef={stageRef}
-              onChange={(rect) => onObjectRectChange(object.id, rect)}
-            />
-          ))}
+          buildEditableObjects(scene).map((object) => {
+            const label = `${object.labelKey ? translate(strings, object.labelKey) : object.id}${object.interactable ? '' : ' · no interactuable'}`;
+            if (object.shape === 'polygon' && object.points) {
+              return (
+                <PolygonPointEditor
+                  key={object.id}
+                  points={object.points}
+                  closed
+                  stageRef={stageRef}
+                  label={label}
+                  onChange={(points) => onPolygonPointsChange?.(object.id, points)}
+                />
+              );
+            }
+            return (
+              <EditableBox
+                key={object.id}
+                label={label}
+                colorClassName={object.kind === 'zone' ? 'border-sky-400' : 'border-amber-accent'}
+                rect={object.rect}
+                stageRef={stageRef}
+                onChange={(rect) => onObjectRectChange(object.id, rect)}
+              />
+            );
+          })}
+
+        {polygonDraftPoints && onAddPolygonDraftPoint && onClosePolygonDraft && (
+          <PolygonPointEditor
+            points={polygonDraftPoints}
+            closed={false}
+            stageRef={stageRef}
+            onAddPoint={onAddPolygonDraftPoint}
+            onClose={onClosePolygonDraft}
+          />
+        )}
 
         <div
           aria-hidden="true"

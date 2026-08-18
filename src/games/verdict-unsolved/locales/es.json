@@ -1,19 +1,20 @@
 {
   "character.director.name": "DIRECTOR",
-  "character.mirror.name": "MIRROR",
   "character.lena.name": "LENA HART",
+  "character.mirror.name": "MIRROR",
   "character.sistema.name": "",
-  "hotspot.oficina-acto1.fotografia": "Fotografía boca abajo",
+  "hotspot.escena-1.telefono": "Celular",
   "hotspot.oficina-acto1.cajon": "Cajón cerrado",
   "hotspot.oficina-acto1.computadora": "Computadora",
+  "hotspot.oficina-acto1.fotografia": "Fotografía boca abajo",
   "hotspot.oficina-acto1.telefono": "Teléfono",
-  "hotspot.oficina-acto2.computadora": "ZERO NETWORK — MIRROR",
-  "hotspot.oficina-acto2.telefono": "Teléfono",
-  "hotspot.oficina-acto2.fotografia": "Fotografía de Unidad Cero",
   "hotspot.oficina-acto2.cajon": "Cajón cerrado",
+  "hotspot.oficina-acto2.computadora": "ZERO NETWORK — MIRROR",
+  "hotspot.oficina-acto2.fotografia": "Fotografía de Unidad Cero",
+  "hotspot.oficina-acto2.telefono": "Teléfono",
   "hotspot.oficina-llamada.telefono-llamada": "Teléfono (llamada en curso)",
-  "menu.menu-inicio.title": "VERDICT: UNSOLVED",
-  "menu.menu-inicio.nueva-partida": "Nueva Partida",
   "menu.menu-inicio.continuar": "Continuar",
-  "menu.menu-inicio.salir": "Salir"
+  "menu.menu-inicio.nueva-partida": "Nueva Partida",
+  "menu.menu-inicio.salir": "Salir",
+  "menu.menu-inicio.title": "VERDICT: UNSOLVED"
 }

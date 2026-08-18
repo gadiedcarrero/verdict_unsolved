@@ -7,6 +7,7 @@ import dialoguesScene3To5 from './dialogues/scene-3-5.json';
 import equipmentItems from './equipment.json';
 import investigation from './investigation.json';
 import esStrings from './locales/es.json';
+import siteSettings from './site-settings.json';
 
 // Carga dinámica: cualquier archivo nuevo en scenes/ (p. ej. creado desde el
 // editor visual) se suma solo, sin tocar este archivo ni reiniciar nada más
@@ -24,4 +25,5 @@ export const gameBundleRaw = {
   equipmentItems,
   strings: esStrings,
   characters,
+  siteSettings,
 };

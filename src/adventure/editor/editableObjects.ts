@@ -1,4 +1,4 @@
-import type { Scene } from '../../game-engine/scene-engine/schemas';
+import type { HotspotShape, PolygonPoint, Scene, TextStyleOverride } from '../../game-engine/scene-engine/schemas';
 import type { EditableRect } from './EditableBox';
 
 export type EditableObject = {
@@ -11,6 +11,13 @@ export type EditableObject = {
   interactable: boolean;
   /** Clave de traducción del hotspot (label), o null si todavía no tiene uno. */
   labelKey: string | null;
+  /** 'rect' para sprites (las capas siempre son rectangulares) o zonas sin
+   * forma libre todavía. 'polygon' solo puede darse en una zona (hotspot). */
+  shape: HotspotShape;
+  /** Solo si `shape === 'polygon'`. */
+  points: PolygonPoint[] | null;
+  /** Override de tipografía del tooltip para este hotspot, si tiene. */
+  labelStyle: TextStyleOverride | undefined;
 };
 
 /**
@@ -32,6 +39,9 @@ export function buildEditableObjects(scene: Scene): EditableObject[] {
       rect: { x: layer.x, y: layer.y, width: layer.width ?? 10, height: layer.height ?? 10 },
       interactable: hotspot?.interactable ?? false,
       labelKey: hotspot?.label ?? null,
+      shape: 'rect',
+      points: null,
+      labelStyle: hotspot?.labelStyle,
     };
   });
 
@@ -43,6 +53,9 @@ export function buildEditableObjects(scene: Scene): EditableObject[] {
       rect: hotspot.area,
       interactable: hotspot.interactable,
       labelKey: hotspot.label,
+      shape: hotspot.shape,
+      points: hotspot.points ?? null,
+      labelStyle: hotspot.labelStyle,
     }));
 
   return [...spriteObjects, ...zoneObjects];

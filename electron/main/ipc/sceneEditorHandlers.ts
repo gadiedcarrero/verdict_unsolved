@@ -21,6 +21,9 @@ function stringsFile(gameId: string): string {
 function charactersFile(gameId: string): string {
   return `${gameDir(gameId)}/characters.json`;
 }
+function siteSettingsFile(gameId: string): string {
+  return `${gameDir(gameId)}/site-settings.json`;
+}
 function assetsDir(gameId: string): string {
   return `assets/games/${gameId}`;
 }
@@ -103,6 +106,22 @@ export function registerSceneEditorHandlers(): void {
       }
     },
   );
+
+  ipcMain.handle('scene-editor:save-site-settings', async (_event, gameId: unknown, settings: unknown) => {
+    if (app.isPackaged) {
+      return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
+    }
+    if (!isValidId(gameId)) {
+      return { ok: false, error: `Id de juego inválido: ${String(gameId)}` };
+    }
+    try {
+      const filePath = join(app.getAppPath(), siteSettingsFile(gameId));
+      await writeFile(filePath, `${JSON.stringify(settings, null, 2)}\n`, 'utf-8');
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
 
   ipcMain.handle(
     'scene-editor:save-portrait',

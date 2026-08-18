@@ -1,10 +1,24 @@
 import { useEffect, useState, type JSX } from 'react';
 import { CharacterEditorPanel } from './editor/CharacterEditorPanel';
 import type { EditableRect } from './editor/EditableBox';
+import { boundingBoxOfPoints } from './editor/polygonUtils';
 import { SceneEditorPanel } from './editor/SceneEditorPanel';
+import { SiteSettingsPanel } from './editor/SiteSettingsPanel';
 import { slugify, uniqueId } from './editor/slug';
 import { getGameProject } from '../game-engine/scene-engine/gameProjects';
-import type { Character, MenuAppearance, Scene, SceneKind } from '../game-engine/scene-engine/schemas';
+import type {
+  Character,
+  Hotspot,
+  HotspotShape,
+  MenuAppearance,
+  PolygonPoint,
+  Scene,
+  SceneAction,
+  SceneKind,
+  SiteSettings,
+  TextStyle,
+  TextStyleOverride,
+} from '../game-engine/scene-engine/schemas';
 import { useSaveStore } from '../game-engine/save-system/save.store';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
 import { DialogueOverlay } from './DialogueOverlay';
@@ -14,7 +28,24 @@ import { MENU_BUTTON_ACTION_CONTINUE, MENU_BUTTON_ACTION_QUIT } from './menuButt
 import { MenuScene } from './MenuScene';
 import { SceneViewer } from './SceneViewer';
 
-type EditorTab = 'scene' | 'characters';
+type EditorTab = 'scene' | 'characters' | 'settings';
+
+/** Zona de forma libre en proceso de trazado — todavía no es un hotspot
+ * real hasta que se cierra (ver closePolygonDraft). También se usa para
+ * "reiniciar forma": ahí se preserva onInteract/repeatable/labelStyle del
+ * hotspot existente en vez de perderlos. */
+type PolygonDraft = {
+  id: string;
+  label: string;
+  /** Texto a fundir en pendingStrings al cerrar — null si es un reinicio de
+   * forma (el texto ya existe y no cambia). */
+  labelText: string | null;
+  interactable: boolean;
+  onInteract: SceneAction[];
+  repeatable: boolean;
+  labelStyle: TextStyleOverride | undefined;
+  points: PolygonPoint[];
+};
 
 const DEFAULT_MENU_APPEARANCE: MenuAppearance = {
   position: 'center',
@@ -76,6 +107,14 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const [characterSaveMessage, setCharacterSaveMessage] = useState<string | null>(null);
   const [uploadingPortraitId, setUploadingPortraitId] = useState<string | null>(null);
 
+  const [editedSiteSettings, setEditedSiteSettings] = useState<SiteSettings | null>(null);
+  const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
+  const [siteSettingsSaveMessage, setSiteSettingsSaveMessage] = useState<string | null>(null);
+
+  // Zona de forma libre en proceso de trazado (ver "Crear zona" o "Reiniciar
+  // forma") — no null mientras se están juntando puntos a click.
+  const [polygonDraft, setPolygonDraft] = useState<PolygonDraft | null>(null);
+
   useEffect(() => {
     void load(gameId);
   }, [load, gameId]);
@@ -92,6 +131,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setEditedScene(null);
     setPendingStrings({});
     setSaveMessage(null);
+    setPolygonDraft(null);
   }, [activeEditorSceneId]);
 
   if (!project) {
@@ -135,6 +175,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const displayScene = editedScene ?? baseScene;
   const baseCharacters = bundle.characters;
   const displayCharacters = editedCharacters ?? baseCharacters;
+  const baseSiteSettings = bundle.siteSettings;
+  const displaySiteSettings = editedSiteSettings ?? baseSiteSettings;
   // El teléfono muestra la pantalla de llamada entrante mientras suena, en
   // vez de una capa fija — ver docs/verdict-unsolved/01-mapeo-escenas.md.
   const layerOverrides =
@@ -186,6 +228,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           id: layer.id,
           label: labelKey,
           area: { x: layer.x, y: layer.y, width: layer.width ?? 10, height: layer.height ?? 10 },
+          shape: 'rect',
           onInteract: [],
           repeatable: true,
           interactable,
@@ -195,15 +238,30 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setPendingStrings((prev) => (labelKey in prev ? prev : { ...prev, [labelKey]: objectId }));
   }
 
-  // Crea una zona nueva (sin capa/imagen propia) directamente sobre la
-  // escena — el flujo que pediste: nombre + texto al pasar el mouse +
-  // interactuable, todo desde el panel.
-  function createZone(name: string, labelText: string, interactable: boolean): void {
+  // Crea una zona nueva directamente sobre la escena. "rect" se crea al
+  // toque con un tamaño por defecto; "polygon" arranca un trazado a click
+  // (ver polygonDraft) que recién se convierte en hotspot al cerrarse.
+  function createZone(name: string, labelText: string, interactable: boolean, shape: HotspotShape): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
     const taken = new Set([...base.hotspots.map((h) => h.id), ...base.layers.map((l) => l.id)]);
     const id = uniqueId(slugify(name), taken);
     const labelKey = `hotspot.${base.id}.${id}`;
+
+    if (shape === 'polygon') {
+      setPolygonDraft({
+        id,
+        label: labelKey,
+        labelText,
+        interactable,
+        onInteract: [],
+        repeatable: true,
+        labelStyle: undefined,
+        points: [],
+      });
+      return;
+    }
+
     setEditedScene({
       ...base,
       hotspots: [
@@ -212,6 +270,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           id,
           label: labelKey,
           area: { x: 40, y: 40, width: 15, height: 15 },
+          shape: 'rect',
           onInteract: [],
           repeatable: true,
           interactable,
@@ -223,6 +282,79 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
 
   function setLabelText(labelKey: string, text: string): void {
     setPendingStrings((prev) => ({ ...prev, [labelKey]: text }));
+  }
+
+  function updateHotspotLabelStyle(objectId: string, patch: Partial<TextStyleOverride> | null): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      hotspots: base.hotspots.map((h) =>
+        h.id === objectId ? { ...h, labelStyle: patch === null ? undefined : { ...(h.labelStyle ?? {}), ...patch } } : h,
+      ),
+    });
+  }
+
+  function updatePolygonPoints(objectId: string, points: PolygonPoint[]): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      hotspots: base.hotspots.map((h) =>
+        h.id === objectId ? { ...h, points, area: boundingBoxOfPoints(points) } : h,
+      ),
+    });
+  }
+
+  // "Reiniciar forma": saca el hotspot existente y arranca un trazado nuevo
+  // con el mismo id/texto/acciones — solo cambian los puntos.
+  function resetShape(objectId: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    const hotspot = base.hotspots.find((h) => h.id === objectId);
+    if (!hotspot) return;
+    setEditedScene({ ...base, hotspots: base.hotspots.filter((h) => h.id !== objectId) });
+    setPolygonDraft({
+      id: hotspot.id,
+      label: hotspot.label,
+      labelText: null,
+      interactable: hotspot.interactable,
+      onInteract: hotspot.onInteract,
+      repeatable: hotspot.repeatable,
+      labelStyle: hotspot.labelStyle,
+      points: [],
+    });
+  }
+
+  function addPolygonDraftPoint(point: PolygonPoint): void {
+    setPolygonDraft((prev) => (prev ? { ...prev, points: [...prev.points, point] } : prev));
+  }
+
+  function cancelPolygonDraft(): void {
+    setPolygonDraft(null);
+  }
+
+  function closePolygonDraft(): void {
+    if (!polygonDraft || polygonDraft.points.length < 3) return;
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    const newHotspot: Hotspot = {
+      id: polygonDraft.id,
+      label: polygonDraft.label,
+      area: boundingBoxOfPoints(polygonDraft.points),
+      shape: 'polygon',
+      points: polygonDraft.points,
+      onInteract: polygonDraft.onInteract,
+      repeatable: polygonDraft.repeatable,
+      interactable: polygonDraft.interactable,
+      labelStyle: polygonDraft.labelStyle,
+    };
+    setEditedScene({ ...base, hotspots: [...base.hotspots, newHotspot] });
+    if (polygonDraft.labelText !== null) {
+      const text = polygonDraft.labelText;
+      setPendingStrings((prev) => ({ ...prev, [polygonDraft.label]: text }));
+    }
+    setPolygonDraft(null);
   }
 
   // Fondos: cada escena puede tener varios (luz prendida/apagada, flashes de
@@ -485,6 +617,27 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     }
   }
 
+  // --- Ajustes generales del juego (hoy: tipografía por defecto del
+  // tooltip de hotspot) — cualquier zona puede pisarlos puntualmente.
+  function updateSiteSettingsHotspotLabelStyle(patch: Partial<TextStyle>): void {
+    const base = editedSiteSettings ?? baseSiteSettings;
+    setEditedSiteSettings({ ...base, hotspotLabelStyle: { ...base.hotspotLabelStyle, ...patch } });
+  }
+
+  async function handleSaveSiteSettings(): Promise<void> {
+    if (!editedSiteSettings) return;
+    setSiteSettingsSaving(true);
+    setSiteSettingsSaveMessage(null);
+    try {
+      const result = await window.api.saveSiteSettings(gameId, editedSiteSettings);
+      setSiteSettingsSaveMessage(result.ok ? 'Guardado en site-settings.json.' : `Error: ${result.error}`);
+    } catch (error) {
+      setSiteSettingsSaveMessage(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setSiteSettingsSaving(false);
+    }
+  }
+
   const strings = { ...bundle.strings, ...pendingStrings, ...pendingCharacterStrings };
 
   return (
@@ -509,6 +662,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
             onClick={() => {
               setEditMode((v) => !v);
               setEditorSceneId(null);
+              setPolygonDraft(null);
             }}
             className={`rounded border px-3 py-1 text-[11px] tracking-widest uppercase transition-colors ${
               editMode
@@ -560,6 +714,17 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
               >
                 Personajes
               </button>
+              <button
+                type="button"
+                onClick={() => setEditorTab('settings')}
+                className={`flex-1 border-l border-graphite-700 px-3 py-2 text-[11px] tracking-widest uppercase transition-colors ${
+                  editorTab === 'settings'
+                    ? 'bg-amber-accent text-graphite-950'
+                    : 'text-graphite-400 hover:text-amber-accent'
+                }`}
+              >
+                Ajustes
+              </button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
               {editorTab === 'scene' ? (
@@ -592,9 +757,13 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onObjectRectChange={updateObjectRect}
                   onToggleInteractable={toggleInteractable}
                   onLabelTextChange={setLabelText}
+                  onLabelStyleChange={updateHotspotLabelStyle}
                   onCreateZone={createZone}
+                  polygonDraftPointCount={polygonDraft?.points.length ?? null}
+                  onCancelPolygonDraft={cancelPolygonDraft}
+                  onResetShape={resetShape}
                 />
-              ) : (
+              ) : editorTab === 'characters' ? (
                 <CharacterEditorPanel
                   gameId={gameId}
                   characters={displayCharacters}
@@ -605,6 +774,11 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onUploadPortrait={(id, file) => void uploadPortrait(id, file)}
                   onCreateCharacter={createCharacter}
                 />
+              ) : (
+                <SiteSettingsPanel
+                  settings={displaySiteSettings}
+                  onChangeHotspotLabelStyle={updateSiteSettingsHotspotLabelStyle}
+                />
               )}
             </div>
 
@@ -613,11 +787,25 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
             <div className="shrink-0 border-t border-graphite-700 p-3">
               <button
                 type="button"
-                onClick={() => void (editorTab === 'scene' ? handleSave() : handleSaveCharacters())}
-                disabled={editorTab === 'scene' ? editedScene === null || saving : editedCharacters === null || characterSaving}
+                onClick={() =>
+                  void (editorTab === 'scene'
+                    ? handleSave()
+                    : editorTab === 'characters'
+                      ? handleSaveCharacters()
+                      : handleSaveSiteSettings())
+                }
+                disabled={
+                  editorTab === 'scene'
+                    ? editedScene === null || saving
+                    : editorTab === 'characters'
+                      ? editedCharacters === null || characterSaving
+                      : editedSiteSettings === null || siteSettingsSaving
+                }
                 className="w-full rounded border border-amber-accent px-3 py-2 text-[11px] font-semibold tracking-widest text-amber-accent uppercase transition-colors hover:bg-amber-accent hover:text-graphite-950 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-amber-accent"
               >
-                {(editorTab === 'scene' ? saving : characterSaving) ? 'Guardando...' : 'Guardar cambios'}
+                {(editorTab === 'scene' ? saving : editorTab === 'characters' ? characterSaving : siteSettingsSaving)
+                  ? 'Guardando...'
+                  : 'Guardar cambios'}
               </button>
               <button
                 type="button"
@@ -626,20 +814,30 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                     setEditedScene(null);
                     setPendingStrings({});
                     setSaveMessage(null);
-                  } else {
+                    setPolygonDraft(null);
+                  } else if (editorTab === 'characters') {
                     setEditedCharacters(null);
                     setPendingCharacterStrings({});
                     setCharacterSaveMessage(null);
+                  } else {
+                    setEditedSiteSettings(null);
+                    setSiteSettingsSaveMessage(null);
                   }
                 }}
-                disabled={editorTab === 'scene' ? editedScene === null : editedCharacters === null}
+                disabled={
+                  editorTab === 'scene'
+                    ? editedScene === null
+                    : editorTab === 'characters'
+                      ? editedCharacters === null
+                      : editedSiteSettings === null
+                }
                 className="mt-2 w-full rounded border border-graphite-700 px-3 py-1.5 text-[10px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Descartar
               </button>
-              {(editorTab === 'scene' ? saveMessage : characterSaveMessage) && (
+              {(editorTab === 'scene' ? saveMessage : editorTab === 'characters' ? characterSaveMessage : siteSettingsSaveMessage) && (
                 <p className="mt-2 text-[10px] text-graphite-300">
-                  {editorTab === 'scene' ? saveMessage : characterSaveMessage}
+                  {editorTab === 'scene' ? saveMessage : editorTab === 'characters' ? characterSaveMessage : siteSettingsSaveMessage}
                 </p>
               )}
             </div>
@@ -650,11 +848,16 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 gameId={gameId}
                 scene={displayScene}
                 strings={strings}
+                siteSettings={displaySiteSettings}
                 transitioning={transitioning}
                 layerOverrides={layerOverrides}
                 onInteract={interactHotspot}
                 editMode={editorTab === 'scene'}
                 onObjectRectChange={updateObjectRect}
+                onPolygonPointsChange={updatePolygonPoints}
+                polygonDraftPoints={polygonDraft?.points ?? null}
+                onAddPolygonDraftPoint={addPolygonDraftPoint}
+                onClosePolygonDraft={closePolygonDraft}
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-[11px] tracking-widest text-graphite-600 uppercase">
@@ -674,6 +877,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           gameId={gameId}
           scene={displayScene}
           strings={strings}
+          siteSettings={displaySiteSettings}
           transitioning={transitioning}
           layerOverrides={layerOverrides}
           onInteract={interactHotspot}

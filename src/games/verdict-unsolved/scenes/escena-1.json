@@ -2,9 +2,32 @@
   "id": "escena-1",
   "act": 1,
   "kind": "standard",
-  "backgrounds": [],
+  "backgrounds": [
+    {
+      "id": "bg-1",
+      "assetPath": "backgrounds/escena-1-bg-1.png"
+    },
+    {
+      "id": "bg-2",
+      "assetPath": "backgrounds/escena-1-bg-2.png"
+    }
+  ],
   "layers": [],
-  "hotspots": [],
+  "hotspots": [
+    {
+      "id": "telefono",
+      "label": "hotspot.escena-1.telefono",
+      "area": {
+        "x": 17.768776633522727,
+        "y": 67.9464567550505,
+        "width": 11.020785245028408,
+        "height": 11.163293087121213
+      },
+      "onInteract": [],
+      "repeatable": true,
+      "interactable": true
+    }
+  ],
   "introSkippable": true,
   "menuTitle": null,
   "menuButtons": [],

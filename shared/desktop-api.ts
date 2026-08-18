@@ -24,6 +24,9 @@ export type DesktopApi = {
     characters: unknown,
     stringsPatch: Record<string, string>,
   ) => Promise<SceneEditorSaveResult>;
+  /** Solo funciona en `pnpm dev` — escribe site-settings.json (ajustes
+   * generales, hoy la tipografía por defecto del tooltip de hotspot). */
+  saveSiteSettings: (gameId: string, settings: unknown) => Promise<SceneEditorSaveResult>;
   /** Solo funciona en `pnpm dev` — sube un retrato a assets/games/<gameId>/portraits/
    * y devuelve la ruta relativa a guardar en el personaje. */
   saveCharacterPortrait: (
