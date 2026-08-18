@@ -6,3 +6,7 @@ dist-electron/
 *.local
 .DS_Store
 coverage/
+
+# Carpeta de trabajo con arte fuente sin procesar (mismo criterio que
+# Downloads): las copias en uso viven en assets/cases/.../
+Imagenes/
