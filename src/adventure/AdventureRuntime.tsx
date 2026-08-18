@@ -90,8 +90,18 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
 
   // Qué escena se está editando: puede ser distinta de `currentSceneId`
   // (la del juego real) — el editor deja navegar/editar cualquier escena.
-  // `null` = seguir a la escena actual del juego.
-  const [editorSceneId, setEditorSceneId] = useState<string | null>(null);
+  // `null` = seguir a la escena actual del juego. Se persiste porque cada
+  // "Guardar cambios" recarga la página entera (ver handleSave) — sin
+  // esto, guardar te devolvía a la escena que el juego tenía activa.
+  const editorSceneStorageKey = `verdictUnsolved.editorScene.${gameId}`;
+  const [editorSceneId, setEditorSceneIdState] = useState<string | null>(() =>
+    localStorage.getItem(editorSceneStorageKey),
+  );
+  function setEditorSceneId(sceneId: string | null): void {
+    if (sceneId) localStorage.setItem(editorSceneStorageKey, sceneId);
+    else localStorage.removeItem(editorSceneStorageKey);
+    setEditorSceneIdState(sceneId);
+  }
 
   const [editedScene, setEditedScene] = useState<Scene | null>(null);
   // Texto (clave → texto en ES) nuevo o editado en esta sesión de edición,
@@ -575,8 +585,17 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setSaveMessage(null);
     try {
       const result = await window.api.saveSceneLayout(gameId, editedScene.id, editedScene, pendingStrings);
-      setSaveMessage(result.ok ? 'Guardado en el JSON de la escena.' : `Error: ${result.error}`);
-      if (result.ok) setPendingStrings({});
+      if (result.ok) {
+        // Recarga completa en vez de solo limpiar el estado pendiente: sin
+        // esto, el bundle en memoria (strings, escenas) podía quedar
+        // desincronizado del JSON recién guardado — algunas zonas mostraban
+        // su texto bien y otras la clave cruda, según cuándo se habían
+        // guardado. Recargar garantiza que lo que se ve siempre coincide
+        // con lo que quedó en disco.
+        window.location.reload();
+        return;
+      }
+      setSaveMessage(`Error: ${result.error}`);
     } catch (error) {
       setSaveMessage(
         `Error: ${error instanceof Error ? error.message : String(error)} (¿reiniciaste "pnpm dev" después de sumar el editor?)`,
@@ -631,8 +650,13 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setCharacterSaveMessage(null);
     try {
       const result = await window.api.saveCharacters(gameId, editedCharacters, pendingCharacterStrings);
-      setCharacterSaveMessage(result.ok ? 'Guardado en characters.json.' : `Error: ${result.error}`);
-      if (result.ok) setPendingCharacterStrings({});
+      if (result.ok) {
+        // Ver comentario en handleSave: recarga completa para no quedar con
+        // el bundle en memoria desincronizado del JSON recién guardado.
+        window.location.reload();
+        return;
+      }
+      setCharacterSaveMessage(`Error: ${result.error}`);
     } catch (error) {
       setCharacterSaveMessage(`Error: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
@@ -653,7 +677,13 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setSiteSettingsSaveMessage(null);
     try {
       const result = await window.api.saveSiteSettings(gameId, editedSiteSettings);
-      setSiteSettingsSaveMessage(result.ok ? 'Guardado en site-settings.json.' : `Error: ${result.error}`);
+      if (result.ok) {
+        // Ver comentario en handleSave: recarga completa para no quedar con
+        // el bundle en memoria desincronizado del JSON recién guardado.
+        window.location.reload();
+        return;
+      }
+      setSiteSettingsSaveMessage(`Error: ${result.error}`);
     } catch (error) {
       setSiteSettingsSaveMessage(`Error: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
