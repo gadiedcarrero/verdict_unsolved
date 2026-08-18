@@ -332,15 +332,6 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
                   onToggleInteractable={toggleInteractable}
                   onLabelTextChange={setLabelText}
                   onCreateZone={createZone}
-                  onSave={() => void handleSave()}
-                  onDiscard={() => {
-                    setEditedScene(null);
-                    setPendingStrings({});
-                    setSaveMessage(null);
-                  }}
-                  hasChanges={editedScene !== null}
-                  saving={saving}
-                  saveMessage={saveMessage}
                 />
               ) : (
                 <CharacterEditorPanel
@@ -351,16 +342,43 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
                   onColorChange={(id, color) => updateCharacter(id, { color })}
                   onUploadPortrait={(id, file) => void uploadPortrait(id, file)}
                   onCreateCharacter={createCharacter}
-                  onSave={() => void handleSaveCharacters()}
-                  onDiscard={() => {
+                />
+              )}
+            </div>
+
+            {/* Pie fijo: no se va con el scroll aunque la lista de arriba
+                tenga cientos de escenas/personajes. */}
+            <div className="shrink-0 border-t border-graphite-700 p-3">
+              <button
+                type="button"
+                onClick={() => void (editorTab === 'scene' ? handleSave() : handleSaveCharacters())}
+                disabled={editorTab === 'scene' ? editedScene === null || saving : editedCharacters === null || characterSaving}
+                className="w-full rounded border border-amber-accent px-3 py-2 text-[11px] font-semibold tracking-widest text-amber-accent uppercase transition-colors hover:bg-amber-accent hover:text-graphite-950 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-amber-accent"
+              >
+                {(editorTab === 'scene' ? saving : characterSaving) ? 'Guardando...' : 'Guardar cambios'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (editorTab === 'scene') {
+                    setEditedScene(null);
+                    setPendingStrings({});
+                    setSaveMessage(null);
+                  } else {
                     setEditedCharacters(null);
                     setPendingCharacterStrings({});
                     setCharacterSaveMessage(null);
-                  }}
-                  hasChanges={editedCharacters !== null}
-                  saving={characterSaving}
-                  saveMessage={characterSaveMessage}
-                />
+                  }
+                }}
+                disabled={editorTab === 'scene' ? editedScene === null : editedCharacters === null}
+                className="mt-2 w-full rounded border border-graphite-700 px-3 py-1.5 text-[10px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Descartar
+              </button>
+              {(editorTab === 'scene' ? saveMessage : characterSaveMessage) && (
+                <p className="mt-2 text-[10px] text-graphite-300">
+                  {editorTab === 'scene' ? saveMessage : characterSaveMessage}
+                </p>
               )}
             </div>
           </aside>

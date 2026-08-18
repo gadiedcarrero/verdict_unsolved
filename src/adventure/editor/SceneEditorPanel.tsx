@@ -121,11 +121,6 @@ export function SceneEditorPanel({
   onToggleInteractable,
   onLabelTextChange,
   onCreateZone,
-  onSave,
-  onDiscard,
-  hasChanges,
-  saving,
-  saveMessage,
 }: {
   scene: Scene;
   strings: Record<string, string>;
@@ -133,11 +128,6 @@ export function SceneEditorPanel({
   onToggleInteractable: (objectId: string, interactable: boolean) => void;
   onLabelTextChange: (labelKey: string, text: string) => void;
   onCreateZone: (name: string, labelText: string, interactable: boolean) => void;
-  onSave: () => void;
-  onDiscard: () => void;
-  hasChanges: boolean;
-  saving: boolean;
-  saveMessage: string | null;
 }): JSX.Element {
   return (
     <div className="text-xs text-graphite-200">
@@ -158,26 +148,6 @@ export function SceneEditorPanel({
           onLabelTextChange={(text) => onLabelTextChange(object.labelKey ?? `hotspot.${scene.id}.${object.id}`, text)}
         />
       ))}
-
-      <div className="mt-3 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={!hasChanges || saving}
-          className="rounded border border-amber-accent px-3 py-1.5 text-[10px] font-semibold tracking-widest text-amber-accent uppercase transition-colors hover:bg-amber-accent hover:text-graphite-950 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-amber-accent"
-        >
-          {saving ? 'Guardando...' : 'Guardar cambios'}
-        </button>
-        <button
-          type="button"
-          onClick={onDiscard}
-          disabled={!hasChanges}
-          className="rounded border border-graphite-700 px-3 py-1.5 text-[10px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Descartar
-        </button>
-      </div>
-      {saveMessage && <p className="mt-2 text-[10px] text-graphite-300">{saveMessage}</p>}
     </div>
   );
 }

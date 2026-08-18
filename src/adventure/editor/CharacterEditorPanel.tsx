@@ -150,11 +150,6 @@ export function CharacterEditorPanel({
   onColorChange,
   onUploadPortrait,
   onCreateCharacter,
-  onSave,
-  onDiscard,
-  hasChanges,
-  saving,
-  saveMessage,
 }: {
   characters: Character[];
   strings: Record<string, string>;
@@ -163,11 +158,6 @@ export function CharacterEditorPanel({
   onColorChange: (characterId: string, color: string) => void;
   onUploadPortrait: (characterId: string, file: File) => void;
   onCreateCharacter: (name: string, nameText: string, color: string) => void;
-  onSave: () => void;
-  onDiscard: () => void;
-  hasChanges: boolean;
-  saving: boolean;
-  saveMessage: string | null;
 }): JSX.Element {
   return (
     <div className="text-xs text-graphite-200">
@@ -189,26 +179,6 @@ export function CharacterEditorPanel({
           onUploadPortrait={(file) => onUploadPortrait(character.id, file)}
         />
       ))}
-
-      <div className="mt-3 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={!hasChanges || saving}
-          className="rounded border border-amber-accent px-3 py-1.5 text-[10px] font-semibold tracking-widest text-amber-accent uppercase transition-colors hover:bg-amber-accent hover:text-graphite-950 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-amber-accent"
-        >
-          {saving ? 'Guardando...' : 'Guardar cambios'}
-        </button>
-        <button
-          type="button"
-          onClick={onDiscard}
-          disabled={!hasChanges}
-          className="rounded border border-graphite-700 px-3 py-1.5 text-[10px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Descartar
-        </button>
-      </div>
-      {saveMessage && <p className="mt-2 text-[10px] text-graphite-300">{saveMessage}</p>}
     </div>
   );
 }
