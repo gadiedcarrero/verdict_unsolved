@@ -44,7 +44,8 @@
       ],
       "onInteract": [],
       "repeatable": true,
-      "interactable": true
+      "interactable": true,
+      "verbs": []
     },
     {
       "id": "fotografia",
@@ -76,7 +77,8 @@
       ],
       "onInteract": [],
       "repeatable": true,
-      "interactable": true
+      "interactable": true,
+      "verbs": []
     },
     {
       "id": "laptop",
@@ -116,7 +118,8 @@
       ],
       "onInteract": [],
       "repeatable": true,
-      "interactable": true
+      "interactable": true,
+      "verbs": []
     },
     {
       "id": "vaso",
@@ -168,7 +171,8 @@
       ],
       "onInteract": [],
       "repeatable": true,
-      "interactable": true
+      "interactable": true,
+      "verbs": []
     },
     {
       "id": "cenizero",
@@ -220,7 +224,8 @@
       ],
       "onInteract": [],
       "repeatable": true,
-      "interactable": true
+      "interactable": true,
+      "verbs": []
     },
     {
       "id": "diario",
@@ -252,7 +257,8 @@
       ],
       "onInteract": [],
       "repeatable": true,
-      "interactable": true
+      "interactable": true,
+      "verbs": []
     },
     {
       "id": "lampara",
@@ -332,7 +338,8 @@
       "labelOffset": {
         "x": 17.285711115056817,
         "y": 22.594105113636363
-      }
+      },
+      "verbs": []
     },
     {
       "id": "sobretodo",
@@ -404,7 +411,57 @@
       "labelOffset": {
         "x": 4.047185724431818,
         "y": 15.054845328282829
-      }
+      },
+      "verbs": []
+    },
+    {
+      "id": "sombrero",
+      "label": "hotspot.escena-1.sombrero",
+      "area": {
+        "x": 7.2443181818181825,
+        "y": 12.07879577020202,
+        "width": 5.664339932528409,
+        "height": 15.09726167929293
+      },
+      "shape": "polygon",
+      "points": [
+        {
+          "x": 11.189686168323863,
+          "y": 12.663746843434343
+        },
+        {
+          "x": 9.264581853693182,
+          "y": 12.07879577020202
+        },
+        {
+          "x": 7.868818803267046,
+          "y": 12.648457228535353
+        },
+        {
+          "x": 7.2443181818181825,
+          "y": 16.333747632575758
+        },
+        {
+          "x": 7.9736882990056825,
+          "y": 20.912247474747474
+        },
+        {
+          "x": 10.617620294744318,
+          "y": 27.17605744949495
+        },
+        {
+          "x": 12.490289861505682,
+          "y": 24.187677556818183
+        },
+        {
+          "x": 12.908658114346592,
+          "y": 19.550978535353536
+        }
+      ],
+      "onInteract": [],
+      "repeatable": true,
+      "interactable": true,
+      "verbs": []
     }
   ],
   "introSkippable": true,

@@ -147,6 +147,22 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   // forma") — no null mientras se están juntando puntos a click.
   const [polygonDraft, setPolygonDraft] = useState<PolygonDraft | null>(null);
 
+  // Cambiar de escena (o salir del modo edición) resetea `editedScene` y
+  // `polygonDraft` sin avisar — antes se perdía en silencio una zona a
+  // medio trazar o cualquier cambio sin guardar. Esta guarda confirma antes
+  // de descartar.
+  function confirmDiscardUnsavedSceneEdits(): boolean {
+    if (editedScene === null && polygonDraft === null) return true;
+    return window.confirm(
+      'Tenés cambios sin guardar en esta escena (por ejemplo, una zona a medio trazar) — se van a perder si cambiás de escena ahora. ¿Seguir igual?',
+    );
+  }
+
+  function switchEditorScene(sceneId: string): void {
+    if (!confirmDiscardUnsavedSceneEdits()) return;
+    setEditorSceneId(sceneId);
+  }
+
   useEffect(() => {
     void load(gameId);
   }, [load, gameId]);
@@ -864,6 +880,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           <button
             type="button"
             onClick={() => {
+              if (!confirmDiscardUnsavedSceneEdits()) return;
               setEditMode((v) => !v);
               setEditorSceneId(null);
               setPolygonDraft(null);
@@ -940,7 +957,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   activeSceneId={activeEditorSceneId}
                   creatingScene={creatingScene}
                   uploadingBackground={uploadingBackground}
-                  onSwitchScene={setEditorSceneId}
+                  onSwitchScene={switchEditorScene}
                   onCreateScene={(name, act, kind) => void createScene(name, act, kind)}
                   onAddBackground={(file) => void addBackground(file)}
                   onRemoveBackground={removeBackground}
