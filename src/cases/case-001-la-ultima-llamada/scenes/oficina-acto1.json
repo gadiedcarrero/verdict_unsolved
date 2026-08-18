@@ -5,7 +5,8 @@
   "layers": [
     { "id": "telefono", "assetPath": "layers/telefono.png", "x": 16, "y": 66, "width": 13, "height": 14, "zIndex": 2 },
     { "id": "fotografia", "assetPath": "layers/fotografia-boca-abajo.png", "x": 30, "y": 74, "width": 10, "height": 8, "zIndex": 3 },
-    { "id": "cenicero", "assetPath": "layers/cenicero-cigarrillo.png", "x": 76, "y": 65, "width": 8, "height": 7, "zIndex": 2 }
+    { "id": "cenicero", "assetPath": "layers/cenicero-cigarrillo.png", "x": 76, "y": 65, "width": 8, "height": 7, "zIndex": 2 },
+    { "id": "computadora", "assetPath": "layers/computadora-apagada.png", "x": 36, "y": 33, "width": 27, "height": 48, "zIndex": 2 }
   ],
   "hotspots": [
     {
