@@ -1,6 +1,6 @@
 import { useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { translate } from '../../i18n/translate';
-import type { Scene } from '../../game-engine/scene-engine/schemas';
+import type { Scene, SceneKind } from '../../game-engine/scene-engine/schemas';
 import type { EditableObject } from './editableObjects';
 import { buildEditableObjects } from './editableObjects';
 import type { EditableRect } from './EditableBox';
@@ -20,18 +20,20 @@ function SceneSwitcher({
   activeSceneId: string;
   creatingScene: boolean;
   onSwitchScene: (sceneId: string) => void;
-  onCreateScene: (name: string, act: number) => void;
+  onCreateScene: (name: string, act: number, kind: SceneKind) => void;
 }): JSX.Element {
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [act, setAct] = useState(1);
+  const [kind, setKind] = useState<SceneKind>('standard');
 
   function submit(): void {
     const trimmed = name.trim();
     if (!trimmed) return;
-    onCreateScene(trimmed, act);
+    onCreateScene(trimmed, act, kind);
     setName('');
     setAct(1);
+    setKind('standard');
     setCreating(false);
   }
 
@@ -68,6 +70,13 @@ function SceneSwitcher({
               className={inputClassName}
             />
           </label>
+          <label className="mb-2 flex flex-col">
+            <span className="text-[9px] text-graphite-500 uppercase">Tipo</span>
+            <select value={kind} onChange={(event) => setKind(event.target.value as SceneKind)} className={inputClassName}>
+              <option value="standard">Estándar (point-and-click)</option>
+              <option value="intro">Intro (secuencia de fondos por tiempo)</option>
+            </select>
+          </label>
           <div className="flex gap-1">
             <button
               type="button"
@@ -102,37 +111,58 @@ function SceneSwitcher({
 function BackgroundThumb({
   assetPath,
   label,
+  durationMs,
+  showDuration,
   onRemove,
+  onDurationChange,
 }: {
   assetPath: string;
   label: string;
+  durationMs: number | undefined;
+  showDuration: boolean;
   onRemove: () => void;
+  onDurationChange: (durationMs: number) => void;
 }): JSX.Element {
   const [failed, setFailed] = useState(false);
   return (
-    <div className="relative shrink-0">
-      {failed ? (
-        <div className="flex h-14 w-24 items-center justify-center rounded border border-dashed border-graphite-600 bg-graphite-800/70 text-[8px] text-graphite-500">
-          sin imagen
-        </div>
-      ) : (
-        <img
-          src={`${CASE_ASSET_BASE}/${assetPath}`}
-          alt=""
-          onError={() => setFailed(true)}
-          className="h-14 w-24 rounded border border-graphite-700 object-cover"
-        />
+    <div className="shrink-0">
+      <div className="relative">
+        {failed ? (
+          <div className="flex h-14 w-24 items-center justify-center rounded border border-dashed border-graphite-600 bg-graphite-800/70 text-[8px] text-graphite-500">
+            sin imagen
+          </div>
+        ) : (
+          <img
+            src={`${CASE_ASSET_BASE}/${assetPath}`}
+            alt=""
+            onError={() => setFailed(true)}
+            className="h-14 w-24 rounded border border-graphite-700 object-cover"
+          />
+        )}
+        <span className="absolute top-0.5 left-0.5 rounded bg-graphite-950/80 px-1 text-[8px] tracking-widest text-amber-accent uppercase">
+          {label}
+        </span>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="absolute top-0.5 right-0.5 rounded bg-graphite-950/80 px-1 text-[8px] text-graphite-300 hover:text-amber-accent"
+        >
+          ✕
+        </button>
+      </div>
+      {showDuration && (
+        <label className="mt-1 flex items-center gap-1">
+          <input
+            type="number"
+            min={100}
+            step={100}
+            value={durationMs ?? 2500}
+            onChange={(event) => onDurationChange(Number(event.target.value))}
+            className="w-16 rounded border border-graphite-700 bg-graphite-900 px-1 py-0.5 text-[9px] text-graphite-100"
+          />
+          <span className="text-[8px] text-graphite-500">ms</span>
+        </label>
       )}
-      <span className="absolute top-0.5 left-0.5 rounded bg-graphite-950/80 px-1 text-[8px] tracking-widest text-amber-accent uppercase">
-        {label}
-      </span>
-      <button
-        type="button"
-        onClick={onRemove}
-        className="absolute top-0.5 right-0.5 rounded bg-graphite-950/80 px-1 text-[8px] text-graphite-300 hover:text-amber-accent"
-      >
-        ✕
-      </button>
     </div>
   );
 }
@@ -142,13 +172,16 @@ function BackgroundsSection({
   uploading,
   onAddBackground,
   onRemoveBackground,
+  onDurationChange,
 }: {
   scene: Scene;
   uploading: boolean;
   onAddBackground: (file: File) => void;
   onRemoveBackground: (bgId: string) => void;
+  onDurationChange: (bgId: string, durationMs: number) => void;
 }): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isIntro = scene.kind === 'intro';
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
@@ -160,7 +193,9 @@ function BackgroundsSection({
     <div className="mb-3 border-b border-graphite-800 pb-3">
       <p className="mb-2 text-[10px] font-semibold tracking-widest text-graphite-300 uppercase">Fondos</p>
       <p className="mb-2 text-[9px] text-graphite-500">
-        El primero (BG 1) es el que se ve por defecto. Vincular cada fondo a un objeto/estado se hace más adelante.
+        {isIntro
+          ? 'Se muestran en este orden, cada uno durante lo que diga su duración, y después pasa solo al siguiente.'
+          : 'El primero (BG 1) es el que se ve por defecto. Vincular cada fondo a un objeto/estado se hace más adelante.'}
       </p>
       <div className="mb-2 flex flex-wrap gap-2">
         {scene.backgrounds.map((bg, index) => (
@@ -168,7 +203,10 @@ function BackgroundsSection({
             key={bg.id}
             assetPath={bg.assetPath}
             label={`BG ${index + 1}`}
+            durationMs={bg.durationMs}
+            showDuration={isIntro}
             onRemove={() => onRemoveBackground(bg.id)}
+            onDurationChange={(durationMs) => onDurationChange(bg.id, durationMs)}
           />
         ))}
       </div>
@@ -181,6 +219,52 @@ function BackgroundsSection({
         {uploading ? 'Subiendo...' : '+ Agregar fondo'}
       </button>
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+    </div>
+  );
+}
+
+function IntroSettings({
+  scene,
+  sceneOptions,
+  onChangeIntroSkippable,
+  onChangeIntroCompleteTarget,
+}: {
+  scene: Scene;
+  sceneOptions: { id: string; act: number }[];
+  onChangeIntroSkippable: (skippable: boolean) => void;
+  onChangeIntroCompleteTarget: (sceneId: string) => void;
+}): JSX.Element {
+  const targetSceneId =
+    scene.onIntroComplete?.find((action) => action.type === 'transitionTo')?.sceneId ?? '';
+
+  return (
+    <div className="mb-3 border-b border-graphite-800 pb-3">
+      <p className="mb-2 text-[10px] font-semibold tracking-widest text-graphite-300 uppercase">Intro</p>
+      <label className="mb-2 flex items-center gap-1 text-[9px] text-graphite-400">
+        <input
+          type="checkbox"
+          checked={scene.introSkippable}
+          onChange={(event) => onChangeIntroSkippable(event.target.checked)}
+        />
+        Mostrar botón &quot;Comenzar&quot; para saltarla
+      </label>
+      <label className="flex flex-col">
+        <span className="text-[9px] text-graphite-500 uppercase">Al terminar, ir a</span>
+        <select
+          value={targetSceneId}
+          onChange={(event) => onChangeIntroCompleteTarget(event.target.value)}
+          className={inputClassName}
+        >
+          <option value="">(sin definir)</option>
+          {sceneOptions
+            .filter((option) => option.id !== scene.id)
+            .map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.id}
+              </option>
+            ))}
+        </select>
+      </label>
     </div>
   );
 }
@@ -302,6 +386,10 @@ export function SceneEditorPanel({
   onCreateScene,
   onAddBackground,
   onRemoveBackground,
+  onBackgroundDurationChange,
+  onChangeKind,
+  onChangeIntroSkippable,
+  onChangeIntroCompleteTarget,
   onObjectRectChange,
   onToggleInteractable,
   onLabelTextChange,
@@ -314,9 +402,13 @@ export function SceneEditorPanel({
   creatingScene: boolean;
   uploadingBackground: boolean;
   onSwitchScene: (sceneId: string) => void;
-  onCreateScene: (name: string, act: number) => void;
+  onCreateScene: (name: string, act: number, kind: SceneKind) => void;
   onAddBackground: (file: File) => void;
   onRemoveBackground: (bgId: string) => void;
+  onBackgroundDurationChange: (bgId: string, durationMs: number) => void;
+  onChangeKind: (kind: SceneKind) => void;
+  onChangeIntroSkippable: (skippable: boolean) => void;
+  onChangeIntroCompleteTarget: (sceneId: string) => void;
   onObjectRectChange: (objectId: string, rect: EditableRect) => void;
   onToggleInteractable: (objectId: string, interactable: boolean) => void;
   onLabelTextChange: (labelKey: string, text: string) => void;
@@ -338,33 +430,57 @@ export function SceneEditorPanel({
         </p>
       ) : (
         <>
+          <label className="mb-3 flex flex-col border-b border-graphite-800 pb-3">
+            <span className="text-[9px] text-graphite-500 uppercase">Tipo de escena</span>
+            <select
+              value={scene.kind}
+              onChange={(event) => onChangeKind(event.target.value as SceneKind)}
+              className={inputClassName}
+            >
+              <option value="standard">Estándar (point-and-click)</option>
+              <option value="intro">Intro (secuencia de fondos por tiempo)</option>
+            </select>
+          </label>
+
           <BackgroundsSection
             scene={scene}
             uploading={uploadingBackground}
             onAddBackground={onAddBackground}
             onRemoveBackground={onRemoveBackground}
+            onDurationChange={onBackgroundDurationChange}
           />
 
-          <p className="mb-3 text-[10px] text-graphite-400">
-            <span className="text-amber-accent">Ámbar</span> = objeto con imagen propia.{' '}
-            <span className="text-sky-400">Celeste</span> = zona sin imagen aparte. Nada cambia hasta que aprietes
-            Guardar.
-          </p>
-
-          <CreateZoneForm onCreate={onCreateZone} />
-
-          {buildEditableObjects(scene).map((object) => (
-            <ObjectFields
-              key={object.id}
-              object={object}
-              strings={strings}
-              onRectChange={(rect) => onObjectRectChange(object.id, rect)}
-              onInteractableChange={(interactable) => onToggleInteractable(object.id, interactable)}
-              onLabelTextChange={(text) =>
-                onLabelTextChange(object.labelKey ?? `hotspot.${scene.id}.${object.id}`, text)
-              }
+          {scene.kind === 'intro' ? (
+            <IntroSettings
+              scene={scene}
+              sceneOptions={sceneOptions}
+              onChangeIntroSkippable={onChangeIntroSkippable}
+              onChangeIntroCompleteTarget={onChangeIntroCompleteTarget}
             />
-          ))}
+          ) : (
+            <>
+              <p className="mb-3 text-[10px] text-graphite-400">
+                <span className="text-amber-accent">Ámbar</span> = objeto con imagen propia.{' '}
+                <span className="text-sky-400">Celeste</span> = zona sin imagen aparte. Nada cambia hasta que
+                aprietes Guardar.
+              </p>
+
+              <CreateZoneForm onCreate={onCreateZone} />
+
+              {buildEditableObjects(scene).map((object) => (
+                <ObjectFields
+                  key={object.id}
+                  object={object}
+                  strings={strings}
+                  onRectChange={(rect) => onObjectRectChange(object.id, rect)}
+                  onInteractableChange={(interactable) => onToggleInteractable(object.id, interactable)}
+                  onLabelTextChange={(text) =>
+                    onLabelTextChange(object.labelKey ?? `hotspot.${scene.id}.${object.id}`, text)
+                  }
+                />
+              ))}
+            </>
+          )}
         </>
       )}
     </div>

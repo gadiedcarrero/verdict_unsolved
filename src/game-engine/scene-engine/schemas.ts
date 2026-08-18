@@ -94,11 +94,21 @@ export const SceneBackgroundSchema = z.object({
   /** Auto-generado al crearlo en el editor: "bg-1", "bg-2"... */
   id: z.string(),
   assetPath: z.string(),
+  /** Solo se usa en escenas `kind: "intro"`: cuánto se muestra este fondo
+   * antes de pasar al siguiente, en milisegundos. Si no está, se usa un
+   * valor por defecto (ver IntroScene.tsx). */
+  durationMs: z.number().optional(),
 });
+
+export const SceneKindSchema = z.enum(['standard', 'intro']);
 
 export const SceneSchema = z.object({
   id: z.string(),
   act: z.number(),
+  /** "intro" es una escena especial de solo fondos (logos, splash) que pasa
+   * de uno a otro por tiempo y termina disparando `onIntroComplete` — sin
+   * capas, hotspots ni diálogo. Cualquier otra escena es "standard". */
+  kind: SceneKindSchema.default('standard'),
   /** Una escena puede tener varios fondos (luz prendida/apagada, flashes de
    * relámpago, etc.) — el primero de la lista es el que se ve por defecto.
    * Vincular qué objeto/estado cambia a cuál fondo se hace más adelante. */
@@ -107,6 +117,12 @@ export const SceneSchema = z.object({
   hotspots: z.array(HotspotSchema),
   /** Acciones que corren automáticamente al entrar a la escena (p. ej. abrir un diálogo). */
   onEnter: z.array(SceneActionSchema).optional(),
+  /** Solo `kind: "intro"`: si se puede saltar la secuencia con un botón
+   * "Comenzar" en vez de esperar a que termine sola. */
+  introSkippable: z.boolean().default(true),
+  /** Solo `kind: "intro"`: acciones al terminar la secuencia (por tiempo) o
+   * al saltarla con el botón — típicamente un `transitionTo` al menú. */
+  onIntroComplete: z.array(SceneActionSchema).optional(),
 });
 
 export const AdventureCaseMetaSchema = z.object({
@@ -170,6 +186,7 @@ export type InterfaceId = z.infer<typeof InterfaceIdSchema>;
 export type SceneAction = z.infer<typeof SceneActionSchema>;
 export type Hotspot = z.infer<typeof HotspotSchema>;
 export type SceneBackground = z.infer<typeof SceneBackgroundSchema>;
+export type SceneKind = z.infer<typeof SceneKindSchema>;
 export type Character = z.infer<typeof CharacterSchema>;
 export type DialogueChoice = z.infer<typeof DialogueChoiceSchema>;
 export type DialogueNode = z.infer<typeof DialogueNodeSchema>;

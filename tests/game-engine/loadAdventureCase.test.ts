@@ -60,11 +60,12 @@ describe('loadAdventureCase', () => {
     if (!result.ok) throw new Error(result.error);
     const { scenes, dialogues } = result.data;
 
-    // Las escenas se están reconstruyendo desde cero (ver
-    // docs/case-001-la-ultima-llamada) — mientras no haya ninguna, no hay
-    // nada que validar todavía; este check vuelve a aplicar en cuanto se
-    // recreen.
-    if (scenes.length === 0) return;
+    // El contenido del caso (acto 1 en adelante) se está reconstruyendo
+    // desde cero — por ahora solo existen las escenas de arranque (intro,
+    // menú, acto 0) y los diálogos viejos quedan intencionalmente huérfanos
+    // hasta que se recreen sus escenas. Este check vuelve a aplicar en
+    // cuanto haya escenas de acto >= 1 otra vez.
+    if (!scenes.some((scene) => scene.act >= 1)) return;
 
     const sceneIds = new Set(scenes.map((s) => s.id));
     const referencedSceneIds = new Set<string>();

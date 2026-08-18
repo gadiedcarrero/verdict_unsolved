@@ -4,11 +4,12 @@ import type { EditableRect } from './editor/EditableBox';
 import { SceneEditorPanel } from './editor/SceneEditorPanel';
 import { slugify, uniqueId } from './editor/slug';
 import { activeAdventureCaseResult } from '../game-engine/scene-engine/activeAdventureCase';
-import type { Character, Scene } from '../game-engine/scene-engine/schemas';
+import type { Character, Scene, SceneKind } from '../game-engine/scene-engine/schemas';
 import { useSaveStore } from '../game-engine/save-system/save.store';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
 import { DialogueOverlay } from './DialogueOverlay';
 import { InterfaceHost } from './interfaces/InterfaceHost';
+import { IntroScene } from './IntroScene';
 import { SceneViewer } from './SceneViewer';
 
 type EditorTab = 'scene' | 'characters';
@@ -230,12 +231,44 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     setEditedScene({ ...base, backgrounds: base.backgrounds.filter((bg) => bg.id !== bgId) });
   }
 
+  function updateBackgroundDuration(bgId: string, durationMs: number): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      backgrounds: base.backgrounds.map((bg) => (bg.id === bgId ? { ...bg, durationMs } : bg)),
+    });
+  }
+
+  // "intro": secuencia de fondos por tiempo, sin capas/hotspots — ver
+  // IntroScene.tsx. `kind` decide si la escena juega así o como point-and-click.
+  function updateSceneKind(kind: SceneKind): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({ ...base, kind });
+  }
+
+  function updateIntroSkippable(introSkippable: boolean): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({ ...base, introSkippable });
+  }
+
+  function updateIntroCompleteTarget(sceneId: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      onIntroComplete: sceneId ? [{ type: 'transitionTo', sceneId, fade: 'fade' }] : [],
+    });
+  }
+
   // Crea una escena mínima (sin fondos/objetos todavía) y recarga la app
   // para que la carga dinámica de escenas (import.meta.glob) la recoja.
-  async function createScene(name: string, act: number): Promise<void> {
+  async function createScene(name: string, act: number, kind: SceneKind): Promise<void> {
     const taken = new Set(allScenes.map((s) => s.id));
     const id = uniqueId(slugify(name), taken);
-    const newScene: Scene = { id, act, backgrounds: [], layers: [], hotspots: [] };
+    const newScene: Scene = { id, act, kind, backgrounds: [], layers: [], hotspots: [], introSkippable: true };
     setCreatingScene(true);
     setSaveMessage(null);
     try {
@@ -256,16 +289,8 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     if (!editedScene) return;
     setSaving(true);
     setSaveMessage(null);
-    const payload = {
-      id: editedScene.id,
-      act: editedScene.act,
-      backgrounds: editedScene.backgrounds,
-      layers: editedScene.layers,
-      hotspots: editedScene.hotspots,
-      ...(editedScene.onEnter ? { onEnter: editedScene.onEnter } : {}),
-    };
     try {
-      const result = await window.api.saveSceneLayout(editedScene.id, payload, pendingStrings);
+      const result = await window.api.saveSceneLayout(editedScene.id, editedScene, pendingStrings);
       setSaveMessage(result.ok ? 'Guardado en el JSON de la escena.' : `Error: ${result.error}`);
       if (result.ok) setPendingStrings({});
     } catch (error) {
@@ -401,9 +426,13 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
                   creatingScene={creatingScene}
                   uploadingBackground={uploadingBackground}
                   onSwitchScene={setEditorSceneId}
-                  onCreateScene={(name, act) => void createScene(name, act)}
+                  onCreateScene={(name, act, kind) => void createScene(name, act, kind)}
                   onAddBackground={(file) => void addBackground(file)}
                   onRemoveBackground={removeBackground}
+                  onBackgroundDurationChange={updateBackgroundDuration}
+                  onChangeKind={updateSceneKind}
+                  onChangeIntroSkippable={updateIntroSkippable}
+                  onChangeIntroCompleteTarget={updateIntroCompleteTarget}
                   onObjectRectChange={updateObjectRect}
                   onToggleInteractable={toggleInteractable}
                   onLabelTextChange={setLabelText}
@@ -476,6 +505,8 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
             )}
           </div>
         </div>
+      ) : displayScene?.kind === 'intro' ? (
+        <IntroScene key={displayScene.id} scene={displayScene} />
       ) : displayScene ? (
         // Modo juego: la escena vuelve a ocupar toda la pantalla, como
         // siempre — el editor no deja rastro.

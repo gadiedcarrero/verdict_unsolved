@@ -1,47 +1,11 @@
-import { useEffect, useRef, useState, type JSX, type ReactNode, type RefObject } from 'react';
+import { useRef, useState, type JSX, type ReactNode } from 'react';
 import type { Hotspot as HotspotData, Scene } from '../game-engine/scene-engine/schemas';
 import { translate } from '../i18n/translate';
 import { buildEditableObjects } from './editor/editableObjects';
 import { EditableBox, type EditableRect } from './editor/EditableBox';
 import { HotspotArea } from './Hotspot';
 import { PlaceholderLayer } from './PlaceholderLayer';
-
-/**
- * Todo el arte de escena se produce en 16:9. Antes el fondo se estiraba con
- * `object-cover` (recortando distinto según la proporción de la ventana)
- * mientras las capas/hotspots se posicionaban en % del contenedor completo
- * — al cambiar el tamaño de ventana, el recorte del fondo se movía pero los
- * objetos no, y todo se desalineaba. Ahora el "stage" se fija a este ratio
- * (con barras a los costados o arriba/abajo si no calza) y tanto el arte
- * como los objetos y el diálogo comparten ese mismo sistema de coordenadas.
- */
-const SCENE_ASPECT_RATIO = 16 / 9;
-
-function useStageSize(containerRef: RefObject<HTMLDivElement | null>): { width: number; height: number } {
-  const [size, setSize] = useState({ width: 0, height: 0 });
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return undefined;
-
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      const { width: containerWidth, height: containerHeight } = entry.contentRect;
-      let width = containerWidth;
-      let height = width / SCENE_ASPECT_RATIO;
-      if (height > containerHeight) {
-        height = containerHeight;
-        width = height * SCENE_ASPECT_RATIO;
-      }
-      setSize({ width, height });
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [containerRef]);
-
-  return size;
-}
+import { useStageSize } from './useStageSize';
 
 export function SceneViewer({
   scene,

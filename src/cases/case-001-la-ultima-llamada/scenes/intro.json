@@ -1,0 +1,10 @@
+{
+  "id": "intro",
+  "act": 0,
+  "kind": "intro",
+  "backgrounds": [],
+  "layers": [],
+  "hotspots": [],
+  "introSkippable": true,
+  "onIntroComplete": [{ "type": "transitionTo", "sceneId": "menu-inicio", "fade": "fade" }]
+}
