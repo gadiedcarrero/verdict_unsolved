@@ -85,22 +85,55 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     );
   }
 
-  function updateLayerRect(layerId: string, rect: EditableRect): void {
+  // Un "objeto" del editor es una capa y su hotspot (si existe) con el mismo
+  // id — se mueven juntos porque representan la misma cosa en pantalla. Ver
+  // editor/editableObjects.ts.
+  function updateObjectRect(objectId: string, rect: EditableRect): void {
     setEditedScene((prev) => {
       const base = prev ?? baseScene;
       if (!base) return prev;
-      return { ...base, layers: base.layers.map((layer) => (layer.id === layerId ? { ...layer, ...rect } : layer)) };
+      const hasLayer = base.layers.some((layer) => layer.id === objectId);
+      return {
+        ...base,
+        layers: hasLayer
+          ? base.layers.map((layer) => (layer.id === objectId ? { ...layer, ...rect } : layer))
+          : base.layers,
+        hotspots: base.hotspots.map((hotspot) => (hotspot.id === objectId ? { ...hotspot, area: rect } : hotspot)),
+      };
     });
   }
 
-  function updateHotspotRect(hotspotId: string, rect: EditableRect): void {
+  // Solo aplica a objetos con capa propia (los "fijos" sin capa siempre son
+  // interactuables, no existirían como hotspot si no). Tildar agrega un
+  // hotspot nuevo sin acción todavía (onInteract: []) para completar a mano
+  // en el JSON; destildar lo saca.
+  function toggleInteractable(objectId: string, interactable: boolean): void {
     setEditedScene((prev) => {
       const base = prev ?? baseScene;
       if (!base) return prev;
-      return {
-        ...base,
-        hotspots: base.hotspots.map((hotspot) => (hotspot.id === hotspotId ? { ...hotspot, area: rect } : hotspot)),
-      };
+      const layer = base.layers.find((l) => l.id === objectId);
+      if (!layer) return base;
+      const hasHotspot = base.hotspots.some((h) => h.id === objectId);
+
+      if (interactable && !hasHotspot) {
+        return {
+          ...base,
+          hotspots: [
+            ...base.hotspots,
+            {
+              id: layer.id,
+              label: layer.id,
+              area: { x: layer.x, y: layer.y, width: layer.width ?? 10, height: layer.height ?? 10 },
+              onInteract: [],
+              repeatable: true,
+            },
+          ],
+        };
+      }
+      if (!interactable && hasHotspot) {
+        return { ...base, hotspots: base.hotspots.filter((h) => h.id !== objectId) };
+      }
+      return base;
     });
   }
 
@@ -116,9 +149,16 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
       hotspots: editedScene.hotspots,
       ...(editedScene.onEnter ? { onEnter: editedScene.onEnter } : {}),
     };
-    const result = await window.api.saveSceneLayout(editedScene.id, payload);
-    setSaving(false);
-    setSaveMessage(result.ok ? 'Guardado en el JSON de la escena.' : `Error: ${result.error}`);
+    try {
+      const result = await window.api.saveSceneLayout(editedScene.id, payload);
+      setSaveMessage(result.ok ? 'Guardado en el JSON de la escena.' : `Error: ${result.error}`);
+    } catch (error) {
+      setSaveMessage(
+        `Error: ${error instanceof Error ? error.message : String(error)} (¿reiniciaste "pnpm dev" después de sumar el editor?)`,
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -151,14 +191,13 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
         layerOverrides={layerOverrides}
         onInteract={interactHotspot}
         editMode={editMode}
-        onLayerRectChange={updateLayerRect}
-        onHotspotRectChange={updateHotspotRect}
+        onObjectRectChange={updateObjectRect}
       >
         {editMode ? (
           <SceneEditorPanel
             scene={displayScene}
-            onLayerRectChange={updateLayerRect}
-            onHotspotRectChange={updateHotspotRect}
+            onObjectRectChange={updateObjectRect}
+            onToggleInteractable={toggleInteractable}
             onSave={() => void handleSave()}
             onDiscard={() => {
               setEditedScene(null);

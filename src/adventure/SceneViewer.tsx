@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type JSX, type ReactNode, type RefObject } from 'react';
 import type { Hotspot as HotspotData, Scene } from '../game-engine/scene-engine/schemas';
+import { buildEditableObjects } from './editor/editableObjects';
 import { EditableBox, type EditableRect } from './editor/EditableBox';
 import { HotspotArea } from './Hotspot';
 import { PlaceholderLayer } from './PlaceholderLayer';
@@ -48,8 +49,7 @@ export function SceneViewer({
   onInteract,
   children,
   editMode = false,
-  onLayerRectChange,
-  onHotspotRectChange,
+  onObjectRectChange,
 }: {
   scene: Scene;
   transitioning: boolean;
@@ -58,10 +58,9 @@ export function SceneViewer({
   onInteract: (hotspot: HotspotData) => void;
   /** Diálogo/interfaces: deben compartir el mismo stage que la escena, no la ventana completa. */
   children?: ReactNode;
-  /** Modo edición: arrastrar/redimensionar capas y hotspots directamente sobre la escena. */
+  /** Modo edición: arrastrar/redimensionar objetos (capa + hotspot con el mismo id, juntos) directamente sobre la escena. */
   editMode?: boolean;
-  onLayerRectChange?: (layerId: string, rect: EditableRect) => void;
-  onHotspotRectChange?: (hotspotId: string, rect: EditableRect) => void;
+  onObjectRectChange?: (objectId: string, rect: EditableRect) => void;
 }): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -106,28 +105,15 @@ export function SceneViewer({
           ))}
 
         {editMode &&
-          onLayerRectChange &&
-          scene.layers.map((layer) => (
+          onObjectRectChange &&
+          buildEditableObjects(scene).map((object) => (
             <EditableBox
-              key={`layer-${layer.id}`}
-              label={layer.id}
-              colorClassName="border-amber-accent"
-              rect={{ x: layer.x, y: layer.y, width: layer.width ?? 10, height: layer.height ?? 10 }}
+              key={object.id}
+              label={`${object.id}${object.kind === 'fixed' ? ' · fijo' : object.interactable ? '' : ' · no interactuable'}`}
+              colorClassName={object.kind === 'fixed' ? 'border-sky-400' : 'border-amber-accent'}
+              rect={object.rect}
               stageRef={stageRef}
-              onChange={(rect) => onLayerRectChange(layer.id, rect)}
-            />
-          ))}
-
-        {editMode &&
-          onHotspotRectChange &&
-          scene.hotspots.map((hotspot) => (
-            <EditableBox
-              key={`hotspot-${hotspot.id}`}
-              label={`hotspot: ${hotspot.id}`}
-              colorClassName="border-sky-400"
-              rect={hotspot.area}
-              stageRef={stageRef}
-              onChange={(rect) => onHotspotRectChange(hotspot.id, rect)}
+              onChange={(rect) => onObjectRectChange(object.id, rect)}
             />
           ))}
 
