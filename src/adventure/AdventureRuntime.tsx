@@ -83,12 +83,13 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
         transitioning={transitioning}
         layerOverrides={layerOverrides}
         onInteract={interactHotspot}
-      />
-      {activeInterfaceId ? (
-        <InterfaceHost interfaceId={activeInterfaceId} />
-      ) : (
-        activeNode && <DialogueOverlay node={activeNode} onAdvance={advance} onChoose={selectChoice} />
-      )}
+      >
+        {activeInterfaceId ? (
+          <InterfaceHost interfaceId={activeInterfaceId} />
+        ) : (
+          activeNode && <DialogueOverlay node={activeNode} onAdvance={advance} onChoose={selectChoice} />
+        )}
+      </SceneViewer>
     </div>
   );
 }
