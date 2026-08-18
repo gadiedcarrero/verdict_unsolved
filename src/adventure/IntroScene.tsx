@@ -38,9 +38,26 @@ export function IntroScene({ gameId, scene }: { gameId: string; scene: Scene }):
 
   return (
     <div ref={containerRef} className="flex h-screen w-screen items-center justify-center bg-graphite-950">
-      <div className="relative overflow-hidden bg-graphite-950" style={{ width, height }}>
+      <div
+        className="relative overflow-hidden bg-graphite-950"
+        style={{ width, height, backgroundColor: current?.backgroundColor }}
+      >
         {current ? (
-          <PlaceholderLayer gameId={gameId} assetPath={current.assetPath} className="absolute inset-0 h-full w-full object-cover" />
+          current.imageWidthPercent ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <PlaceholderLayer
+                gameId={gameId}
+                assetPath={current.assetPath}
+                style={{ width: `${current.imageWidthPercent}%` }}
+              />
+            </div>
+          ) : (
+            <PlaceholderLayer
+              gameId={gameId}
+              assetPath={current.assetPath}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          )
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-xs tracking-widest text-graphite-600 uppercase">
             Sin fondos — agregá uno en el editor

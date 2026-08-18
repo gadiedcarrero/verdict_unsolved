@@ -98,6 +98,13 @@ export const SceneBackgroundSchema = z.object({
    * antes de pasar al siguiente, en milisegundos. Si no está, se usa un
    * valor por defecto (ver IntroScene.tsx). */
   durationMs: z.number().optional(),
+  /** Solo `kind: "intro"`: color sólido (hex) detrás de la imagen — para un
+   * logo que no ocupa toda la pantalla, en vez de dejar el fondo transparente. */
+  backgroundColor: z.string().optional(),
+  /** Solo `kind: "intro"`: ancho de la imagen como % del stage, centrada y
+   * sin recortar (útil para logos). Si no está, la imagen cubre toda la
+   * pantalla como un fondo de escena normal. */
+  imageWidthPercent: z.number().optional(),
 });
 
 export const SceneKindSchema = z.enum(['standard', 'intro']);

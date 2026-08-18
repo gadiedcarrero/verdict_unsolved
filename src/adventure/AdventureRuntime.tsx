@@ -252,6 +252,26 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
   }
 
+  // Para logos que no deben ocupar toda la pantalla: color sólido detrás y
+  // la imagen a un % de ancho, centrada — ver IntroScene.tsx.
+  function updateBackgroundColor(bgId: string, backgroundColor: string | undefined): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      backgrounds: base.backgrounds.map((bg) => (bg.id === bgId ? { ...bg, backgroundColor } : bg)),
+    });
+  }
+
+  function updateBackgroundImageWidth(bgId: string, imageWidthPercent: number | undefined): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      backgrounds: base.backgrounds.map((bg) => (bg.id === bgId ? { ...bg, imageWidthPercent } : bg)),
+    });
+  }
+
   // "intro": secuencia de fondos por tiempo, sin capas/hotspots — ver
   // IntroScene.tsx. `kind` decide si la escena juega así o como point-and-click.
   function updateSceneKind(kind: SceneKind): void {
@@ -459,6 +479,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onAddBackground={(file) => void addBackground(file)}
                   onRemoveBackground={removeBackground}
                   onBackgroundDurationChange={updateBackgroundDuration}
+                  onBackgroundColorChange={updateBackgroundColor}
+                  onBackgroundImageWidthChange={updateBackgroundImageWidth}
                   onChangeKind={updateSceneKind}
                   onChangeIntroSkippable={updateIntroSkippable}
                   onChangeIntroCompleteTarget={updateIntroCompleteTarget}

@@ -113,33 +113,47 @@ function BackgroundThumb({
   assetPath,
   label,
   durationMs,
-  showDuration,
+  backgroundColor,
+  imageWidthPercent,
+  showIntroFields,
   onRemove,
   onDurationChange,
+  onBackgroundColorChange,
+  onImageWidthChange,
 }: {
   gameId: string;
   assetPath: string;
   label: string;
   durationMs: number | undefined;
-  showDuration: boolean;
+  backgroundColor: string | undefined;
+  imageWidthPercent: number | undefined;
+  showIntroFields: boolean;
   onRemove: () => void;
   onDurationChange: (durationMs: number) => void;
+  onBackgroundColorChange: (color: string | undefined) => void;
+  onImageWidthChange: (widthPercent: number | undefined) => void;
 }): JSX.Element {
   const [failed, setFailed] = useState(false);
   return (
-    <div className="shrink-0">
+    <div className="w-24 shrink-0">
       <div className="relative">
         {failed ? (
           <div className="flex h-14 w-24 items-center justify-center rounded border border-dashed border-graphite-600 bg-graphite-800/70 text-[8px] text-graphite-500">
             sin imagen
           </div>
         ) : (
-          <img
-            src={gameAssetUrl(gameId, assetPath)}
-            alt=""
-            onError={() => setFailed(true)}
-            className="h-14 w-24 rounded border border-graphite-700 object-cover"
-          />
+          <div
+            className="flex h-14 w-24 items-center justify-center overflow-hidden rounded border border-graphite-700"
+            style={{ backgroundColor: backgroundColor || undefined }}
+          >
+            <img
+              src={gameAssetUrl(gameId, assetPath)}
+              alt=""
+              onError={() => setFailed(true)}
+              className={imageWidthPercent ? 'max-h-full' : 'h-14 w-24 object-cover'}
+              style={imageWidthPercent ? { width: `${imageWidthPercent}%` } : undefined}
+            />
+          </div>
         )}
         <span className="absolute top-0.5 left-0.5 rounded bg-graphite-950/80 px-1 text-[8px] tracking-widest text-amber-accent uppercase">
           {label}
@@ -152,18 +166,52 @@ function BackgroundThumb({
           ✕
         </button>
       </div>
-      {showDuration && (
-        <label className="mt-1 flex items-center gap-1">
-          <input
-            type="number"
-            min={100}
-            step={100}
-            value={durationMs ?? 2500}
-            onChange={(event) => onDurationChange(Number(event.target.value))}
-            className="w-16 rounded border border-graphite-700 bg-graphite-900 px-1 py-0.5 text-[9px] text-graphite-100"
-          />
-          <span className="text-[8px] text-graphite-500">ms</span>
-        </label>
+      {showIntroFields && (
+        <div className="mt-1 flex flex-col gap-1">
+          <label className="flex items-center gap-1">
+            <input
+              type="number"
+              min={100}
+              step={100}
+              value={durationMs ?? 2500}
+              onChange={(event) => onDurationChange(Number(event.target.value))}
+              className="w-14 rounded border border-graphite-700 bg-graphite-900 px-1 py-0.5 text-[9px] text-graphite-100"
+            />
+            <span className="text-[8px] text-graphite-500">ms</span>
+          </label>
+          <label className="flex items-center gap-1">
+            <input
+              type="color"
+              value={backgroundColor ?? '#0b0f14'}
+              onChange={(event) => onBackgroundColorChange(event.target.value)}
+              className="h-4 w-6 cursor-pointer rounded border border-graphite-700 bg-graphite-900"
+            />
+            <span className="text-[8px] text-graphite-500">fondo</span>
+            {backgroundColor && (
+              <button
+                type="button"
+                onClick={() => onBackgroundColorChange(undefined)}
+                className="text-[8px] text-graphite-500 hover:text-amber-accent"
+              >
+                ✕
+              </button>
+            )}
+          </label>
+          <label className="flex items-center gap-1">
+            <input
+              type="number"
+              min={1}
+              max={100}
+              placeholder="100"
+              value={imageWidthPercent ?? ''}
+              onChange={(event) =>
+                onImageWidthChange(event.target.value === '' ? undefined : Number(event.target.value))
+              }
+              className="w-14 rounded border border-graphite-700 bg-graphite-900 px-1 py-0.5 text-[9px] text-graphite-100"
+            />
+            <span className="text-[8px] text-graphite-500">% tamaño</span>
+          </label>
+        </div>
       )}
     </div>
   );
@@ -176,6 +224,8 @@ function BackgroundsSection({
   onAddBackground,
   onRemoveBackground,
   onDurationChange,
+  onBackgroundColorChange,
+  onImageWidthChange,
 }: {
   gameId: string;
   scene: Scene;
@@ -183,6 +233,8 @@ function BackgroundsSection({
   onAddBackground: (file: File) => void;
   onRemoveBackground: (bgId: string) => void;
   onDurationChange: (bgId: string, durationMs: number) => void;
+  onBackgroundColorChange: (bgId: string, color: string | undefined) => void;
+  onImageWidthChange: (bgId: string, widthPercent: number | undefined) => void;
 }): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isIntro = scene.kind === 'intro';
@@ -198,7 +250,7 @@ function BackgroundsSection({
       <p className="mb-2 text-[10px] font-semibold tracking-widest text-graphite-300 uppercase">Fondos</p>
       <p className="mb-2 text-[9px] text-graphite-500">
         {isIntro
-          ? 'Se muestran en este orden, cada uno durante lo que diga su duración, y después pasa solo al siguiente.'
+          ? 'Se muestran en este orden, cada uno durante lo que diga su duración, y después pasa solo al siguiente. Para un logo: dejale un % de tamaño y un color de fondo en vez de que ocupe toda la pantalla.'
           : 'El primero (BG 1) es el que se ve por defecto. Vincular cada fondo a un objeto/estado se hace más adelante.'}
       </p>
       <div className="mb-2 flex flex-wrap gap-2">
@@ -209,9 +261,13 @@ function BackgroundsSection({
             assetPath={bg.assetPath}
             label={`BG ${index + 1}`}
             durationMs={bg.durationMs}
-            showDuration={isIntro}
+            backgroundColor={bg.backgroundColor}
+            imageWidthPercent={bg.imageWidthPercent}
+            showIntroFields={isIntro}
             onRemove={() => onRemoveBackground(bg.id)}
             onDurationChange={(durationMs) => onDurationChange(bg.id, durationMs)}
+            onBackgroundColorChange={(color) => onBackgroundColorChange(bg.id, color)}
+            onImageWidthChange={(widthPercent) => onImageWidthChange(bg.id, widthPercent)}
           />
         ))}
       </div>
@@ -393,6 +449,8 @@ export function SceneEditorPanel({
   onAddBackground,
   onRemoveBackground,
   onBackgroundDurationChange,
+  onBackgroundColorChange,
+  onBackgroundImageWidthChange,
   onChangeKind,
   onChangeIntroSkippable,
   onChangeIntroCompleteTarget,
@@ -413,6 +471,8 @@ export function SceneEditorPanel({
   onAddBackground: (file: File) => void;
   onRemoveBackground: (bgId: string) => void;
   onBackgroundDurationChange: (bgId: string, durationMs: number) => void;
+  onBackgroundColorChange: (bgId: string, color: string | undefined) => void;
+  onBackgroundImageWidthChange: (bgId: string, widthPercent: number | undefined) => void;
   onChangeKind: (kind: SceneKind) => void;
   onChangeIntroSkippable: (skippable: boolean) => void;
   onChangeIntroCompleteTarget: (sceneId: string) => void;
@@ -456,6 +516,8 @@ export function SceneEditorPanel({
             onAddBackground={onAddBackground}
             onRemoveBackground={onRemoveBackground}
             onDurationChange={onBackgroundDurationChange}
+            onBackgroundColorChange={onBackgroundColorChange}
+            onImageWidthChange={onBackgroundImageWidthChange}
           />
 
           {scene.kind === 'intro' ? (
