@@ -16,13 +16,29 @@ function usePreferencesEffect(): void {
   }, [reduceMotion]);
 }
 
+// El editor recarga la página entera después de crear una escena (para que
+// import.meta.glob la recoja) — sin recordar qué juego estaba abierto, esa
+// recarga te mandaba de vuelta al selector de proyectos en vez de quedarte
+// en el mismo juego.
+const LAST_GAME_ID_KEY = 'verdictUnsolved.lastGameId';
+
 export function App(): JSX.Element {
-  const [gameId, setGameId] = useState<string | null>(null);
+  const [gameId, setGameId] = useState<string | null>(() => localStorage.getItem(LAST_GAME_ID_KEY));
   usePreferencesEffect();
 
-  if (!gameId) {
-    return <ProjectHub onOpenGame={setGameId} />;
+  function openGame(id: string): void {
+    localStorage.setItem(LAST_GAME_ID_KEY, id);
+    setGameId(id);
   }
 
-  return <AdventureRuntime gameId={gameId} onExit={() => setGameId(null)} />;
+  function exitToHub(): void {
+    localStorage.removeItem(LAST_GAME_ID_KEY);
+    setGameId(null);
+  }
+
+  if (!gameId) {
+    return <ProjectHub onOpenGame={openGame} />;
+  }
+
+  return <AdventureRuntime gameId={gameId} onExit={exitToHub} />;
 }

@@ -13,7 +13,7 @@
   "introSkippable": true,
   "menuTitle": {
     "text": "menu.menu-inicio.title",
-    "fontFamily": "serif",
+    "fontFamily": "mono",
     "fontSize": 56,
     "color": "#e6eaef"
   },
@@ -26,18 +26,26 @@
     {
       "id": "continuar",
       "label": "menu.menu-inicio.continuar",
-      "onClick": [{ "type": "continueGame" }]
+      "onClick": [
+        {
+          "type": "continueGame"
+        }
+      ]
     },
     {
       "id": "salir",
       "label": "menu.menu-inicio.salir",
-      "onClick": [{ "type": "quitApp" }]
+      "onClick": [
+        {
+          "type": "quitApp"
+        }
+      ]
     }
   ],
   "menuAppearance": {
-    "position": "center",
-    "buttonStyle": "bordered",
-    "fontFamily": "sans",
+    "position": "left",
+    "buttonStyle": "frameless",
+    "fontFamily": "mono",
     "fontSize": 16,
     "fontColor": "#e6eaef",
     "hoverColor": "#e0a636"

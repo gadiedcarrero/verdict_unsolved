@@ -96,8 +96,17 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
 
   if (!project) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-graphite-950 p-8 text-center text-graphite-200">
-        Proyecto &quot;{gameId}&quot; no encontrado.
+      <div className="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-graphite-950 p-8 text-center text-graphite-200">
+        <p>
+          Proyecto &quot;{gameId}&quot; no encontrado.
+        </p>
+        <button
+          type="button"
+          onClick={onExit}
+          className="rounded border border-graphite-700 px-3 py-1 text-[11px] tracking-widest text-graphite-400 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
+        >
+          Volver al selector de proyectos
+        </button>
       </div>
     );
   }

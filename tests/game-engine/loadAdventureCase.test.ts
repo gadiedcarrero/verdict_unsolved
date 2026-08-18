@@ -60,23 +60,57 @@ describe('loadAdventureCase', () => {
     if (!result.ok) throw new Error(result.error);
     const { scenes, dialogues } = result.data;
 
-    // El contenido del caso (acto 1 en adelante) se está reconstruyendo
-    // desde cero — por ahora solo existen las escenas de arranque (intro,
-    // menú, acto 0) y los diálogos viejos quedan intencionalmente huérfanos
-    // hasta que se recreen sus escenas. Este check vuelve a aplicar en
-    // cuanto haya escenas de acto >= 1 otra vez.
-    if (!scenes.some((scene) => scene.act >= 1)) return;
-
     const sceneIds = new Set(scenes.map((s) => s.id));
-    const referencedSceneIds = new Set<string>();
-    for (const node of Object.values(dialogues)) {
+
+    // Solo cuentan las transiciones de diálogos a los que en verdad se
+    // puede llegar desde una escena (hotspot.onInteract / scene.onEnter) —
+    // contenido todavía no conectado a ninguna escena (p. ej. guiones
+    // viejos mientras se reconstruye un acto) no debe bloquear este check.
+    const reachableNodeIds = new Set<string>();
+    const queue: string[] = [];
+    for (const scene of scenes) {
+      for (const hotspot of scene.hotspots) {
+        for (const action of hotspot.onInteract) {
+          if (action.type === 'dialogue') queue.push(action.nodeId);
+        }
+      }
+      for (const action of scene.onEnter ?? []) {
+        if (action.type === 'dialogue') queue.push(action.nodeId);
+      }
+    }
+    while (queue.length > 0) {
+      const nodeId = queue.pop();
+      if (!nodeId || reachableNodeIds.has(nodeId)) continue;
+      reachableNodeIds.add(nodeId);
+      const node = dialogues[nodeId];
+      if (!node) continue;
+      if (node.next) queue.push(node.next);
+      for (const choice of node.choices ?? []) queue.push(choice.next);
       for (const action of node.onShow ?? []) {
+        if (action.type === 'dialogue') queue.push(action.nodeId);
+      }
+    }
+
+    const referencedSceneIds = new Set<string>();
+    for (const nodeId of reachableNodeIds) {
+      for (const action of dialogues[nodeId]?.onShow ?? []) {
         if (action.type === 'transitionTo') referencedSceneIds.add(action.sceneId);
       }
     }
     for (const scene of scenes) {
       for (const hotspot of scene.hotspots) {
         for (const action of hotspot.onInteract) {
+          if (action.type === 'transitionTo') referencedSceneIds.add(action.sceneId);
+        }
+      }
+      for (const action of scene.onEnter ?? []) {
+        if (action.type === 'transitionTo') referencedSceneIds.add(action.sceneId);
+      }
+      for (const action of scene.onIntroComplete ?? []) {
+        if (action.type === 'transitionTo') referencedSceneIds.add(action.sceneId);
+      }
+      for (const button of scene.menuButtons) {
+        for (const action of button.onClick) {
           if (action.type === 'transitionTo') referencedSceneIds.add(action.sceneId);
         }
       }

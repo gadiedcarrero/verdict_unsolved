@@ -1,0 +1,19 @@
+{
+  "id": "escena-1",
+  "act": 1,
+  "kind": "standard",
+  "backgrounds": [],
+  "layers": [],
+  "hotspots": [],
+  "introSkippable": true,
+  "menuTitle": null,
+  "menuButtons": [],
+  "menuAppearance": {
+    "position": "center",
+    "buttonStyle": "bordered",
+    "fontFamily": "sans",
+    "fontSize": 16,
+    "fontColor": "#e6eaef",
+    "hoverColor": "#e0a636"
+  }
+}
