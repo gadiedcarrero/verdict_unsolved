@@ -1,7 +1,0 @@
-{
-  "id": "oficina-acto1",
-  "act": 1,
-  "backgrounds": [{ "id": "bg-1", "assetPath": "backgrounds/oficina-noche-lluvia.png" }],
-  "layers": [],
-  "hotspots": []
-}

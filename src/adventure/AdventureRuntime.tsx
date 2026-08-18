@@ -108,10 +108,14 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
       ? { telefono: 'layers/telefono-llamada-entrante.png' }
       : undefined;
 
-  if (!displayScene) {
+  // Fuera del modo edición sí hace falta una escena real para jugar. En modo
+  // edición no: sin escenas todavía (p. ej. mientras se reconstruye el
+  // contenido de cero) el editor debe seguir mostrando el panel para poder
+  // crear la primera.
+  if (!displayScene && !editMode) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-graphite-950 text-graphite-200">
-        Escena &quot;{editMode ? activeEditorSceneId : currentSceneId}&quot; no encontrada.
+        Escena &quot;{currentSceneId}&quot; no encontrada.
       </div>
     );
   }
@@ -466,41 +470,49 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
             </div>
           </aside>
           <div className="min-w-0 flex-1">
-            <SceneViewer
-              scene={displayScene}
-              strings={strings}
-              transitioning={transitioning}
-              layerOverrides={layerOverrides}
-              onInteract={interactHotspot}
-              editMode={editorTab === 'scene'}
-              onObjectRectChange={updateObjectRect}
-            />
+            {displayScene ? (
+              <SceneViewer
+                scene={displayScene}
+                strings={strings}
+                transitioning={transitioning}
+                layerOverrides={layerOverrides}
+                onInteract={interactHotspot}
+                editMode={editorTab === 'scene'}
+                onObjectRectChange={updateObjectRect}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-[11px] tracking-widest text-graphite-600 uppercase">
+                Sin escenas — creá una desde el panel
+              </div>
+            )}
           </div>
         </div>
       ) : (
         // Modo juego: la escena vuelve a ocupar toda la pantalla, como
         // siempre — el editor no deja rastro.
-        <SceneViewer
-          scene={displayScene}
-          strings={strings}
-          transitioning={transitioning}
-          layerOverrides={layerOverrides}
-          onInteract={interactHotspot}
-        >
-          {activeInterfaceId ? (
-            <InterfaceHost interfaceId={activeInterfaceId} />
-          ) : (
-            activeNode && (
-              <DialogueOverlay
-                node={activeNode}
-                characters={displayCharacters}
-                strings={strings}
-                onAdvance={advance}
-                onChoose={selectChoice}
-              />
-            )
-          )}
-        </SceneViewer>
+        displayScene && (
+          <SceneViewer
+            scene={displayScene}
+            strings={strings}
+            transitioning={transitioning}
+            layerOverrides={layerOverrides}
+            onInteract={interactHotspot}
+          >
+            {activeInterfaceId ? (
+              <InterfaceHost interfaceId={activeInterfaceId} />
+            ) : (
+              activeNode && (
+                <DialogueOverlay
+                  node={activeNode}
+                  characters={displayCharacters}
+                  strings={strings}
+                  onAdvance={advance}
+                  onChoose={selectChoice}
+                />
+              )
+            )}
+          </SceneViewer>
+        )
       )}
     </div>
   );

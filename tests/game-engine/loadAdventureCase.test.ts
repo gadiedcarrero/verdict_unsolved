@@ -9,7 +9,6 @@ describe('loadAdventureCase', () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.case.id).toBe('case-001-la-ultima-llamada');
-      expect(result.data.scenes.length).toBeGreaterThan(0);
       expect(Object.keys(result.data.dialogues).length).toBeGreaterThan(0);
       expect(result.data.agents.length).toBe(3);
       expect(result.data.equipmentItems.length).toBeGreaterThan(0);
@@ -60,6 +59,12 @@ describe('loadAdventureCase', () => {
     const result = loadAdventureCase(adventureCaseBundleRaw);
     if (!result.ok) throw new Error(result.error);
     const { scenes, dialogues } = result.data;
+
+    // Las escenas se están reconstruyendo desde cero (ver
+    // docs/case-001-la-ultima-llamada) — mientras no haya ninguna, no hay
+    // nada que validar todavía; este check vuelve a aplicar en cuanto se
+    // recreen.
+    if (scenes.length === 0) return;
 
     const sceneIds = new Set(scenes.map((s) => s.id));
     const referencedSceneIds = new Set<string>();

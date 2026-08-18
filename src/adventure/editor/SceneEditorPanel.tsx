@@ -307,7 +307,7 @@ export function SceneEditorPanel({
   onLabelTextChange,
   onCreateZone,
 }: {
-  scene: Scene;
+  scene: Scene | null;
   strings: Record<string, string>;
   sceneOptions: { id: string; act: number }[];
   activeSceneId: string;
@@ -332,30 +332,41 @@ export function SceneEditorPanel({
         onCreateScene={onCreateScene}
       />
 
-      <BackgroundsSection
-        scene={scene}
-        uploading={uploadingBackground}
-        onAddBackground={onAddBackground}
-        onRemoveBackground={onRemoveBackground}
-      />
+      {scene === null ? (
+        <p className="text-[10px] text-graphite-500">
+          No hay ninguna escena todavía — creá una desde arriba para empezar a editarla.
+        </p>
+      ) : (
+        <>
+          <BackgroundsSection
+            scene={scene}
+            uploading={uploadingBackground}
+            onAddBackground={onAddBackground}
+            onRemoveBackground={onRemoveBackground}
+          />
 
-      <p className="mb-3 text-[10px] text-graphite-400">
-        <span className="text-amber-accent">Ámbar</span> = objeto con imagen propia. <span className="text-sky-400">Celeste</span> = zona
-        sin imagen aparte. Nada cambia hasta que aprietes Guardar.
-      </p>
+          <p className="mb-3 text-[10px] text-graphite-400">
+            <span className="text-amber-accent">Ámbar</span> = objeto con imagen propia.{' '}
+            <span className="text-sky-400">Celeste</span> = zona sin imagen aparte. Nada cambia hasta que aprietes
+            Guardar.
+          </p>
 
-      <CreateZoneForm onCreate={onCreateZone} />
+          <CreateZoneForm onCreate={onCreateZone} />
 
-      {buildEditableObjects(scene).map((object) => (
-        <ObjectFields
-          key={object.id}
-          object={object}
-          strings={strings}
-          onRectChange={(rect) => onObjectRectChange(object.id, rect)}
-          onInteractableChange={(interactable) => onToggleInteractable(object.id, interactable)}
-          onLabelTextChange={(text) => onLabelTextChange(object.labelKey ?? `hotspot.${scene.id}.${object.id}`, text)}
-        />
-      ))}
+          {buildEditableObjects(scene).map((object) => (
+            <ObjectFields
+              key={object.id}
+              object={object}
+              strings={strings}
+              onRectChange={(rect) => onObjectRectChange(object.id, rect)}
+              onInteractableChange={(interactable) => onToggleInteractable(object.id, interactable)}
+              onLabelTextChange={(text) =>
+                onLabelTextChange(object.labelKey ?? `hotspot.${scene.id}.${object.id}`, text)
+              }
+            />
+          ))}
+        </>
+      )}
     </div>
   );
 }
