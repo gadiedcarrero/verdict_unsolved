@@ -2,7 +2,7 @@ import { useEffect, useState, type JSX } from 'react';
 import { CharacterEditorPanel } from './editor/CharacterEditorPanel';
 import type { EditableRect } from './editor/EditableBox';
 import { boundingBoxOfPoints } from './editor/polygonUtils';
-import { SceneEditorPanel } from './editor/SceneEditorPanel';
+import { SceneEditorPanel, type VerbActionKind } from './editor/SceneEditorPanel';
 import { SiteSettingsPanel } from './editor/SiteSettingsPanel';
 import { slugify, uniqueId } from './editor/slug';
 import { getGameProject } from '../game-engine/scene-engine/gameProjects';
@@ -10,6 +10,8 @@ import type {
   Character,
   Hotspot,
   HotspotShape,
+  HotspotVerb,
+  HotspotVerbIcon,
   MenuAppearance,
   PolygonPoint,
   Scene,
@@ -45,6 +47,7 @@ type PolygonDraft = {
   repeatable: boolean;
   labelStyle: TextStyleOverride | undefined;
   labelOffset: PolygonPoint | undefined;
+  verbs: HotspotVerb[];
   points: PolygonPoint[];
 };
 
@@ -74,6 +77,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const transitioning = useAdventureRuntimeStore((s) => s.transitioning);
   const ringState = useAdventureRuntimeStore((s) => s.ringState);
   const interactHotspot = useAdventureRuntimeStore((s) => s.interactHotspot);
+  const activeVerbMenuHotspotId = useAdventureRuntimeStore((s) => s.activeVerbMenuHotspotId);
+  const selectVerb = useAdventureRuntimeStore((s) => s.selectVerb);
+  const closeVerbMenu = useAdventureRuntimeStore((s) => s.closeVerbMenu);
   const advance = useAdventureRuntimeStore((s) => s.advance);
   const selectChoice = useAdventureRuntimeStore((s) => s.selectChoice);
   const getActiveScene = useAdventureRuntimeStore((s) => s.getActiveScene);
@@ -121,6 +127,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const [editedSiteSettings, setEditedSiteSettings] = useState<SiteSettings | null>(null);
   const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
   const [siteSettingsSaveMessage, setSiteSettingsSaveMessage] = useState<string | null>(null);
+  const [uploadingCursor, setUploadingCursor] = useState<'default' | 'hover' | null>(null);
 
   // Zona de forma libre en proceso de trazado (ver "Crear zona" o "Reiniciar
   // forma") — no null mientras se están juntando puntos a click.
@@ -243,6 +250,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           onInteract: [],
           repeatable: true,
           interactable,
+          verbs: [],
         },
       ],
     });
@@ -269,6 +277,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         repeatable: true,
         labelStyle: undefined,
         labelOffset: undefined,
+        verbs: [],
         points: [],
       });
       return;
@@ -286,6 +295,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           onInteract: [],
           repeatable: true,
           interactable,
+          verbs: [],
         },
       ],
     });
@@ -303,6 +313,97 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       ...base,
       hotspots: base.hotspots.map((h) =>
         h.id === objectId ? { ...h, labelStyle: patch === null ? undefined : { ...(h.labelStyle ?? {}), ...patch } } : h,
+      ),
+    });
+  }
+
+  // "verbs": si no está vacío, un click en la zona abre el menú circular en
+  // vez de correr onInteract directo — ver HotspotVerbMenu.tsx.
+  function setHotspotVerbsEnabled(objectId: string, enabled: boolean): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    if (!enabled) {
+      setEditedScene({
+        ...base,
+        hotspots: base.hotspots.map((h) => (h.id === objectId ? { ...h, verbs: [] } : h)),
+      });
+      return;
+    }
+    const exploreKey = `verb.${base.id}.${objectId}.explorar`;
+    const interactKey = `verb.${base.id}.${objectId}.interactuar`;
+    setEditedScene({
+      ...base,
+      hotspots: base.hotspots.map((h) =>
+        h.id === objectId
+          ? {
+              ...h,
+              verbs: [
+                { id: 'explorar', label: exploreKey, icon: 'eye', onInteract: [] },
+                { id: 'interactuar', label: interactKey, icon: 'hand', onInteract: [] },
+              ],
+            }
+          : h,
+      ),
+    });
+    setPendingStrings((prev) => ({ ...prev, [exploreKey]: 'Explorar', [interactKey]: 'Interactuar' }));
+  }
+
+  function addHotspotVerb(objectId: string, name: string, labelText: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    const hotspot = base.hotspots.find((h) => h.id === objectId);
+    if (!hotspot) return;
+    const taken = new Set(hotspot.verbs.map((v) => v.id));
+    const id = uniqueId(slugify(name), taken);
+    const labelKey = `verb.${base.id}.${objectId}.${id}`;
+    setEditedScene({
+      ...base,
+      hotspots: base.hotspots.map((h) =>
+        h.id === objectId ? { ...h, verbs: [...h.verbs, { id, label: labelKey, icon: 'hand', onInteract: [] }] } : h,
+      ),
+    });
+    setPendingStrings((prev) => ({ ...prev, [labelKey]: labelText }));
+  }
+
+  function removeHotspotVerb(objectId: string, verbId: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      hotspots: base.hotspots.map((h) =>
+        h.id === objectId ? { ...h, verbs: h.verbs.filter((v) => v.id !== verbId) } : h,
+      ),
+    });
+  }
+
+  function updateHotspotVerbIcon(objectId: string, verbId: string, icon: HotspotVerbIcon): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      hotspots: base.hotspots.map((h) =>
+        h.id === objectId ? { ...h, verbs: h.verbs.map((v) => (v.id === verbId ? { ...v, icon } : v)) } : h,
+      ),
+    });
+  }
+
+  function updateHotspotVerbAction(objectId: string, verbId: string, kind: VerbActionKind, value: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    const onInteract: SceneAction[] =
+      kind === 'none'
+        ? []
+        : kind === 'dialogue'
+          ? value
+            ? [{ type: 'dialogue', nodeId: value }]
+            : []
+          : value
+            ? [{ type: 'transitionTo', sceneId: value, fade: 'fade' }]
+            : [];
+    setEditedScene({
+      ...base,
+      hotspots: base.hotspots.map((h) =>
+        h.id === objectId ? { ...h, verbs: h.verbs.map((v) => (v.id === verbId ? { ...v, onInteract } : v)) } : h,
       ),
     });
   }
@@ -344,6 +445,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       repeatable: hotspot.repeatable,
       labelStyle: hotspot.labelStyle,
       labelOffset: hotspot.labelOffset,
+      verbs: hotspot.verbs,
       points: [],
     });
   }
@@ -381,6 +483,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       interactable: polygonDraft.interactable,
       labelStyle: polygonDraft.labelStyle,
       labelOffset: polygonDraft.labelOffset,
+      verbs: polygonDraft.verbs,
     };
     setEditedScene({ ...base, hotspots: [...base.hotspots, newHotspot] });
     if (polygonDraft.labelText !== null) {
@@ -671,6 +774,37 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setEditedSiteSettings({ ...base, hotspotLabelStyle: { ...base.hotspotLabelStyle, ...patch } });
   }
 
+  async function uploadCursor(kind: 'default' | 'hover', file: File): Promise<void> {
+    setUploadingCursor(kind);
+    setSiteSettingsSaveMessage(null);
+    try {
+      const ext = file.name.split('.').pop() || 'png';
+      const buffer = new Uint8Array(await file.arrayBuffer());
+      const result = await window.api.saveCursorImage(gameId, `cursor-${kind}`, ext, buffer);
+      if (result.ok) {
+        const base = editedSiteSettings ?? baseSiteSettings;
+        setEditedSiteSettings({
+          ...base,
+          cursor: { ...base.cursor, [kind === 'default' ? 'defaultCursorPath' : 'hoverCursorPath']: result.path },
+        });
+      } else {
+        setSiteSettingsSaveMessage(`Error subiendo cursor: ${result.error}`);
+      }
+    } catch (error) {
+      setSiteSettingsSaveMessage(`Error subiendo cursor: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setUploadingCursor(null);
+    }
+  }
+
+  function removeCursor(kind: 'default' | 'hover'): void {
+    const base = editedSiteSettings ?? baseSiteSettings;
+    setEditedSiteSettings({
+      ...base,
+      cursor: { ...base.cursor, [kind === 'default' ? 'defaultCursorPath' : 'hoverCursorPath']: null },
+    });
+  }
+
   async function handleSaveSiteSettings(): Promise<void> {
     if (!editedSiteSettings) return;
     setSiteSettingsSaving(true);
@@ -816,6 +950,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onCancelPolygonDraft={cancelPolygonDraft}
                   onResetShape={resetShape}
                   onRemoveZone={removeHotspot}
+                  onSetHotspotVerbsEnabled={setHotspotVerbsEnabled}
+                  onAddHotspotVerb={addHotspotVerb}
+                  onRemoveHotspotVerb={removeHotspotVerb}
+                  onHotspotVerbLabelTextChange={setLabelText}
+                  onHotspotVerbIconChange={updateHotspotVerbIcon}
+                  onHotspotVerbActionChange={updateHotspotVerbAction}
                 />
               ) : editorTab === 'characters' ? (
                 <CharacterEditorPanel
@@ -830,8 +970,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 />
               ) : (
                 <SiteSettingsPanel
+                  gameId={gameId}
                   settings={displaySiteSettings}
+                  uploadingCursor={uploadingCursor}
                   onChangeHotspotLabelStyle={updateSiteSettingsHotspotLabelStyle}
+                  onUploadCursor={(kind, file) => void uploadCursor(kind, file)}
+                  onRemoveCursor={removeCursor}
                 />
               )}
             </div>
@@ -922,9 +1066,15 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           </div>
         </div>
       ) : displayScene?.kind === 'intro' ? (
-        <IntroScene key={displayScene.id} gameId={gameId} scene={displayScene} />
+        <IntroScene key={displayScene.id} gameId={gameId} scene={displayScene} siteSettings={displaySiteSettings} />
       ) : displayScene?.kind === 'menu' ? (
-        <MenuScene key={displayScene.id} gameId={gameId} scene={displayScene} strings={strings} />
+        <MenuScene
+          key={displayScene.id}
+          gameId={gameId}
+          scene={displayScene}
+          strings={strings}
+          siteSettings={displaySiteSettings}
+        />
       ) : displayScene ? (
         // Modo juego: la escena vuelve a ocupar toda la pantalla, como
         // siempre — el editor no deja rastro.
@@ -936,6 +1086,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           transitioning={transitioning}
           layerOverrides={layerOverrides}
           onInteract={interactHotspot}
+          activeVerbMenuHotspotId={activeVerbMenuHotspotId}
+          onSelectVerb={selectVerb}
+          onCloseVerbMenu={closeVerbMenu}
         >
           {activeInterfaceId ? (
             <InterfaceHost interfaceId={activeInterfaceId} />

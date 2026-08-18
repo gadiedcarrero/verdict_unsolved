@@ -13,6 +13,8 @@ const api: DesktopApi = {
     ipcRenderer.invoke('scene-editor:save-portrait', gameId, characterId, ext, data),
   saveSceneBackground: (gameId, fileId, ext, data) =>
     ipcRenderer.invoke('scene-editor:save-background', gameId, fileId, ext, data),
+  saveCursorImage: (gameId, fileId, ext, data) =>
+    ipcRenderer.invoke('scene-editor:save-cursor', gameId, fileId, ext, data),
 };
 
 contextBridge.exposeInMainWorld('api', api);

@@ -5,6 +5,7 @@ import type {
   AdventureCaseBundle,
   DialogueNode,
   Hotspot,
+  HotspotVerb,
   InterfaceId,
   Scene,
   SceneAction,
@@ -29,11 +30,18 @@ type AdventureRuntimeState = {
   ringState: 'silent' | 'ringing';
   ringAttempts: number;
   transitioning: boolean;
+  /** No null mientras está abierto el menú circular de verbos (Explorar/
+   * Interactuar/...) de este hotspot — ver Hotspot.verbs. */
+  activeVerbMenuHotspotId: string | null;
 
   init: (bundle: AdventureCaseBundle, persisted: AdventureCaseState | null) => void;
   getActiveScene: () => Scene | null;
   getActiveNode: () => DialogueNode | null;
+  /** Si el hotspot tiene verbos definidos, abre el menú circular en vez de
+   * correr `onInteract` directo. */
   interactHotspot: (hotspot: Hotspot) => void;
+  closeVerbMenu: () => void;
+  selectVerb: (verb: HotspotVerb) => void;
   openDialogue: (nodeId: string) => void;
   advance: () => void;
   selectChoice: (next: string, setState?: Record<string, unknown>, addFlag?: string) => void;
@@ -71,6 +79,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   ringState: 'silent',
   ringAttempts: 0,
   transitioning: false,
+  activeVerbMenuHotspotId: null,
 
   init: (bundle, persisted) => {
     const startingSceneId = bundle.case.startingSceneId;
@@ -85,6 +94,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       ringState: 'silent',
       ringAttempts: 0,
       transitioning: false,
+      activeVerbMenuHotspotId: null,
     });
   },
 
@@ -123,7 +133,21 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       return;
     }
 
+    if (hotspot.verbs.length > 0) {
+      set({ activeVerbMenuHotspotId: hotspot.id });
+      return;
+    }
+
     get().runActions(hotspot.onInteract);
+  },
+
+  closeVerbMenu: () => {
+    set({ activeVerbMenuHotspotId: null });
+  },
+
+  selectVerb: (verb) => {
+    set({ activeVerbMenuHotspotId: null });
+    get().runActions(verb.onInteract);
   },
 
   openDialogue: (nodeId) => {
@@ -221,7 +245,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   },
 
   transitionToScene: (sceneId, fade) => {
-    set({ activeDialogueNodeId: null, activeInterfaceId: null, transitioning: true });
+    set({ activeDialogueNodeId: null, activeInterfaceId: null, activeVerbMenuHotspotId: null, transitioning: true });
     const delay = fade === 'cut' ? 0 : SCENE_FADE_MS;
     window.setTimeout(() => {
       const scene = get().bundle?.scenes.find((s) => s.id === sceneId) ?? null;
@@ -244,6 +268,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       currentSceneId: sceneId,
       activeDialogueNodeId: null,
       activeInterfaceId: null,
+      activeVerbMenuHotspotId: null,
       officeInteractions: [],
       ringState: 'silent',
       ringAttempts: 0,
@@ -258,6 +283,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       currentSceneId: '',
       activeDialogueNodeId: null,
       activeInterfaceId: null,
+      activeVerbMenuHotspotId: null,
       caseState: createEmptyAdventureCaseState(''),
       officeInteractions: [],
       ringState: 'silent',

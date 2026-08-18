@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type JSX } from 'react';
-import type { Scene } from '../game-engine/scene-engine/schemas';
+import type { Scene, SiteSettings } from '../game-engine/scene-engine/schemas';
+import { cursorCssValue } from './cursorCss';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
 import { PlaceholderLayer } from './PlaceholderLayer';
 import { useStageSize } from './useStageSize';
@@ -12,7 +13,15 @@ const DEFAULT_SLIDE_MS = 2500;
  * el botón "Comenzar") dispara `scene.onIntroComplete`, típicamente un
  * `transitionTo` al menú. Ver Scene.kind en schemas.ts.
  */
-export function IntroScene({ gameId, scene }: { gameId: string; scene: Scene }): JSX.Element {
+export function IntroScene({
+  gameId,
+  scene,
+  siteSettings,
+}: {
+  gameId: string;
+  scene: Scene;
+  siteSettings: SiteSettings;
+}): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const { width, height } = useStageSize(containerRef);
   const [index, setIndex] = useState(0);
@@ -40,7 +49,12 @@ export function IntroScene({ gameId, scene }: { gameId: string; scene: Scene }):
     <div ref={containerRef} className="flex h-screen w-screen items-center justify-center bg-graphite-950">
       <div
         className="relative overflow-hidden bg-graphite-950"
-        style={{ width, height, backgroundColor: current?.backgroundColor }}
+        style={{
+          width,
+          height,
+          backgroundColor: current?.backgroundColor,
+          cursor: cursorCssValue(gameId, siteSettings.cursor.defaultCursorPath, 'auto'),
+        }}
       >
         {current ? (
           current.imageWidthPercent ? (

@@ -33,6 +33,9 @@ function portraitsDir(gameId: string): string {
 function backgroundsDir(gameId: string): string {
   return `${assetsDir(gameId)}/backgrounds`;
 }
+function cursorsDir(gameId: string): string {
+  return `${assetsDir(gameId)}/cursors`;
+}
 
 function isValidId(value: unknown): value is string {
   return typeof value === 'string' && ID_PATTERN.test(value);
@@ -145,6 +148,37 @@ export function registerSceneEditorHandlers(): void {
         const dir = join(app.getAppPath(), portraitsDir(gameId));
         await mkdir(dir, { recursive: true });
         const relativePath = `portraits/${characterId}.${ext.toLowerCase()}`;
+        const filePath = join(app.getAppPath(), assetsDir(gameId), relativePath);
+        await writeFile(filePath, Buffer.from(data));
+        return { ok: true, path: relativePath };
+      } catch (error) {
+        return { ok: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    'scene-editor:save-cursor',
+    async (_event, gameId: unknown, fileId: unknown, ext: unknown, data: unknown) => {
+      if (app.isPackaged) {
+        return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
+      }
+      if (!isValidId(gameId)) {
+        return { ok: false, error: `Id de juego inválido: ${String(gameId)}` };
+      }
+      if (!isValidId(fileId)) {
+        return { ok: false, error: `Id de cursor inválido: ${String(fileId)}` };
+      }
+      if (typeof ext !== 'string' || !EXT_PATTERN.test(ext)) {
+        return { ok: false, error: `Extensión de archivo inválida: ${String(ext)}` };
+      }
+      if (!(data instanceof Uint8Array)) {
+        return { ok: false, error: 'Datos de imagen inválidos.' };
+      }
+      try {
+        const dir = join(app.getAppPath(), cursorsDir(gameId));
+        await mkdir(dir, { recursive: true });
+        const relativePath = `cursors/${fileId}.${ext.toLowerCase()}`;
         const filePath = join(app.getAppPath(), assetsDir(gameId), relativePath);
         await writeFile(filePath, Buffer.from(data));
         return { ok: true, path: relativePath };

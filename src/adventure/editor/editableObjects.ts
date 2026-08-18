@@ -1,4 +1,10 @@
-import type { HotspotShape, PolygonPoint, Scene, TextStyleOverride } from '../../game-engine/scene-engine/schemas';
+import type {
+  HotspotShape,
+  HotspotVerb,
+  PolygonPoint,
+  Scene,
+  TextStyleOverride,
+} from '../../game-engine/scene-engine/schemas';
 import { resolveLabelPosition } from '../hotspotLabel';
 import type { EditableRect } from './EditableBox';
 
@@ -22,6 +28,9 @@ export type EditableObject = {
   /** Dónde se ancla el tooltip (automático o arrastrado a mano), null si
    * todavía no hay hotspot. */
   labelPosition: PolygonPoint | null;
+  /** Si no está vacío, un click abre el menú circular de verbos en vez de
+   * correr `onInteract` directo. [] en objetos sin hotspot todavía. */
+  verbs: HotspotVerb[];
 };
 
 /**
@@ -47,6 +56,7 @@ export function buildEditableObjects(scene: Scene): EditableObject[] {
       points: null,
       labelStyle: hotspot?.labelStyle,
       labelPosition: hotspot ? resolveLabelPosition(hotspot) : null,
+      verbs: hotspot?.verbs ?? [],
     };
   });
 
@@ -62,6 +72,7 @@ export function buildEditableObjects(scene: Scene): EditableObject[] {
       points: hotspot.points ?? null,
       labelStyle: hotspot.labelStyle,
       labelPosition: resolveLabelPosition(hotspot),
+      verbs: hotspot.verbs,
     }));
 
   return [...spriteObjects, ...zoneObjects];

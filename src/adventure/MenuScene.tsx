@@ -1,5 +1,6 @@
 import { useRef, type JSX } from 'react';
-import type { Scene } from '../game-engine/scene-engine/schemas';
+import type { Scene, SiteSettings } from '../game-engine/scene-engine/schemas';
+import { cursorCssValue } from './cursorCss';
 import { translate } from '../i18n/translate';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
 import { MENU_POSITION_CLASSES, MenuButtonView } from './MenuButtonView';
@@ -17,10 +18,12 @@ export function MenuScene({
   gameId,
   scene,
   strings,
+  siteSettings,
 }: {
   gameId: string;
   scene: Scene;
   strings: Record<string, string>;
+  siteSettings: SiteSettings;
 }): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const { width, height } = useStageSize(containerRef);
@@ -30,7 +33,10 @@ export function MenuScene({
 
   return (
     <div ref={containerRef} className="flex h-screen w-screen items-center justify-center bg-graphite-950">
-      <div className="relative overflow-hidden bg-graphite-950" style={{ width, height }}>
+      <div
+        className="relative overflow-hidden bg-graphite-950"
+        style={{ width, height, cursor: cursorCssValue(gameId, siteSettings.cursor.defaultCursorPath, 'auto') }}
+      >
         {activeBackground ? (
           <PlaceholderLayer
             gameId={gameId}

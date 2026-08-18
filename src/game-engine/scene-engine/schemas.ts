@@ -6,7 +6,7 @@ import { z } from 'zod';
  */
 
 /** Compartida por la tipografía de menús, títulos y tooltips de hotspot. */
-export const FontFamilySchema = z.enum(['sans', 'serif', 'mono']);
+export const FontFamilySchema = z.enum(['sans', 'serif', 'mono', 'comic-sans']);
 
 export const SceneLayerSchema = z.object({
   id: z.string(),
@@ -65,6 +65,17 @@ export const PolygonPointSchema = z.object({ x: z.number(), y: z.number() });
 
 export const HotspotShapeSchema = z.enum(['rect', 'polygon']);
 
+export const HotspotVerbIconSchema = z.enum(['eye', 'hand', 'chat', 'bag', 'gear']);
+
+export const HotspotVerbSchema = z.object({
+  /** Auto-generado al crearlo en el editor. */
+  id: z.string(),
+  /** Clave de traducción (igual que Hotspot.label), no el texto en sí. */
+  label: z.string(),
+  icon: HotspotVerbIconSchema.default('hand'),
+  onInteract: z.array(SceneActionSchema),
+});
+
 export const HotspotSchema = z.object({
   id: z.string(),
   /** Clave de traducción (ver locales/es.json del caso), no el texto en sí —
@@ -97,6 +108,10 @@ export const HotspotSchema = z.object({
   /** Posición del tooltip, en % del stage — si no está, se calcula sola
    * (centro-arriba del bounding box). Se arrastra desde el editor. */
   labelOffset: PolygonPointSchema.optional(),
+  /** Si no está vacío, un click en la zona abre un menú circular con estas
+   * opciones (ej. Explorar/Interactuar) en vez de correr `onInteract`
+   * directo — cada verbo tiene sus propias acciones. */
+  verbs: z.array(HotspotVerbSchema).default([]),
 });
 
 export const CharacterSchema = z.object({
@@ -266,12 +281,22 @@ export const EquipmentItemSchema = z.object({
   riskLabel: z.string(),
 });
 
-/** Ajustes generales del sitio/juego — hoy solo la tipografía por defecto
- * del tooltip de hotspot, pero es el lugar para sumar más defaults
- * generales (que cada objeto puede seguir pisando puntualmente) más
- * adelante. */
+/** Cómo se ve el cursor del mouse en este juego — esta es una plataforma
+ * para hacer varios juegos, así que ni el ícono por defecto ni el de "esto
+ * es interactuable" deberían quedar fijos (una lupa tiene sentido acá, en
+ * otro juego podría ser una banana). Rutas relativas dentro de
+ * assets/games/<gameId>/cursors/, o null = cursor normal del sistema. */
+export const CursorSettingsSchema = z.object({
+  defaultCursorPath: z.string().nullable().default(null),
+  /** Se usa en vez del anterior al pasar el mouse sobre una zona interactuable. */
+  hoverCursorPath: z.string().nullable().default(null),
+});
+
+/** Ajustes generales del sitio/juego. */
 export const SiteSettingsSchema = z.object({
+  /** Tipografía por defecto del tooltip de hotspot. */
   hotspotLabelStyle: TextStyleSchema.default({ fontFamily: 'sans', fontSize: 10, color: '#e6eaef' }),
+  cursor: CursorSettingsSchema.default({ defaultCursorPath: null, hoverCursorPath: null }),
 });
 
 export const AdventureCaseBundleSchema = z.object({
@@ -285,7 +310,10 @@ export const AdventureCaseBundleSchema = z.object({
   /** Diccionario clave → texto en español. Ver docs sobre i18n en el editor. */
   strings: z.record(z.string(), z.string()),
   characters: z.array(CharacterSchema),
-  siteSettings: SiteSettingsSchema.default({ hotspotLabelStyle: { fontFamily: 'sans', fontSize: 10, color: '#e6eaef' } }),
+  siteSettings: SiteSettingsSchema.default({
+    hotspotLabelStyle: { fontFamily: 'sans', fontSize: 10, color: '#e6eaef' },
+    cursor: { defaultCursorPath: null, hoverCursorPath: null },
+  }),
 });
 
 export type SceneLayer = z.infer<typeof SceneLayerSchema>;
@@ -293,10 +321,13 @@ export type InterfaceId = z.infer<typeof InterfaceIdSchema>;
 export type SceneAction = z.infer<typeof SceneActionSchema>;
 export type Hotspot = z.infer<typeof HotspotSchema>;
 export type HotspotShape = z.infer<typeof HotspotShapeSchema>;
+export type HotspotVerb = z.infer<typeof HotspotVerbSchema>;
+export type HotspotVerbIcon = z.infer<typeof HotspotVerbIconSchema>;
 export type PolygonPoint = z.infer<typeof PolygonPointSchema>;
 export type TextStyle = z.infer<typeof TextStyleSchema>;
 export type TextStyleOverride = z.infer<typeof TextStyleOverrideSchema>;
 export type SiteSettings = z.infer<typeof SiteSettingsSchema>;
+export type CursorSettings = z.infer<typeof CursorSettingsSchema>;
 export type SceneBackground = z.infer<typeof SceneBackgroundSchema>;
 export type SceneKind = z.infer<typeof SceneKindSchema>;
 export type MenuButton = z.infer<typeof MenuButtonSchema>;

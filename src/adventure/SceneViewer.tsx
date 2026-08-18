@@ -1,11 +1,19 @@
 import { useRef, useState, type JSX, type ReactNode } from 'react';
-import type { Hotspot as HotspotData, PolygonPoint, Scene, SiteSettings } from '../game-engine/scene-engine/schemas';
+import type {
+  Hotspot as HotspotData,
+  HotspotVerb,
+  PolygonPoint,
+  Scene,
+  SiteSettings,
+} from '../game-engine/scene-engine/schemas';
+import { cursorCssValue } from './cursorCss';
 import { translate } from '../i18n/translate';
 import { buildEditableObjects } from './editor/editableObjects';
 import { EditableBox, type EditableRect } from './editor/EditableBox';
 import { HotspotLabelHandle } from './editor/HotspotLabelHandle';
 import { PolygonPointEditor } from './editor/PolygonPointEditor';
 import { HotspotArea } from './Hotspot';
+import { HotspotVerbMenu } from './HotspotVerbMenu';
 import { MENU_POSITION_CLASSES, MenuButtonView } from './MenuButtonView';
 import { MENU_TITLE_POSITION_CLASSES, MenuTitleView } from './MenuTitleView';
 import { PlaceholderLayer } from './PlaceholderLayer';
@@ -28,6 +36,9 @@ export function SceneViewer({
   polygonDraftPoints,
   onAddPolygonDraftPoint,
   onClosePolygonDraft,
+  activeVerbMenuHotspotId,
+  onSelectVerb,
+  onCloseVerbMenu,
 }: {
   gameId: string;
   scene: Scene;
@@ -51,6 +62,10 @@ export function SceneViewer({
   polygonDraftPoints?: PolygonPoint[] | null;
   onAddPolygonDraftPoint?: (point: PolygonPoint) => void;
   onClosePolygonDraft?: () => void;
+  /** Id del hotspot con el menú circular de verbos abierto — ver Hotspot.verbs. */
+  activeVerbMenuHotspotId?: string | null;
+  onSelectVerb?: (verb: HotspotVerb) => void;
+  onCloseVerbMenu?: () => void;
 }): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -68,7 +83,14 @@ export function SceneViewer({
       <div
         ref={stageRef}
         className="relative overflow-hidden bg-graphite-950"
-        style={{ width, height, backgroundColor: activeBackground?.backgroundColor }}
+        style={{
+          width,
+          height,
+          backgroundColor: activeBackground?.backgroundColor,
+          // El cursor custom es solo para el juego real — en modo edición
+          // interfiere con cursor-move/cursor-pointer de los handles.
+          cursor: editMode ? undefined : cursorCssValue(gameId, siteSettings.cursor.defaultCursorPath, 'auto'),
+        }}
       >
         {activeBackground ? (
           activeBackground.imageWidthPercent ? (
@@ -120,6 +142,7 @@ export function SceneViewer({
                 hotspot={hotspot}
                 strings={strings}
                 labelStyle={resolveTextStyle(siteSettings.hotspotLabelStyle, hotspot.labelStyle)}
+                hoverCursor={cursorCssValue(gameId, siteSettings.cursor.hoverCursorPath, 'pointer')}
                 onInteract={onInteract}
                 onHoverChange={(hovering) => setHoveredId(hovering ? hotspot.id : null)}
               />
@@ -191,6 +214,29 @@ export function SceneViewer({
             onClose={onClosePolygonDraft}
           />
         )}
+
+        {!editMode &&
+          activeVerbMenuHotspotId &&
+          onSelectVerb &&
+          onCloseVerbMenu &&
+          (() => {
+            const activeHotspot = scene.hotspots.find((h) => h.id === activeVerbMenuHotspotId);
+            if (!activeHotspot) return null;
+            return (
+              <HotspotVerbMenu
+                anchor={{
+                  x: activeHotspot.area.x + activeHotspot.area.width / 2,
+                  y: activeHotspot.area.y + activeHotspot.area.height / 2,
+                }}
+                stageWidth={width}
+                stageHeight={height}
+                verbs={activeHotspot.verbs}
+                strings={strings}
+                onSelectVerb={onSelectVerb}
+                onClose={onCloseVerbMenu}
+              />
+            );
+          })()}
 
         <div
           aria-hidden="true"

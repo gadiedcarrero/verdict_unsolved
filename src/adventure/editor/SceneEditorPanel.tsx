@@ -3,6 +3,8 @@ import { translate } from '../../i18n/translate';
 import type {
   FontFamily,
   HotspotShape,
+  HotspotVerb,
+  HotspotVerbIcon,
   MenuAppearance,
   MenuButton,
   MenuButtonStyle,
@@ -489,6 +491,7 @@ function MenuTitleSettings({
                 <option value="sans">Sans</option>
                 <option value="serif">Serif</option>
                 <option value="mono">Monoespaciada</option>
+                <option value="comic-sans">Comic Sans</option>
               </select>
             </label>
             <label className="flex flex-col">
@@ -595,6 +598,7 @@ function MenuSettings({
           <option value="sans">Sans</option>
           <option value="serif">Serif</option>
           <option value="mono">Monoespaciada</option>
+          <option value="comic-sans">Comic Sans</option>
         </select>
       </label>
 
@@ -647,24 +651,230 @@ function MenuSettings({
   );
 }
 
+const VERB_ICON_OPTIONS: { value: HotspotVerbIcon; label: string }[] = [
+  { value: 'eye', label: '👁 Ojo' },
+  { value: 'hand', label: '✋ Mano' },
+  { value: 'chat', label: '💬 Charla' },
+  { value: 'bag', label: '👜 Bolsa' },
+  { value: 'gear', label: '⚙ Ajuste' },
+];
+
+export type VerbActionKind = 'none' | 'dialogue' | 'scene';
+
+function VerbFields({
+  verb,
+  strings,
+  sceneOptions,
+  onLabelTextChange,
+  onIconChange,
+  onActionChange,
+  onRemove,
+}: {
+  verb: HotspotVerb;
+  strings: Record<string, string>;
+  sceneOptions: { id: string; act: number }[];
+  onLabelTextChange: (text: string) => void;
+  onIconChange: (icon: HotspotVerbIcon) => void;
+  onActionChange: (kind: VerbActionKind, value: string) => void;
+  onRemove: () => void;
+}): JSX.Element {
+  const action = verb.onInteract[0];
+  const actionKind: VerbActionKind =
+    action?.type === 'dialogue' ? 'dialogue' : action?.type === 'transitionTo' ? 'scene' : 'none';
+  const actionValue = action?.type === 'dialogue' ? action.nodeId : action?.type === 'transitionTo' ? action.sceneId : '';
+
+  return (
+    <div className="mb-2 border-b border-graphite-800 pb-2">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <select
+          value={verb.icon}
+          onChange={(event) => onIconChange(event.target.value as HotspotVerbIcon)}
+          className="rounded border border-graphite-700 bg-graphite-900 px-1 py-0.5 text-[9px] text-graphite-100"
+        >
+          {VERB_ICON_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="text-[9px] text-graphite-500 uppercase hover:text-red-400"
+        >
+          eliminar
+        </button>
+      </div>
+      <label className="mb-1 flex flex-col">
+        <span className="text-[9px] text-graphite-500 uppercase">Texto</span>
+        <input
+          type="text"
+          value={strings[verb.label] ?? translate(strings, verb.label)}
+          onChange={(event) => onLabelTextChange(event.target.value)}
+          className={inputClassName}
+        />
+      </label>
+      <label className="mb-1 flex flex-col">
+        <span className="text-[9px] text-graphite-500 uppercase">Acción</span>
+        <select
+          value={actionKind}
+          onChange={(event) => onActionChange(event.target.value as VerbActionKind, '')}
+          className={inputClassName}
+        >
+          <option value="none">(sin definir)</option>
+          <option value="dialogue">Diálogo (id del nodo)</option>
+          <option value="scene">Ir a escena</option>
+        </select>
+      </label>
+      {actionKind === 'dialogue' && (
+        <input
+          type="text"
+          placeholder="id del nodo de diálogo"
+          value={actionValue}
+          onChange={(event) => onActionChange('dialogue', event.target.value)}
+          className={inputClassName}
+        />
+      )}
+      {actionKind === 'scene' && (
+        <select
+          value={actionValue}
+          onChange={(event) => onActionChange('scene', event.target.value)}
+          className={inputClassName}
+        >
+          <option value="">(elegir escena)</option>
+          {sceneOptions.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.id}
+            </option>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+}
+
+function CreateVerbForm({ onCreate }: { onCreate: (name: string, labelText: string) => void }): JSX.Element {
+  const [name, setName] = useState('');
+  const [labelText, setLabelText] = useState('');
+
+  function submit(): void {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    onCreate(trimmed, labelText.trim() || trimmed);
+    setName('');
+    setLabelText('');
+  }
+
+  return (
+    <div className="rounded border border-amber-accent/40 bg-graphite-900/60 p-2">
+      <p className="mb-2 text-[10px] font-semibold tracking-widest text-amber-accent uppercase">+ Agregar verbo</p>
+      <label className="mb-1 flex flex-col">
+        <span className="text-[9px] text-graphite-500 uppercase">Nombre (id interno)</span>
+        <input type="text" value={name} onChange={(event) => setName(event.target.value)} className={inputClassName} />
+      </label>
+      <label className="mb-2 flex flex-col">
+        <span className="text-[9px] text-graphite-500 uppercase">Texto</span>
+        <input
+          type="text"
+          value={labelText}
+          onChange={(event) => setLabelText(event.target.value)}
+          className={inputClassName}
+        />
+      </label>
+      <button
+        type="button"
+        onClick={submit}
+        disabled={!name.trim()}
+        className="w-full rounded border border-amber-accent px-2 py-1 text-[10px] font-semibold tracking-widest text-amber-accent uppercase transition-colors hover:bg-amber-accent hover:text-graphite-950 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Crear
+      </button>
+    </div>
+  );
+}
+
+function VerbsSection({
+  verbs,
+  strings,
+  sceneOptions,
+  onSetEnabled,
+  onAddVerb,
+  onRemoveVerb,
+  onVerbLabelTextChange,
+  onVerbIconChange,
+  onVerbActionChange,
+}: {
+  verbs: HotspotVerb[];
+  strings: Record<string, string>;
+  sceneOptions: { id: string; act: number }[];
+  onSetEnabled: (enabled: boolean) => void;
+  onAddVerb: (name: string, labelText: string) => void;
+  onRemoveVerb: (verbId: string) => void;
+  onVerbLabelTextChange: (labelKey: string, text: string) => void;
+  onVerbIconChange: (verbId: string, icon: HotspotVerbIcon) => void;
+  onVerbActionChange: (verbId: string, kind: VerbActionKind, value: string) => void;
+}): JSX.Element {
+  const enabled = verbs.length > 0;
+
+  return (
+    <div className="mt-2 border-t border-graphite-800 pt-2">
+      <label className="mb-2 flex items-center gap-1 text-[9px] text-graphite-400">
+        <input type="checkbox" checked={enabled} onChange={(event) => onSetEnabled(event.target.checked)} />
+        Menú circular de verbos (Explorar/Interactuar...) en vez de un solo click
+      </label>
+      {enabled && (
+        <>
+          {verbs.map((verb) => (
+            <VerbFields
+              key={verb.id}
+              verb={verb}
+              strings={strings}
+              sceneOptions={sceneOptions}
+              onLabelTextChange={(text) => onVerbLabelTextChange(verb.label, text)}
+              onIconChange={(icon) => onVerbIconChange(verb.id, icon)}
+              onActionChange={(kind, value) => onVerbActionChange(verb.id, kind, value)}
+              onRemove={() => onRemoveVerb(verb.id)}
+            />
+          ))}
+          <CreateVerbForm onCreate={onAddVerb} />
+        </>
+      )}
+    </div>
+  );
+}
+
 function ObjectFields({
   object,
   strings,
+  sceneOptions,
   onRectChange,
   onInteractableChange,
   onLabelTextChange,
   onLabelStyleChange,
   onResetShape,
   onRemoveZone,
+  onSetVerbsEnabled,
+  onAddVerb,
+  onRemoveVerb,
+  onVerbLabelTextChange,
+  onVerbIconChange,
+  onVerbActionChange,
 }: {
   object: EditableObject;
   strings: Record<string, string>;
+  sceneOptions: { id: string; act: number }[];
   onRectChange: (rect: EditableRect) => void;
   onInteractableChange: (interactable: boolean) => void;
   onLabelTextChange: (text: string) => void;
   onLabelStyleChange: (patch: Partial<TextStyleOverride> | null) => void;
   onResetShape: () => void;
   onRemoveZone: () => void;
+  onSetVerbsEnabled: (enabled: boolean) => void;
+  onAddVerb: (name: string, labelText: string) => void;
+  onRemoveVerb: (verbId: string) => void;
+  onVerbLabelTextChange: (labelKey: string, text: string) => void;
+  onVerbIconChange: (verbId: string, icon: HotspotVerbIcon) => void;
+  onVerbActionChange: (verbId: string, kind: VerbActionKind, value: string) => void;
 }): JSX.Element {
   const hasCustomStyle = object.labelStyle !== undefined;
   const isPolygon = object.shape === 'polygon';
@@ -734,6 +944,7 @@ function ObjectFields({
                   <option value="sans">Sans</option>
                   <option value="serif">Serif</option>
                   <option value="mono">Mono</option>
+                  <option value="comic-sans">Comic Sans</option>
                 </select>
               </label>
               <label className="flex flex-col">
@@ -787,6 +998,20 @@ function ObjectFields({
             </label>
           ))}
         </div>
+      )}
+
+      {object.labelKey && (
+        <VerbsSection
+          verbs={object.verbs}
+          strings={strings}
+          sceneOptions={sceneOptions}
+          onSetEnabled={onSetVerbsEnabled}
+          onAddVerb={onAddVerb}
+          onRemoveVerb={onRemoveVerb}
+          onVerbLabelTextChange={onVerbLabelTextChange}
+          onVerbIconChange={onVerbIconChange}
+          onVerbActionChange={onVerbActionChange}
+        />
       )}
     </div>
   );
@@ -905,6 +1130,12 @@ export function SceneEditorPanel({
   onCancelPolygonDraft,
   onResetShape,
   onRemoveZone,
+  onSetHotspotVerbsEnabled,
+  onAddHotspotVerb,
+  onRemoveHotspotVerb,
+  onHotspotVerbLabelTextChange,
+  onHotspotVerbIconChange,
+  onHotspotVerbActionChange,
 }: {
   gameId: string;
   scene: Scene | null;
@@ -941,6 +1172,12 @@ export function SceneEditorPanel({
   onCancelPolygonDraft: () => void;
   onResetShape: (objectId: string) => void;
   onRemoveZone: (objectId: string) => void;
+  onSetHotspotVerbsEnabled: (objectId: string, enabled: boolean) => void;
+  onAddHotspotVerb: (objectId: string, name: string, labelText: string) => void;
+  onRemoveHotspotVerb: (objectId: string, verbId: string) => void;
+  onHotspotVerbLabelTextChange: (labelKey: string, text: string) => void;
+  onHotspotVerbIconChange: (objectId: string, verbId: string, icon: HotspotVerbIcon) => void;
+  onHotspotVerbActionChange: (objectId: string, verbId: string, kind: VerbActionKind, value: string) => void;
 }): JSX.Element {
   return (
     <div className="text-xs text-graphite-200">
@@ -1022,6 +1259,7 @@ export function SceneEditorPanel({
                   key={object.id}
                   object={object}
                   strings={strings}
+                  sceneOptions={sceneOptions}
                   onRectChange={(rect) => onObjectRectChange(object.id, rect)}
                   onInteractableChange={(interactable) => onToggleInteractable(object.id, interactable)}
                   onLabelTextChange={(text) =>
@@ -1030,6 +1268,12 @@ export function SceneEditorPanel({
                   onLabelStyleChange={(patch) => onLabelStyleChange(object.id, patch)}
                   onResetShape={() => onResetShape(object.id)}
                   onRemoveZone={() => onRemoveZone(object.id)}
+                  onSetVerbsEnabled={(enabled) => onSetHotspotVerbsEnabled(object.id, enabled)}
+                  onAddVerb={(name, labelText) => onAddHotspotVerb(object.id, name, labelText)}
+                  onRemoveVerb={(verbId) => onRemoveHotspotVerb(object.id, verbId)}
+                  onVerbLabelTextChange={onHotspotVerbLabelTextChange}
+                  onVerbIconChange={(verbId, icon) => onHotspotVerbIconChange(object.id, verbId, icon)}
+                  onVerbActionChange={(verbId, kind, value) => onHotspotVerbActionChange(object.id, verbId, kind, value)}
                 />
               ))}
             </>

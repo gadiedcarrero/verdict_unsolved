@@ -1,11 +1,6 @@
 import { useRef, type CSSProperties, type JSX, type PointerEvent as ReactPointerEvent, type RefObject } from 'react';
 import type { PolygonPoint, TextStyle } from '../../game-engine/scene-engine/schemas';
-
-const FONT_FAMILY_CLASSES: Record<TextStyle['fontFamily'], string> = {
-  sans: 'font-sans',
-  serif: 'font-serif',
-  mono: 'font-mono',
-};
+import { FONT_FAMILY_CSS } from '../fontFamilyCss';
 
 /**
  * Preview arrastrable del tooltip de un hotspot — a diferencia del juego
@@ -55,12 +50,13 @@ export function HotspotLabelHandle({
     transform: 'translate(-50%, -140%)',
     fontSize: `${labelStyle.fontSize}px`,
     color: labelStyle.color,
+    fontFamily: FONT_FAMILY_CSS[labelStyle.fontFamily],
     zIndex: 260,
   };
 
   return (
     <div
-      className={`absolute cursor-move touch-none rounded border border-dashed border-sky-400 bg-graphite-950/90 px-2 py-1 whitespace-nowrap ${FONT_FAMILY_CLASSES[labelStyle.fontFamily]}`}
+      className="absolute cursor-move touch-none rounded border border-dashed border-sky-400 bg-graphite-950/90 px-2 py-1 whitespace-nowrap"
       style={style}
       onPointerDown={beginDrag}
       onPointerMove={onPointerMove}

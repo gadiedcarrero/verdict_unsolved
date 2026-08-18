@@ -43,4 +43,7 @@ export type DesktopApi = {
     ext: string,
     data: Uint8Array,
   ) => Promise<BackgroundSaveResult>;
+  /** Solo funciona en `pnpm dev` — sube una imagen de cursor a
+   * assets/games/<gameId>/cursors/ y devuelve la ruta relativa. */
+  saveCursorImage: (gameId: string, fileId: string, ext: string, data: Uint8Array) => Promise<BackgroundSaveResult>;
 };

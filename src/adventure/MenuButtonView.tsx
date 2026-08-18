@@ -1,17 +1,12 @@
 import { useState, type CSSProperties, type JSX } from 'react';
 import type { MenuAppearance, MenuPosition } from '../game-engine/scene-engine/schemas';
+import { FONT_FAMILY_CSS } from './fontFamilyCss';
 
 /** Dónde se agrupa la pila de botones dentro del stage. */
 export const MENU_POSITION_CLASSES: Record<MenuPosition, string> = {
   left: 'absolute left-16 top-1/2 flex -translate-y-1/2 flex-col items-start gap-3',
   center: 'absolute inset-0 flex flex-col items-center justify-center gap-3',
   right: 'absolute right-16 top-1/2 flex -translate-y-1/2 flex-col items-end gap-3',
-};
-
-const FONT_FAMILY_CLASSES: Record<MenuAppearance['fontFamily'], string> = {
-  sans: 'font-sans',
-  serif: 'font-serif',
-  mono: 'font-mono',
 };
 
 /**
@@ -38,8 +33,8 @@ export function MenuButtonView({
     fontSize: `${appearance.fontSize}px`,
     letterSpacing: '0.05em',
     transition: 'all 150ms ease-out',
+    fontFamily: FONT_FAMILY_CSS[appearance.fontFamily],
   };
-  const fontFamilyClass = FONT_FAMILY_CLASSES[appearance.fontFamily];
 
   const sharedProps = {
     type: 'button' as const,
@@ -53,7 +48,7 @@ export function MenuButtonView({
       <button
         {...sharedProps}
         style={{ ...baseStyle, color, textDecoration: hovered ? 'underline' : 'none' }}
-        className={`bg-transparent uppercase ${fontFamilyClass}`}
+        className="bg-transparent uppercase"
       >
         {label}
       </button>
@@ -65,7 +60,7 @@ export function MenuButtonView({
       <button
         {...sharedProps}
         style={{ ...baseStyle, backgroundColor: color, color: '#0b0f14' }}
-        className={`rounded px-8 py-3 uppercase ${fontFamilyClass}`}
+        className="rounded px-8 py-3 uppercase"
       >
         {label}
       </button>
@@ -77,7 +72,7 @@ export function MenuButtonView({
     <button
       {...sharedProps}
       style={{ ...baseStyle, borderColor: color, color }}
-      className={`rounded-none border bg-transparent px-8 py-3 uppercase ${fontFamilyClass}`}
+      className="rounded-none border bg-transparent px-8 py-3 uppercase"
     >
       {label}
     </button>

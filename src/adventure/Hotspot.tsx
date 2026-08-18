@@ -1,18 +1,14 @@
 import { useState, type CSSProperties, type JSX } from 'react';
 import type { Hotspot as HotspotData, TextStyle } from '../game-engine/scene-engine/schemas';
+import { FONT_FAMILY_CSS } from './fontFamilyCss';
 import { resolveLabelPosition } from './hotspotLabel';
 import { translate } from '../i18n/translate';
-
-const FONT_FAMILY_CLASSES: Record<TextStyle['fontFamily'], string> = {
-  sans: 'font-sans',
-  serif: 'font-serif',
-  mono: 'font-mono',
-};
 
 export function HotspotArea({
   hotspot,
   strings,
   labelStyle,
+  hoverCursor,
   onInteract,
   onHoverChange,
 }: {
@@ -20,6 +16,8 @@ export function HotspotArea({
   strings: Record<string, string>;
   /** Ya resuelto: default general del sitio + override de este hotspot, si tiene. */
   labelStyle: TextStyle;
+  /** Valor CSS `cursor` (ver cursorCss.ts) — undefined = flecha/pointer normal. */
+  hoverCursor?: string | undefined;
   onInteract: (hotspot: HotspotData) => void;
   onHoverChange?: (hovering: boolean) => void;
 }): JSX.Element {
@@ -72,14 +70,21 @@ export function HotspotArea({
         className="absolute cursor-pointer"
         style={{
           ...areaStyle,
+          cursor: hoverCursor,
           // Por encima de cualquier capa de escena (zIndex 1-4), para que el
           // clic siempre llegue al hotspot y no a la capa/placeholder debajo.
           zIndex: 50,
         }}
       />
       <span
-        className={`pointer-events-none absolute rounded bg-graphite-950/90 px-2 py-1 whitespace-nowrap transition-opacity ${FONT_FAMILY_CLASSES[labelStyle.fontFamily]} ${hovering ? 'opacity-100' : 'opacity-0'}`}
-        style={{ ...labelStyleProps, fontSize: `${labelStyle.fontSize}px`, color: labelStyle.color, zIndex: 51 }}
+        className={`pointer-events-none absolute rounded bg-graphite-950/90 px-2 py-1 whitespace-nowrap transition-opacity ${hovering ? 'opacity-100' : 'opacity-0'}`}
+        style={{
+          ...labelStyleProps,
+          fontSize: `${labelStyle.fontSize}px`,
+          color: labelStyle.color,
+          fontFamily: FONT_FAMILY_CSS[labelStyle.fontFamily],
+          zIndex: 51,
+        }}
       >
         {displayLabel}
       </span>
