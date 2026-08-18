@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type JSX, type ReactNode, type RefObject } from 'react';
 import type { Hotspot as HotspotData, Scene } from '../game-engine/scene-engine/schemas';
+import { EditableBox, type EditableRect } from './editor/EditableBox';
 import { HotspotArea } from './Hotspot';
 import { PlaceholderLayer } from './PlaceholderLayer';
 
@@ -46,6 +47,9 @@ export function SceneViewer({
   layerOverrides,
   onInteract,
   children,
+  editMode = false,
+  onLayerRectChange,
+  onHotspotRectChange,
 }: {
   scene: Scene;
   transitioning: boolean;
@@ -54,8 +58,13 @@ export function SceneViewer({
   onInteract: (hotspot: HotspotData) => void;
   /** Diálogo/interfaces: deben compartir el mismo stage que la escena, no la ventana completa. */
   children?: ReactNode;
+  /** Modo edición: arrastrar/redimensionar capas y hotspots directamente sobre la escena. */
+  editMode?: boolean;
+  onLayerRectChange?: (layerId: string, rect: EditableRect) => void;
+  onHotspotRectChange?: (hotspotId: string, rect: EditableRect) => void;
 }): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const { width, height } = useStageSize(containerRef);
 
   // Id del hotspot bajo el cursor: si coincide con el id de una capa, esa
@@ -65,7 +74,7 @@ export function SceneViewer({
 
   return (
     <div ref={containerRef} className="flex h-full w-full items-center justify-center bg-graphite-950">
-      <div className="relative overflow-hidden bg-graphite-950" style={{ width, height }}>
+      <div ref={stageRef} className="relative overflow-hidden bg-graphite-950" style={{ width, height }}>
         <PlaceholderLayer assetPath={scene.background} className="absolute inset-0 h-full w-full object-cover" />
 
         {[...scene.layers]
@@ -86,14 +95,41 @@ export function SceneViewer({
             />
           ))}
 
-        {scene.hotspots.map((hotspot) => (
-          <HotspotArea
-            key={hotspot.id}
-            hotspot={hotspot}
-            onInteract={onInteract}
-            onHoverChange={(hovering) => setHoveredId(hovering ? hotspot.id : null)}
-          />
-        ))}
+        {!editMode &&
+          scene.hotspots.map((hotspot) => (
+            <HotspotArea
+              key={hotspot.id}
+              hotspot={hotspot}
+              onInteract={onInteract}
+              onHoverChange={(hovering) => setHoveredId(hovering ? hotspot.id : null)}
+            />
+          ))}
+
+        {editMode &&
+          onLayerRectChange &&
+          scene.layers.map((layer) => (
+            <EditableBox
+              key={`layer-${layer.id}`}
+              label={layer.id}
+              colorClassName="border-amber-accent"
+              rect={{ x: layer.x, y: layer.y, width: layer.width ?? 10, height: layer.height ?? 10 }}
+              stageRef={stageRef}
+              onChange={(rect) => onLayerRectChange(layer.id, rect)}
+            />
+          ))}
+
+        {editMode &&
+          onHotspotRectChange &&
+          scene.hotspots.map((hotspot) => (
+            <EditableBox
+              key={`hotspot-${hotspot.id}`}
+              label={`hotspot: ${hotspot.id}`}
+              colorClassName="border-sky-400"
+              rect={hotspot.area}
+              stageRef={stageRef}
+              onChange={(rect) => onHotspotRectChange(hotspot.id, rect)}
+            />
+          ))}
 
         <div
           aria-hidden="true"

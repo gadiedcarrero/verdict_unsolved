@@ -4,6 +4,7 @@ import type { DesktopApi } from '../../shared/desktop-api';
 const api: DesktopApi = {
   saveGame: (data) => ipcRenderer.invoke('save:write', data),
   loadGame: () => ipcRenderer.invoke('save:read'),
+  saveSceneLayout: (sceneId, scene) => ipcRenderer.invoke('scene-editor:save', sceneId, scene),
 };
 
 contextBridge.exposeInMainWorld('api', api);

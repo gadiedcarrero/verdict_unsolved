@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from 'electron';
 import { createMainWindow } from './window';
 import { registerSaveHandlers } from './ipc/saveHandlers';
+import { registerSceneEditorHandlers } from './ipc/sceneEditorHandlers';
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 
@@ -17,6 +18,7 @@ if (!gotSingleInstanceLock) {
 
   void app.whenReady().then(() => {
     registerSaveHandlers();
+    registerSceneEditorHandlers();
     createMainWindow();
 
     app.on('activate', () => {
