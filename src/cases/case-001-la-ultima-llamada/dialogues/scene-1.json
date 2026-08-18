@@ -12,18 +12,6 @@
     "onShow": [{ "type": "addFlag", "flag": "photoLogged" }]
   },
 
-  "sobre-1": {
-    "id": "sobre-1",
-    "speaker": "SISTEMA",
-    "line": "Notificación final de alquiler atrasado. La oficina será embargada en siete días.",
-    "next": "sobre-2"
-  },
-  "sobre-2": {
-    "id": "sobre-2",
-    "speaker": "DIRECTOR",
-    "line": "Siete días. Generoso."
-  },
-
   "cajon-1": {
     "id": "cajon-1",
     "speaker": "DIRECTOR",

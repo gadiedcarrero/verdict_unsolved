@@ -110,7 +110,7 @@
   "caso-rechazado": {
     "id": "caso-rechazado",
     "speaker": "MIRROR",
-    "line": "El pago del alquiler vence en siete días. Protocolo Zero solo era conocido por seis personas.",
+    "line": "Protocolo Zero solo era conocido por seis personas.",
     "onShow": [{ "type": "addFlag", "flag": "rechazo-registrado" }],
     "next": "caso-rechazado-2"
   },
