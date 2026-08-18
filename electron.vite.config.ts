@@ -36,6 +36,18 @@ export default defineConfig({
   renderer: {
     root: '.',
     publicDir: resolve(root, 'assets'),
+    // Vite hace full-reload de la página ante cualquier cambio dentro de
+    // publicDir (no es HMR-able, al no ser parte del grafo de módulos). El
+    // editor sube fondos/retratos directo a assets/games/**/ por IPC —
+    // sin este ignore, cada subida recargaba toda la app y perdía el
+    // estado de React (volvía al selector de proyectos). El componente ya
+    // actualiza su estado local al confirmarse la subida, así que no hace
+    // falta que Vite recargue nada.
+    server: {
+      watch: {
+        ignored: ['**/assets/games/**'],
+      },
+    },
     resolve: {
       alias: {
         '@': resolve(root, 'src'),
