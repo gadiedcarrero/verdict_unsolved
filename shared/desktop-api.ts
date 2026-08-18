@@ -2,6 +2,7 @@ import type { SaveData } from './save-data';
 
 export type SceneEditorSaveResult = { ok: true } | { ok: false; error: string };
 export type PortraitSaveResult = { ok: true; path: string } | { ok: false; error: string };
+export type BackgroundSaveResult = { ok: true; path: string } | { ok: false; error: string };
 
 export type DesktopApi = {
   saveGame: (data: SaveData) => Promise<void>;
@@ -19,4 +20,7 @@ export type DesktopApi = {
   /** Solo funciona en `pnpm dev` — sube un retrato a assets/.../portraits/ y
    * devuelve la ruta relativa a guardar en el personaje. */
   saveCharacterPortrait: (characterId: string, ext: string, data: Uint8Array) => Promise<PortraitSaveResult>;
+  /** Solo funciona en `pnpm dev` — sube un fondo a assets/.../backgrounds/ y
+   * devuelve la ruta relativa a guardar en `scene.backgrounds`. */
+  saveSceneBackground: (fileId: string, ext: string, data: Uint8Array) => Promise<BackgroundSaveResult>;
 };

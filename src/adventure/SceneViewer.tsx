@@ -75,10 +75,18 @@ export function SceneViewer({
   // vez de dibujar un rectángulo alrededor del hotspot.
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
+  const activeBackground = scene.backgrounds[0];
+
   return (
     <div ref={containerRef} className="flex h-full w-full items-center justify-center bg-graphite-950">
       <div ref={stageRef} className="relative overflow-hidden bg-graphite-950" style={{ width, height }}>
-        <PlaceholderLayer assetPath={scene.background} className="absolute inset-0 h-full w-full object-cover" />
+        {activeBackground ? (
+          <PlaceholderLayer assetPath={activeBackground.assetPath} className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-xs tracking-widest text-graphite-600 uppercase">
+            Sin fondo — agregá uno en el editor
+          </div>
+        )}
 
         {[...scene.layers]
           .sort((a, b) => a.zIndex - b.zIndex)

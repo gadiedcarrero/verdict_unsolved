@@ -1,7 +1,7 @@
 {
   "id": "oficina-llamada",
   "act": 1,
-  "background": "backgrounds/oficina-noche-lluvia.png",
+  "backgrounds": [{ "id": "bg-1", "assetPath": "backgrounds/oficina-noche-lluvia.png" }],
   "layers": [
     { "id": "telefono", "assetPath": "layers/telefono-llamada-entrante.png", "x": 16, "y": 66, "width": 13, "height": 14, "zIndex": 2 },
     { "id": "cenicero", "assetPath": "layers/cenicero-cigarrillo.png", "x": 76, "y": 65, "width": 8, "height": 7, "zIndex": 2 }

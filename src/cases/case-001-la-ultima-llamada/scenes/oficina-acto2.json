@@ -1,7 +1,7 @@
 {
   "id": "oficina-acto2",
   "act": 2,
-  "background": "backgrounds/oficina-noche-lluvia.png",
+  "backgrounds": [{ "id": "bg-1", "assetPath": "backgrounds/oficina-noche-lluvia.png" }],
   "layers": [
     {
       "id": "telefono",

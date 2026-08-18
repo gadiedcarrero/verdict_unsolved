@@ -90,10 +90,19 @@ export const DialogueNodeSchema = z.object({
   onShow: z.array(SceneActionSchema).optional(),
 });
 
+export const SceneBackgroundSchema = z.object({
+  /** Auto-generado al crearlo en el editor: "bg-1", "bg-2"... */
+  id: z.string(),
+  assetPath: z.string(),
+});
+
 export const SceneSchema = z.object({
   id: z.string(),
   act: z.number(),
-  background: z.string(),
+  /** Una escena puede tener varios fondos (luz prendida/apagada, flashes de
+   * relámpago, etc.) — el primero de la lista es el que se ve por defecto.
+   * Vincular qué objeto/estado cambia a cuál fondo se hace más adelante. */
+  backgrounds: z.array(SceneBackgroundSchema),
   layers: z.array(SceneLayerSchema),
   hotspots: z.array(HotspotSchema),
   /** Acciones que corren automáticamente al entrar a la escena (p. ej. abrir un diálogo). */
@@ -160,6 +169,7 @@ export type SceneLayer = z.infer<typeof SceneLayerSchema>;
 export type InterfaceId = z.infer<typeof InterfaceIdSchema>;
 export type SceneAction = z.infer<typeof SceneActionSchema>;
 export type Hotspot = z.infer<typeof HotspotSchema>;
+export type SceneBackground = z.infer<typeof SceneBackgroundSchema>;
 export type Character = z.infer<typeof CharacterSchema>;
 export type DialogueChoice = z.infer<typeof DialogueChoiceSchema>;
 export type DialogueNode = z.infer<typeof DialogueNodeSchema>;

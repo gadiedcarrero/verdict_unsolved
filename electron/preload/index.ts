@@ -10,6 +10,8 @@ const api: DesktopApi = {
     ipcRenderer.invoke('scene-editor:save-characters', characters, stringsPatch),
   saveCharacterPortrait: (characterId, ext, data) =>
     ipcRenderer.invoke('scene-editor:save-portrait', characterId, ext, data),
+  saveSceneBackground: (fileId, ext, data) =>
+    ipcRenderer.invoke('scene-editor:save-background', fileId, ext, data),
 };
 
 contextBridge.exposeInMainWorld('api', api);

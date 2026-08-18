@@ -39,12 +39,19 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
   const [editMode, setEditMode] = useState(false);
   const [editorTab, setEditorTab] = useState<EditorTab>('scene');
 
+  // Qué escena se está editando: puede ser distinta de `currentSceneId`
+  // (la del juego real) — el editor deja navegar/editar cualquier escena.
+  // `null` = seguir a la escena actual del juego.
+  const [editorSceneId, setEditorSceneId] = useState<string | null>(null);
+
   const [editedScene, setEditedScene] = useState<Scene | null>(null);
   // Texto (clave → texto en ES) nuevo o editado en esta sesión de edición,
   // pendiente de fundirse con locales/es.json al guardar.
   const [pendingStrings, setPendingStrings] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [uploadingBackground, setUploadingBackground] = useState(false);
+  const [creatingScene, setCreatingScene] = useState(false);
 
   const [editedCharacters, setEditedCharacters] = useState<Character[] | null>(null);
   const [pendingCharacterStrings, setPendingCharacterStrings] = useState<Record<string, string>>({});
@@ -62,11 +69,13 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     }
   }, [isLoaded, bundle, init, persistedAdventureState]);
 
+  const activeEditorSceneId = editorSceneId ?? currentSceneId;
+
   useEffect(() => {
     setEditedScene(null);
     setPendingStrings({});
     setSaveMessage(null);
-  }, [currentSceneId]);
+  }, [activeEditorSceneId]);
 
   if (!activeAdventureCaseResult.ok) {
     return (
@@ -84,7 +93,10 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     return <div className="h-screen w-screen bg-graphite-950" />;
   }
 
-  const baseScene = getActiveScene();
+  const allScenes = bundle.scenes;
+  // En modo edición se puede navegar y editar cualquier escena, no solo la
+  // que el estado de juego tiene activa ahora mismo.
+  const baseScene = editMode ? (allScenes.find((s) => s.id === activeEditorSceneId) ?? null) : getActiveScene();
   const activeNode = getActiveNode();
   const displayScene = editedScene ?? baseScene;
   const baseCharacters = bundle.characters;
@@ -99,7 +111,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
   if (!displayScene) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-graphite-950 text-graphite-200">
-        Escena &quot;{currentSceneId}&quot; no encontrada.
+        Escena &quot;{editMode ? activeEditorSceneId : currentSceneId}&quot; no encontrada.
       </div>
     );
   }
@@ -187,6 +199,66 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     setPendingStrings((prev) => ({ ...prev, [labelKey]: text }));
   }
 
+  // Fondos: cada escena puede tener varios (luz prendida/apagada, flashes de
+  // relámpago...), numerados automáticamente. El primero de la lista es el
+  // que se ve por defecto — a cuál se pasa según qué objeto todavía no está
+  // resuelto, queda para más adelante.
+  async function addBackground(file: File): Promise<void> {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setUploadingBackground(true);
+    setSaveMessage(null);
+    try {
+      const takenBgIds = new Set(base.backgrounds.map((bg) => bg.id));
+      let n = base.backgrounds.length + 1;
+      let bgId = `bg-${n}`;
+      while (takenBgIds.has(bgId)) {
+        n += 1;
+        bgId = `bg-${n}`;
+      }
+      const ext = file.name.split('.').pop() || 'png';
+      const buffer = new Uint8Array(await file.arrayBuffer());
+      const result = await window.api.saveSceneBackground(`${base.id}-${bgId}`, ext, buffer);
+      if (result.ok) {
+        setEditedScene({ ...base, backgrounds: [...base.backgrounds, { id: bgId, assetPath: result.path }] });
+      } else {
+        setSaveMessage(`Error subiendo fondo: ${result.error}`);
+      }
+    } catch (error) {
+      setSaveMessage(`Error subiendo fondo: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setUploadingBackground(false);
+    }
+  }
+
+  function removeBackground(bgId: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({ ...base, backgrounds: base.backgrounds.filter((bg) => bg.id !== bgId) });
+  }
+
+  // Crea una escena mínima (sin fondos/objetos todavía) y recarga la app
+  // para que la carga dinámica de escenas (import.meta.glob) la recoja.
+  async function createScene(name: string, act: number): Promise<void> {
+    const taken = new Set(allScenes.map((s) => s.id));
+    const id = uniqueId(slugify(name), taken);
+    const newScene: Scene = { id, act, backgrounds: [], layers: [], hotspots: [] };
+    setCreatingScene(true);
+    setSaveMessage(null);
+    try {
+      const result = await window.api.saveSceneLayout(id, newScene, {});
+      if (result.ok) {
+        window.location.reload();
+        return;
+      }
+      setSaveMessage(`Error creando escena: ${result.error}`);
+    } catch (error) {
+      setSaveMessage(`Error creando escena: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setCreatingScene(false);
+    }
+  }
+
   async function handleSave(): Promise<void> {
     if (!editedScene) return;
     setSaving(true);
@@ -194,7 +266,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     const payload = {
       id: editedScene.id,
       act: editedScene.act,
-      background: editedScene.background,
+      backgrounds: editedScene.backgrounds,
       layers: editedScene.layers,
       hotspots: editedScene.hotspots,
       ...(editedScene.onEnter ? { onEnter: editedScene.onEnter } : {}),
@@ -274,7 +346,10 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
         {import.meta.env.DEV && (
           <button
             type="button"
-            onClick={() => setEditMode((v) => !v)}
+            onClick={() => {
+              setEditMode((v) => !v);
+              setEditorSceneId(null);
+            }}
             className={`rounded border px-3 py-1 text-[11px] tracking-widest uppercase transition-colors ${
               editMode
                 ? 'border-amber-accent bg-amber-accent text-graphite-950'
@@ -328,6 +403,14 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
                 <SceneEditorPanel
                   scene={displayScene}
                   strings={strings}
+                  sceneOptions={allScenes.map((s) => ({ id: s.id, act: s.act }))}
+                  activeSceneId={activeEditorSceneId}
+                  creatingScene={creatingScene}
+                  uploadingBackground={uploadingBackground}
+                  onSwitchScene={setEditorSceneId}
+                  onCreateScene={(name, act) => void createScene(name, act)}
+                  onAddBackground={(file) => void addBackground(file)}
+                  onRemoveBackground={removeBackground}
                   onObjectRectChange={updateObjectRect}
                   onToggleInteractable={toggleInteractable}
                   onLabelTextChange={setLabelText}
