@@ -4,6 +4,7 @@ import { translate } from '../i18n/translate';
 import { buildEditableObjects } from './editor/editableObjects';
 import { EditableBox, type EditableRect } from './editor/EditableBox';
 import { HotspotArea } from './Hotspot';
+import { MENU_POSITION_CLASSES, MenuButtonView } from './MenuButtonView';
 import { PlaceholderLayer } from './PlaceholderLayer';
 import { useStageSize } from './useStageSize';
 
@@ -103,6 +104,18 @@ export function SceneViewer({
                 onHoverChange={(hovering) => setHoveredId(hovering ? hotspot.id : null)}
               />
             ))}
+
+        {scene.kind === 'menu' && (
+          <div className={MENU_POSITION_CLASSES[scene.menuAppearance.position]}>
+            {scene.menuButtons.map((button) => (
+              <MenuButtonView
+                key={button.id}
+                label={button.label ? translate(strings, button.label) : button.id}
+                appearance={scene.menuAppearance}
+              />
+            ))}
+          </div>
+        )}
 
         {editMode &&
           onObjectRectChange &&

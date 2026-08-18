@@ -2,7 +2,12 @@
   "id": "menu-inicio",
   "act": 0,
   "kind": "standard",
-  "backgrounds": [],
+  "backgrounds": [
+    {
+      "id": "bg-1",
+      "assetPath": "backgrounds/menu-inicio-bg-1.png"
+    }
+  ],
   "layers": [],
   "hotspots": [],
   "introSkippable": true

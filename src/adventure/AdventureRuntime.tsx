@@ -4,15 +4,25 @@ import type { EditableRect } from './editor/EditableBox';
 import { SceneEditorPanel } from './editor/SceneEditorPanel';
 import { slugify, uniqueId } from './editor/slug';
 import { getGameProject } from '../game-engine/scene-engine/gameProjects';
-import type { Character, Scene, SceneKind } from '../game-engine/scene-engine/schemas';
+import type { Character, MenuAppearance, Scene, SceneKind } from '../game-engine/scene-engine/schemas';
 import { useSaveStore } from '../game-engine/save-system/save.store';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
 import { DialogueOverlay } from './DialogueOverlay';
 import { InterfaceHost } from './interfaces/InterfaceHost';
 import { IntroScene } from './IntroScene';
+import { MenuScene } from './MenuScene';
 import { SceneViewer } from './SceneViewer';
 
 type EditorTab = 'scene' | 'characters';
+
+const DEFAULT_MENU_APPEARANCE: MenuAppearance = {
+  position: 'center',
+  buttonStyle: 'bordered',
+  fontFamily: 'sans',
+  fontSize: 16,
+  fontColor: '#e6eaef',
+  hoverColor: '#e0a636',
+};
 
 export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: () => void }): JSX.Element {
   const project = getGameProject(gameId);
@@ -295,12 +305,59 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
   }
 
+  // "menu": fondo + botones, sin capas/hotspots — ver MenuScene.tsx.
+  function updateMenuAppearance(patch: Partial<MenuAppearance>): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({ ...base, menuAppearance: { ...base.menuAppearance, ...patch } });
+  }
+
+  function addMenuButton(name: string, labelText: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    const taken = new Set(base.menuButtons.map((b) => b.id));
+    const id = uniqueId(slugify(name), taken);
+    const labelKey = `menu.${base.id}.${id}`;
+    setEditedScene({
+      ...base,
+      menuButtons: [...base.menuButtons, { id, label: labelKey, onClick: [] }],
+    });
+    setPendingStrings((prev) => ({ ...prev, [labelKey]: labelText }));
+  }
+
+  function removeMenuButton(buttonId: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({ ...base, menuButtons: base.menuButtons.filter((b) => b.id !== buttonId) });
+  }
+
+  function updateMenuButtonTarget(buttonId: string, sceneId: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      menuButtons: base.menuButtons.map((b) =>
+        b.id === buttonId ? { ...b, onClick: sceneId ? [{ type: 'transitionTo', sceneId, fade: 'fade' }] : [] } : b,
+      ),
+    });
+  }
+
   // Crea una escena mínima (sin fondos/objetos todavía) y recarga la app
   // para que la carga dinámica de escenas (import.meta.glob) la recoja.
   async function createScene(name: string, act: number, kind: SceneKind): Promise<void> {
     const taken = new Set(allScenes.map((s) => s.id));
     const id = uniqueId(slugify(name), taken);
-    const newScene: Scene = { id, act, kind, backgrounds: [], layers: [], hotspots: [], introSkippable: true };
+    const newScene: Scene = {
+      id,
+      act,
+      kind,
+      backgrounds: [],
+      layers: [],
+      hotspots: [],
+      introSkippable: true,
+      menuButtons: [],
+      menuAppearance: DEFAULT_MENU_APPEARANCE,
+    };
     setCreatingScene(true);
     setSaveMessage(null);
     try {
@@ -484,6 +541,11 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onChangeKind={updateSceneKind}
                   onChangeIntroSkippable={updateIntroSkippable}
                   onChangeIntroCompleteTarget={updateIntroCompleteTarget}
+                  onChangeMenuAppearance={updateMenuAppearance}
+                  onAddMenuButton={addMenuButton}
+                  onRemoveMenuButton={removeMenuButton}
+                  onMenuButtonLabelTextChange={setLabelText}
+                  onMenuButtonTargetChange={updateMenuButtonTarget}
                   onObjectRectChange={updateObjectRect}
                   onToggleInteractable={toggleInteractable}
                   onLabelTextChange={setLabelText}
@@ -560,6 +622,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         </div>
       ) : displayScene?.kind === 'intro' ? (
         <IntroScene key={displayScene.id} gameId={gameId} scene={displayScene} />
+      ) : displayScene?.kind === 'menu' ? (
+        <MenuScene key={displayScene.id} gameId={gameId} scene={displayScene} strings={strings} />
       ) : displayScene ? (
         // Modo juego: la escena vuelve a ocupar toda la pantalla, como
         // siempre — el editor no deja rastro.

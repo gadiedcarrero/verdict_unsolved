@@ -107,14 +107,40 @@ export const SceneBackgroundSchema = z.object({
   imageWidthPercent: z.number().optional(),
 });
 
-export const SceneKindSchema = z.enum(['standard', 'intro']);
+export const SceneKindSchema = z.enum(['standard', 'intro', 'menu']);
+
+export const MenuButtonSchema = z.object({
+  /** Auto-generado al crearlo en el editor. */
+  id: z.string(),
+  /** Clave de traducción (igual que Hotspot.label), no el texto en sí. */
+  label: z.string(),
+  onClick: z.array(SceneActionSchema),
+});
+
+export const MenuPositionSchema = z.enum(['left', 'center', 'right']);
+export const MenuButtonStyleSchema = z.enum(['bordered', 'frameless', 'filled']);
+export const MenuFontFamilySchema = z.enum(['sans', 'serif', 'mono']);
+
+export const MenuAppearanceSchema = z.object({
+  /** Dónde se agrupan los botones en el stage. */
+  position: MenuPositionSchema.default('center'),
+  /** "bordered" = cuadrado con marco, "frameless" = solo texto, "filled" = relleno sólido. */
+  buttonStyle: MenuButtonStyleSchema.default('bordered'),
+  fontFamily: MenuFontFamilySchema.default('sans'),
+  fontSize: z.number().default(16),
+  /** Color del texto/marco en reposo, en hex. */
+  fontColor: z.string().default('#e6eaef'),
+  /** Color del texto/marco (o relleno, si buttonStyle es "filled") al pasar el mouse. */
+  hoverColor: z.string().default('#e0a636'),
+});
 
 export const SceneSchema = z.object({
   id: z.string(),
   act: z.number(),
   /** "intro" es una escena especial de solo fondos (logos, splash) que pasa
    * de uno a otro por tiempo y termina disparando `onIntroComplete` — sin
-   * capas, hotspots ni diálogo. Cualquier otra escena es "standard". */
+   * capas, hotspots ni diálogo. "menu" es un fondo con botones (título,
+   * menú de inicio). Cualquier otra escena es "standard" (point-and-click). */
   kind: SceneKindSchema.default('standard'),
   /** Una escena puede tener varios fondos (luz prendida/apagada, flashes de
    * relámpago, etc.) — el primero de la lista es el que se ve por defecto.
@@ -130,6 +156,17 @@ export const SceneSchema = z.object({
   /** Solo `kind: "intro"`: acciones al terminar la secuencia (por tiempo) o
    * al saltarla con el botón — típicamente un `transitionTo` al menú. */
   onIntroComplete: z.array(SceneActionSchema).optional(),
+  /** Solo `kind: "menu"`: los botones del menú, en orden. */
+  menuButtons: z.array(MenuButtonSchema).default([]),
+  /** Solo `kind: "menu"`: posición y estilo visual de los botones. */
+  menuAppearance: MenuAppearanceSchema.default({
+    position: 'center',
+    buttonStyle: 'bordered',
+    fontFamily: 'sans',
+    fontSize: 16,
+    fontColor: '#e6eaef',
+    hoverColor: '#e0a636',
+  }),
 });
 
 export const AdventureCaseMetaSchema = z.object({
@@ -194,6 +231,11 @@ export type SceneAction = z.infer<typeof SceneActionSchema>;
 export type Hotspot = z.infer<typeof HotspotSchema>;
 export type SceneBackground = z.infer<typeof SceneBackgroundSchema>;
 export type SceneKind = z.infer<typeof SceneKindSchema>;
+export type MenuButton = z.infer<typeof MenuButtonSchema>;
+export type MenuPosition = z.infer<typeof MenuPositionSchema>;
+export type MenuButtonStyle = z.infer<typeof MenuButtonStyleSchema>;
+export type MenuFontFamily = z.infer<typeof MenuFontFamilySchema>;
+export type MenuAppearance = z.infer<typeof MenuAppearanceSchema>;
 export type Character = z.infer<typeof CharacterSchema>;
 export type DialogueChoice = z.infer<typeof DialogueChoiceSchema>;
 export type DialogueNode = z.infer<typeof DialogueNodeSchema>;

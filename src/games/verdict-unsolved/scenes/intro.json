@@ -2,9 +2,22 @@
   "id": "intro",
   "act": 0,
   "kind": "intro",
-  "backgrounds": [],
+  "backgrounds": [
+    {
+      "id": "bg-1",
+      "assetPath": "backgrounds/intro-bg-1.svg",
+      "imageWidthPercent": 44,
+      "backgroundColor": "#1c1c1c"
+    }
+  ],
   "layers": [],
   "hotspots": [],
   "introSkippable": true,
-  "onIntroComplete": [{ "type": "transitionTo", "sceneId": "menu-inicio", "fade": "fade" }]
+  "onIntroComplete": [
+    {
+      "type": "transitionTo",
+      "sceneId": "menu-inicio",
+      "fade": "fade"
+    }
+  ]
 }
