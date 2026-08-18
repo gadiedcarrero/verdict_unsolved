@@ -140,8 +140,7 @@ export function SceneEditorPanel({
   saveMessage: string | null;
 }): JSX.Element {
   return (
-    <div className="absolute top-4 left-4 z-300 max-h-[calc(100%-2rem)] w-72 overflow-y-auto rounded border border-graphite-700 bg-graphite-950/95 p-3 text-xs text-graphite-200 shadow-2xl">
-      <p className="mb-1 text-[11px] font-semibold tracking-widest text-amber-accent uppercase">Editor de posiciones</p>
+    <div className="text-xs text-graphite-200">
       <p className="mb-3 text-[10px] text-graphite-400">
         <span className="text-amber-accent">Ámbar</span> = objeto con imagen propia. <span className="text-sky-400">Celeste</span> = zona
         sin imagen aparte. Nada cambia hasta que aprietes Guardar.

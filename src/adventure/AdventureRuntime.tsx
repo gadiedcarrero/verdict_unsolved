@@ -271,30 +271,6 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
   return (
     <div className="relative h-screen w-screen bg-graphite-950">
       <div className="absolute top-4 right-4 z-10 flex gap-2">
-        {import.meta.env.DEV && editMode && (
-          <div className="flex overflow-hidden rounded border border-graphite-700">
-            <button
-              type="button"
-              onClick={() => setEditorTab('scene')}
-              className={`px-3 py-1 text-[11px] tracking-widest uppercase transition-colors ${
-                editorTab === 'scene' ? 'bg-amber-accent text-graphite-950' : 'text-graphite-400 hover:text-amber-accent'
-              }`}
-            >
-              Escena
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditorTab('characters')}
-              className={`border-l border-graphite-700 px-3 py-1 text-[11px] tracking-widest uppercase transition-colors ${
-                editorTab === 'characters'
-                  ? 'bg-amber-accent text-graphite-950'
-                  : 'text-graphite-400 hover:text-amber-accent'
-              }`}
-            >
-              Personajes
-            </button>
-          </div>
-        )}
         {import.meta.env.DEV && (
           <button
             type="button"
@@ -316,66 +292,115 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
           Salir
         </button>
       </div>
-      <SceneViewer
-        scene={displayScene}
-        strings={strings}
-        transitioning={transitioning}
-        layerOverrides={layerOverrides}
-        onInteract={interactHotspot}
-        editMode={editMode && editorTab === 'scene'}
-        onObjectRectChange={updateObjectRect}
-      >
-        {editMode && editorTab === 'scene' ? (
-          <SceneEditorPanel
-            scene={displayScene}
-            strings={strings}
-            onObjectRectChange={updateObjectRect}
-            onToggleInteractable={toggleInteractable}
-            onLabelTextChange={setLabelText}
-            onCreateZone={createZone}
-            onSave={() => void handleSave()}
-            onDiscard={() => {
-              setEditedScene(null);
-              setPendingStrings({});
-              setSaveMessage(null);
-            }}
-            hasChanges={editedScene !== null}
-            saving={saving}
-            saveMessage={saveMessage}
-          />
-        ) : editMode && editorTab === 'characters' ? (
-          <CharacterEditorPanel
-            characters={displayCharacters}
-            strings={strings}
-            uploadingId={uploadingPortraitId}
-            onNameTextChange={setCharacterNameText}
-            onColorChange={(id, color) => updateCharacter(id, { color })}
-            onUploadPortrait={(id, file) => void uploadPortrait(id, file)}
-            onCreateCharacter={createCharacter}
-            onSave={() => void handleSaveCharacters()}
-            onDiscard={() => {
-              setEditedCharacters(null);
-              setPendingCharacterStrings({});
-              setCharacterSaveMessage(null);
-            }}
-            hasChanges={editedCharacters !== null}
-            saving={characterSaving}
-            saveMessage={characterSaveMessage}
-          />
-        ) : activeInterfaceId ? (
-          <InterfaceHost interfaceId={activeInterfaceId} />
-        ) : (
-          activeNode && (
-            <DialogueOverlay
-              node={activeNode}
-              characters={displayCharacters}
+
+      {editMode ? (
+        // Modo edición: layout de dos paneles — herramientas a la izquierda,
+        // la escena a la derecha, nada superpuesto sobre el juego. Al salir,
+        // este layout entero desaparece y vuelve la vista de juego normal.
+        <div className="flex h-full w-full">
+          <aside className="flex h-full w-80 shrink-0 flex-col border-r border-graphite-700 bg-graphite-950">
+            <div className="flex shrink-0 border-b border-graphite-700">
+              <button
+                type="button"
+                onClick={() => setEditorTab('scene')}
+                className={`flex-1 px-3 py-2 text-[11px] tracking-widest uppercase transition-colors ${
+                  editorTab === 'scene'
+                    ? 'bg-amber-accent text-graphite-950'
+                    : 'text-graphite-400 hover:text-amber-accent'
+                }`}
+              >
+                Escena
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditorTab('characters')}
+                className={`flex-1 border-l border-graphite-700 px-3 py-2 text-[11px] tracking-widest uppercase transition-colors ${
+                  editorTab === 'characters'
+                    ? 'bg-amber-accent text-graphite-950'
+                    : 'text-graphite-400 hover:text-amber-accent'
+                }`}
+              >
+                Personajes
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-3">
+              {editorTab === 'scene' ? (
+                <SceneEditorPanel
+                  scene={displayScene}
+                  strings={strings}
+                  onObjectRectChange={updateObjectRect}
+                  onToggleInteractable={toggleInteractable}
+                  onLabelTextChange={setLabelText}
+                  onCreateZone={createZone}
+                  onSave={() => void handleSave()}
+                  onDiscard={() => {
+                    setEditedScene(null);
+                    setPendingStrings({});
+                    setSaveMessage(null);
+                  }}
+                  hasChanges={editedScene !== null}
+                  saving={saving}
+                  saveMessage={saveMessage}
+                />
+              ) : (
+                <CharacterEditorPanel
+                  characters={displayCharacters}
+                  strings={strings}
+                  uploadingId={uploadingPortraitId}
+                  onNameTextChange={setCharacterNameText}
+                  onColorChange={(id, color) => updateCharacter(id, { color })}
+                  onUploadPortrait={(id, file) => void uploadPortrait(id, file)}
+                  onCreateCharacter={createCharacter}
+                  onSave={() => void handleSaveCharacters()}
+                  onDiscard={() => {
+                    setEditedCharacters(null);
+                    setPendingCharacterStrings({});
+                    setCharacterSaveMessage(null);
+                  }}
+                  hasChanges={editedCharacters !== null}
+                  saving={characterSaving}
+                  saveMessage={characterSaveMessage}
+                />
+              )}
+            </div>
+          </aside>
+          <div className="min-w-0 flex-1">
+            <SceneViewer
+              scene={displayScene}
               strings={strings}
-              onAdvance={advance}
-              onChoose={selectChoice}
+              transitioning={transitioning}
+              layerOverrides={layerOverrides}
+              onInteract={interactHotspot}
+              editMode={editorTab === 'scene'}
+              onObjectRectChange={updateObjectRect}
             />
-          )
-        )}
-      </SceneViewer>
+          </div>
+        </div>
+      ) : (
+        // Modo juego: la escena vuelve a ocupar toda la pantalla, como
+        // siempre — el editor no deja rastro.
+        <SceneViewer
+          scene={displayScene}
+          strings={strings}
+          transitioning={transitioning}
+          layerOverrides={layerOverrides}
+          onInteract={interactHotspot}
+        >
+          {activeInterfaceId ? (
+            <InterfaceHost interfaceId={activeInterfaceId} />
+          ) : (
+            activeNode && (
+              <DialogueOverlay
+                node={activeNode}
+                characters={displayCharacters}
+                strings={strings}
+                onAdvance={advance}
+                onChoose={selectChoice}
+              />
+            )
+          )}
+        </SceneViewer>
+      )}
     </div>
   );
 }
