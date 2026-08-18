@@ -45,7 +45,9 @@
       "onInteract": [],
       "repeatable": true,
       "interactable": true,
-      "verbs": []
+      "actionMenuEnabled": false,
+      "onExamine": [],
+      "onInteractWith": []
     },
     {
       "id": "fotografia",
@@ -78,7 +80,9 @@
       "onInteract": [],
       "repeatable": true,
       "interactable": true,
-      "verbs": []
+      "actionMenuEnabled": false,
+      "onExamine": [],
+      "onInteractWith": []
     },
     {
       "id": "laptop",
@@ -119,7 +123,9 @@
       "onInteract": [],
       "repeatable": true,
       "interactable": true,
-      "verbs": []
+      "actionMenuEnabled": false,
+      "onExamine": [],
+      "onInteractWith": []
     },
     {
       "id": "vaso",
@@ -172,7 +178,9 @@
       "onInteract": [],
       "repeatable": true,
       "interactable": true,
-      "verbs": []
+      "actionMenuEnabled": false,
+      "onExamine": [],
+      "onInteractWith": []
     },
     {
       "id": "cenizero",
@@ -225,7 +233,9 @@
       "onInteract": [],
       "repeatable": true,
       "interactable": true,
-      "verbs": []
+      "actionMenuEnabled": false,
+      "onExamine": [],
+      "onInteractWith": []
     },
     {
       "id": "diario",
@@ -258,7 +268,9 @@
       "onInteract": [],
       "repeatable": true,
       "interactable": true,
-      "verbs": []
+      "actionMenuEnabled": false,
+      "onExamine": [],
+      "onInteractWith": []
     },
     {
       "id": "lampara",
@@ -339,7 +351,9 @@
         "x": 17.285711115056817,
         "y": 22.594105113636363
       },
-      "verbs": []
+      "actionMenuEnabled": false,
+      "onExamine": [],
+      "onInteractWith": []
     },
     {
       "id": "sobretodo",
@@ -412,7 +426,9 @@
         "x": 4.047185724431818,
         "y": 15.054845328282829
       },
-      "verbs": []
+      "actionMenuEnabled": false,
+      "onExamine": [],
+      "onInteractWith": []
     },
     {
       "id": "sombrero",
@@ -461,7 +477,9 @@
       "onInteract": [],
       "repeatable": true,
       "interactable": true,
-      "verbs": []
+      "actionMenuEnabled": false,
+      "onExamine": [],
+      "onInteractWith": []
     }
   ],
   "introSkippable": true,

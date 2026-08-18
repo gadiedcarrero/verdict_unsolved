@@ -2,16 +2,14 @@ import { useEffect, useState, type JSX } from 'react';
 import { CharacterEditorPanel } from './editor/CharacterEditorPanel';
 import type { EditableRect } from './editor/EditableBox';
 import { boundingBoxOfPoints } from './editor/polygonUtils';
-import { SceneEditorPanel, type VerbActionKind } from './editor/SceneEditorPanel';
-import { SiteSettingsPanel } from './editor/SiteSettingsPanel';
+import { SceneEditorPanel, type ActionKind } from './editor/SceneEditorPanel';
+import { SiteSettingsPanel, type ActionMenuImageKind, type ActionMenuZoneKey } from './editor/SiteSettingsPanel';
 import { slugify, uniqueId } from './editor/slug';
 import { getGameProject } from '../game-engine/scene-engine/gameProjects';
 import type {
   Character,
   Hotspot,
   HotspotShape,
-  HotspotVerb,
-  HotspotVerbIcon,
   MenuAppearance,
   PolygonPoint,
   Scene,
@@ -48,7 +46,9 @@ type PolygonDraft = {
   repeatable: boolean;
   labelStyle: TextStyleOverride | undefined;
   labelOffset: PolygonPoint | undefined;
-  verbs: HotspotVerb[];
+  actionMenuEnabled: boolean;
+  onExamine: SceneAction[];
+  onInteractWith: SceneAction[];
   points: PolygonPoint[];
 };
 
@@ -78,9 +78,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const transitioning = useAdventureRuntimeStore((s) => s.transitioning);
   const ringState = useAdventureRuntimeStore((s) => s.ringState);
   const interactHotspot = useAdventureRuntimeStore((s) => s.interactHotspot);
-  const activeVerbMenuHotspotId = useAdventureRuntimeStore((s) => s.activeVerbMenuHotspotId);
-  const selectVerb = useAdventureRuntimeStore((s) => s.selectVerb);
-  const closeVerbMenu = useAdventureRuntimeStore((s) => s.closeVerbMenu);
+  const activeActionMenuHotspotId = useAdventureRuntimeStore((s) => s.activeActionMenuHotspotId);
+  const selectAction = useAdventureRuntimeStore((s) => s.selectAction);
+  const closeActionMenu = useAdventureRuntimeStore((s) => s.closeActionMenu);
   const advance = useAdventureRuntimeStore((s) => s.advance);
   const selectChoice = useAdventureRuntimeStore((s) => s.selectChoice);
   const getActiveScene = useAdventureRuntimeStore((s) => s.getActiveScene);
@@ -142,6 +142,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
   const [siteSettingsSaveMessage, setSiteSettingsSaveMessage] = useState<string | null>(null);
   const [uploadingCursor, setUploadingCursor] = useState<'default' | 'hover' | null>(null);
+  const [uploadingActionMenuImage, setUploadingActionMenuImage] = useState<ActionMenuImageKind | null>(null);
 
   // Zona de forma libre en proceso de trazado (ver "Crear zona" o "Reiniciar
   // forma") — no null mientras se están juntando puntos a click.
@@ -280,7 +281,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           onInteract: [],
           repeatable: true,
           interactable,
-          verbs: [],
+          actionMenuEnabled: false,
+          onExamine: [],
+          onInteractWith: [],
         },
       ],
     });
@@ -307,7 +310,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         repeatable: true,
         labelStyle: undefined,
         labelOffset: undefined,
-        verbs: [],
+        actionMenuEnabled: false,
+        onExamine: [],
+        onInteractWith: [],
         points: [],
       });
       return;
@@ -325,7 +330,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           onInteract: [],
           repeatable: true,
           interactable,
-          verbs: [],
+          actionMenuEnabled: false,
+          onExamine: [],
+          onInteractWith: [],
         },
       ],
     });
@@ -347,94 +354,37 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
   }
 
-  // "verbs": si no está vacío, un click en la zona abre el menú circular en
-  // vez de correr onInteract directo — ver HotspotVerbMenu.tsx.
-  function setHotspotVerbsEnabled(objectId: string, enabled: boolean): void {
-    const base = editedScene ?? baseScene;
-    if (!base) return;
-    if (!enabled) {
-      setEditedScene({
-        ...base,
-        hotspots: base.hotspots.map((h) => (h.id === objectId ? { ...h, verbs: [] } : h)),
-      });
-      return;
-    }
-    const exploreKey = `verb.${base.id}.${objectId}.explorar`;
-    const interactKey = `verb.${base.id}.${objectId}.interactuar`;
-    setEditedScene({
-      ...base,
-      hotspots: base.hotspots.map((h) =>
-        h.id === objectId
-          ? {
-              ...h,
-              verbs: [
-                { id: 'explorar', label: exploreKey, icon: 'eye', onInteract: [] },
-                { id: 'interactuar', label: interactKey, icon: 'hand', onInteract: [] },
-              ],
-            }
-          : h,
-      ),
-    });
-    setPendingStrings((prev) => ({ ...prev, [exploreKey]: 'Explorar', [interactKey]: 'Interactuar' }));
-  }
-
-  function addHotspotVerb(objectId: string, name: string, labelText: string): void {
-    const base = editedScene ?? baseScene;
-    if (!base) return;
-    const hotspot = base.hotspots.find((h) => h.id === objectId);
-    if (!hotspot) return;
-    const taken = new Set(hotspot.verbs.map((v) => v.id));
-    const id = uniqueId(slugify(name), taken);
-    const labelKey = `verb.${base.id}.${objectId}.${id}`;
-    setEditedScene({
-      ...base,
-      hotspots: base.hotspots.map((h) =>
-        h.id === objectId ? { ...h, verbs: [...h.verbs, { id, label: labelKey, icon: 'hand', onInteract: [] }] } : h,
-      ),
-    });
-    setPendingStrings((prev) => ({ ...prev, [labelKey]: labelText }));
-  }
-
-  function removeHotspotVerb(objectId: string, verbId: string): void {
+  // "actionMenuEnabled": si es true, un click en la zona abre el menú de
+  // acción (Examinar/Interactuar/Interactuar con/Cerrar) en vez de correr
+  // onInteract directo — ver ActionMenu.tsx y SiteSettings.actionMenu para
+  // el arte, que es global para todo el juego.
+  function setActionMenuEnabled(objectId: string, enabled: boolean): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
     setEditedScene({
       ...base,
-      hotspots: base.hotspots.map((h) =>
-        h.id === objectId ? { ...h, verbs: h.verbs.filter((v) => v.id !== verbId) } : h,
-      ),
+      hotspots: base.hotspots.map((h) => (h.id === objectId ? { ...h, actionMenuEnabled: enabled } : h)),
     });
   }
 
-  function updateHotspotVerbIcon(objectId: string, verbId: string, icon: HotspotVerbIcon): void {
-    const base = editedScene ?? baseScene;
-    if (!base) return;
-    setEditedScene({
-      ...base,
-      hotspots: base.hotspots.map((h) =>
-        h.id === objectId ? { ...h, verbs: h.verbs.map((v) => (v.id === verbId ? { ...v, icon } : v)) } : h,
-      ),
-    });
+  function buildActionList(kind: ActionKind, value: string): SceneAction[] {
+    if (kind === 'none') return [];
+    if (kind === 'dialogue') return value ? [{ type: 'dialogue', nodeId: value }] : [];
+    return value ? [{ type: 'transitionTo', sceneId: value, fade: 'fade' }] : [];
   }
 
-  function updateHotspotVerbAction(objectId: string, verbId: string, kind: VerbActionKind, value: string): void {
+  function updateHotspotAction(
+    objectId: string,
+    field: 'onExamine' | 'onInteract' | 'onInteractWith',
+    kind: ActionKind,
+    value: string,
+  ): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
-    const onInteract: SceneAction[] =
-      kind === 'none'
-        ? []
-        : kind === 'dialogue'
-          ? value
-            ? [{ type: 'dialogue', nodeId: value }]
-            : []
-          : value
-            ? [{ type: 'transitionTo', sceneId: value, fade: 'fade' }]
-            : [];
+    const actions = buildActionList(kind, value);
     setEditedScene({
       ...base,
-      hotspots: base.hotspots.map((h) =>
-        h.id === objectId ? { ...h, verbs: h.verbs.map((v) => (v.id === verbId ? { ...v, onInteract } : v)) } : h,
-      ),
+      hotspots: base.hotspots.map((h) => (h.id === objectId ? { ...h, [field]: actions } : h)),
     });
   }
 
@@ -475,7 +425,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       repeatable: hotspot.repeatable,
       labelStyle: hotspot.labelStyle,
       labelOffset: hotspot.labelOffset,
-      verbs: hotspot.verbs,
+      actionMenuEnabled: hotspot.actionMenuEnabled,
+      onExamine: hotspot.onExamine,
+      onInteractWith: hotspot.onInteractWith,
       points: [],
     });
   }
@@ -513,7 +465,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       interactable: polygonDraft.interactable,
       labelStyle: polygonDraft.labelStyle,
       labelOffset: polygonDraft.labelOffset,
-      verbs: polygonDraft.verbs,
+      actionMenuEnabled: polygonDraft.actionMenuEnabled,
+      onExamine: polygonDraft.onExamine,
+      onInteractWith: polygonDraft.onInteractWith,
     };
     setEditedScene({ ...base, hotspots: [...base.hotspots, newHotspot] });
     if (polygonDraft.labelText !== null) {
@@ -838,6 +792,54 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
   }
 
+  const ACTION_MENU_IMAGE_FIELD = {
+    normal: 'normalImagePath',
+    examine: 'examineImagePath',
+    interact: 'interactImagePath',
+    interactWith: 'interactWithImagePath',
+    close: 'closeImagePath',
+  } as const;
+  const ACTION_MENU_IMAGE_FILE_ID: Record<ActionMenuImageKind, string> = {
+    normal: 'normal',
+    examine: 'examine',
+    interact: 'interact',
+    interactWith: 'interact-with',
+    close: 'close',
+  };
+
+  async function uploadActionMenuImage(kind: ActionMenuImageKind, file: File): Promise<void> {
+    setUploadingActionMenuImage(kind);
+    setSiteSettingsSaveMessage(null);
+    try {
+      const ext = file.name.split('.').pop() || 'png';
+      const buffer = new Uint8Array(await file.arrayBuffer());
+      const result = await window.api.saveActionMenuImage(gameId, ACTION_MENU_IMAGE_FILE_ID[kind], ext, buffer);
+      if (result.ok) {
+        const base = editedSiteSettings ?? baseSiteSettings;
+        setEditedSiteSettings({
+          ...base,
+          actionMenu: { ...base.actionMenu, [ACTION_MENU_IMAGE_FIELD[kind]]: result.path },
+        });
+      } else {
+        setSiteSettingsSaveMessage(`Error subiendo imagen: ${result.error}`);
+      }
+    } catch (error) {
+      setSiteSettingsSaveMessage(`Error subiendo imagen: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setUploadingActionMenuImage(null);
+    }
+  }
+
+  function removeActionMenuImage(kind: ActionMenuImageKind): void {
+    const base = editedSiteSettings ?? baseSiteSettings;
+    setEditedSiteSettings({ ...base, actionMenu: { ...base.actionMenu, [ACTION_MENU_IMAGE_FIELD[kind]]: null } });
+  }
+
+  function updateActionMenuZone(zoneKey: ActionMenuZoneKey, points: PolygonPoint[]): void {
+    const base = editedSiteSettings ?? baseSiteSettings;
+    setEditedSiteSettings({ ...base, actionMenu: { ...base.actionMenu, [zoneKey]: points } });
+  }
+
   async function handleSaveSiteSettings(): Promise<void> {
     if (!editedSiteSettings) return;
     setSiteSettingsSaving(true);
@@ -984,12 +986,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onCancelPolygonDraft={cancelPolygonDraft}
                   onResetShape={resetShape}
                   onRemoveZone={removeHotspot}
-                  onSetHotspotVerbsEnabled={setHotspotVerbsEnabled}
-                  onAddHotspotVerb={addHotspotVerb}
-                  onRemoveHotspotVerb={removeHotspotVerb}
-                  onHotspotVerbLabelTextChange={setLabelText}
-                  onHotspotVerbIconChange={updateHotspotVerbIcon}
-                  onHotspotVerbActionChange={updateHotspotVerbAction}
+                  onSetActionMenuEnabled={setActionMenuEnabled}
+                  onExamineActionChange={(objectId, kind, value) => updateHotspotAction(objectId, 'onExamine', kind, value)}
+                  onInteractActionChange={(objectId, kind, value) => updateHotspotAction(objectId, 'onInteract', kind, value)}
+                  onInteractWithActionChange={(objectId, kind, value) =>
+                    updateHotspotAction(objectId, 'onInteractWith', kind, value)
+                  }
                 />
               ) : editorTab === 'characters' ? (
                 <CharacterEditorPanel
@@ -1007,9 +1009,13 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   gameId={gameId}
                   settings={displaySiteSettings}
                   uploadingCursor={uploadingCursor}
+                  uploadingActionMenuImage={uploadingActionMenuImage}
                   onChangeHotspotLabelStyle={updateSiteSettingsHotspotLabelStyle}
                   onUploadCursor={(kind, file) => void uploadCursor(kind, file)}
                   onRemoveCursor={removeCursor}
+                  onUploadActionMenuImage={(kind, file) => void uploadActionMenuImage(kind, file)}
+                  onRemoveActionMenuImage={removeActionMenuImage}
+                  onActionMenuZoneChange={updateActionMenuZone}
                 />
               )}
             </div>
@@ -1120,9 +1126,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           transitioning={transitioning}
           layerOverrides={layerOverrides}
           onInteract={interactHotspot}
-          activeVerbMenuHotspotId={activeVerbMenuHotspotId}
-          onSelectVerb={selectVerb}
-          onCloseVerbMenu={closeVerbMenu}
+          activeActionMenuHotspotId={activeActionMenuHotspotId}
+          onSelectAction={selectAction}
+          onCloseActionMenu={closeActionMenu}
         >
           {activeInterfaceId ? (
             <InterfaceHost interfaceId={activeInterfaceId} />

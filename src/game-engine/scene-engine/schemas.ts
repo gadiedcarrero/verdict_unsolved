@@ -65,17 +65,6 @@ export const PolygonPointSchema = z.object({ x: z.number(), y: z.number() });
 
 export const HotspotShapeSchema = z.enum(['rect', 'polygon']);
 
-export const HotspotVerbIconSchema = z.enum(['eye', 'hand', 'chat', 'bag', 'gear']);
-
-export const HotspotVerbSchema = z.object({
-  /** Auto-generado al crearlo en el editor. */
-  id: z.string(),
-  /** Clave de traducción (igual que Hotspot.label), no el texto en sí. */
-  label: z.string(),
-  icon: HotspotVerbIconSchema.default('hand'),
-  onInteract: z.array(SceneActionSchema),
-});
-
 export const HotspotSchema = z.object({
   id: z.string(),
   /** Clave de traducción (ver locales/es.json del caso), no el texto en sí —
@@ -108,10 +97,15 @@ export const HotspotSchema = z.object({
   /** Posición del tooltip, en % del stage — si no está, se calcula sola
    * (centro-arriba del bounding box). Se arrastra desde el editor. */
   labelOffset: PolygonPointSchema.optional(),
-  /** Si no está vacío, un click en la zona abre un menú circular con estas
-   * opciones (ej. Explorar/Interactuar) en vez de correr `onInteract`
-   * directo — cada verbo tiene sus propias acciones. */
-  verbs: z.array(HotspotVerbSchema).default([]),
+  /** Si es true, un click abre el menú de acción de 4 imágenes (Examinar/
+   * Interactuar/Interactuar con/Cerrar) configurado en
+   * SiteSettings.actionMenu, en vez de correr `onInteract` directo. */
+  actionMenuEnabled: z.boolean().default(false),
+  /** Solo si `actionMenuEnabled`. */
+  onExamine: z.array(SceneActionSchema).default([]),
+  /** Solo si `actionMenuEnabled` — "Interactuar" reusa `onInteract` de
+   * arriba (mismo campo que el click único de siempre). */
+  onInteractWith: z.array(SceneActionSchema).default([]),
 });
 
 export const CharacterSchema = z.object({
@@ -292,11 +286,50 @@ export const CursorSettingsSchema = z.object({
   hoverCursorPath: z.string().nullable().default(null),
 });
 
+/** El "menú de acción" es la interfaz que reemplaza al click único en
+ * cualquier objeto con `Hotspot.actionMenuEnabled`: Examinar/Interactuar/
+ * Interactuar con/Cerrar, las 4 funciones que tienen todos los juegos
+ * point-and-click. El arte es 100% custom por juego (5 imágenes: una base
+ * "normal" que aparece al primer click, y una por acción que la reemplaza
+ * al pasar el mouse) y las 4 zonas clickeables se trazan a mano sobre la
+ * imagen base — libres, no un layout fijo, porque el menú puede tener
+ * cualquier forma (no necesariamente un círculo con 4 cuartos iguales). */
+export const ActionMenuSettingsSchema = z.object({
+  /** Rutas relativas dentro de assets/games/<gameId>/action-menu/, o null =
+   * todavía no configurada. Sin `normalImagePath` el menú no se muestra —
+   * el objeto corre `onInteract` directo, como si `actionMenuEnabled`
+   * fuera false. */
+  normalImagePath: z.string().nullable().default(null),
+  examineImagePath: z.string().nullable().default(null),
+  interactImagePath: z.string().nullable().default(null),
+  interactWithImagePath: z.string().nullable().default(null),
+  closeImagePath: z.string().nullable().default(null),
+  /** Vértices en % de la imagen base (no del stage), en orden — vacío =
+   * esa acción todavía no tiene zona marcada. */
+  examineZone: z.array(PolygonPointSchema).default([]),
+  interactZone: z.array(PolygonPointSchema).default([]),
+  interactWithZone: z.array(PolygonPointSchema).default([]),
+  closeZone: z.array(PolygonPointSchema).default([]),
+});
+
+const DEFAULT_ACTION_MENU_SETTINGS = {
+  normalImagePath: null,
+  examineImagePath: null,
+  interactImagePath: null,
+  interactWithImagePath: null,
+  closeImagePath: null,
+  examineZone: [],
+  interactZone: [],
+  interactWithZone: [],
+  closeZone: [],
+};
+
 /** Ajustes generales del sitio/juego. */
 export const SiteSettingsSchema = z.object({
   /** Tipografía por defecto del tooltip de hotspot. */
   hotspotLabelStyle: TextStyleSchema.default({ fontFamily: 'sans', fontSize: 10, color: '#e6eaef' }),
   cursor: CursorSettingsSchema.default({ defaultCursorPath: null, hoverCursorPath: null }),
+  actionMenu: ActionMenuSettingsSchema.default(DEFAULT_ACTION_MENU_SETTINGS),
 });
 
 export const AdventureCaseBundleSchema = z.object({
@@ -313,6 +346,7 @@ export const AdventureCaseBundleSchema = z.object({
   siteSettings: SiteSettingsSchema.default({
     hotspotLabelStyle: { fontFamily: 'sans', fontSize: 10, color: '#e6eaef' },
     cursor: { defaultCursorPath: null, hoverCursorPath: null },
+    actionMenu: DEFAULT_ACTION_MENU_SETTINGS,
   }),
 });
 
@@ -321,13 +355,12 @@ export type InterfaceId = z.infer<typeof InterfaceIdSchema>;
 export type SceneAction = z.infer<typeof SceneActionSchema>;
 export type Hotspot = z.infer<typeof HotspotSchema>;
 export type HotspotShape = z.infer<typeof HotspotShapeSchema>;
-export type HotspotVerb = z.infer<typeof HotspotVerbSchema>;
-export type HotspotVerbIcon = z.infer<typeof HotspotVerbIconSchema>;
 export type PolygonPoint = z.infer<typeof PolygonPointSchema>;
 export type TextStyle = z.infer<typeof TextStyleSchema>;
 export type TextStyleOverride = z.infer<typeof TextStyleOverrideSchema>;
 export type SiteSettings = z.infer<typeof SiteSettingsSchema>;
 export type CursorSettings = z.infer<typeof CursorSettingsSchema>;
+export type ActionMenuSettings = z.infer<typeof ActionMenuSettingsSchema>;
 export type SceneBackground = z.infer<typeof SceneBackgroundSchema>;
 export type SceneKind = z.infer<typeof SceneKindSchema>;
 export type MenuButton = z.infer<typeof MenuButtonSchema>;

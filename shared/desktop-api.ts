@@ -46,4 +46,7 @@ export type DesktopApi = {
   /** Solo funciona en `pnpm dev` — sube una imagen de cursor a
    * assets/games/<gameId>/cursors/ y devuelve la ruta relativa. */
   saveCursorImage: (gameId: string, fileId: string, ext: string, data: Uint8Array) => Promise<BackgroundSaveResult>;
+  /** Solo funciona en `pnpm dev` — sube una de las 5 imágenes del menú de
+   * acción a assets/games/<gameId>/action-menu/ y devuelve la ruta relativa. */
+  saveActionMenuImage: (gameId: string, fileId: string, ext: string, data: Uint8Array) => Promise<BackgroundSaveResult>;
 };

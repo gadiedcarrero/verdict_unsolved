@@ -5,11 +5,12 @@ import type {
   AdventureCaseBundle,
   DialogueNode,
   Hotspot,
-  HotspotVerb,
   InterfaceId,
   Scene,
   SceneAction,
 } from '../game-engine/scene-engine/schemas';
+
+export type ActionMenuActionKind = 'examine' | 'interact' | 'interactWith' | 'close';
 
 /** El guion pide 12s de espera al dejar sonar el teléfono; se acorta para
  * que la escena sea jugable durante el desarrollo. Ajustar aquí cuando el
@@ -30,18 +31,19 @@ type AdventureRuntimeState = {
   ringState: 'silent' | 'ringing';
   ringAttempts: number;
   transitioning: boolean;
-  /** No null mientras está abierto el menú circular de verbos (Explorar/
-   * Interactuar/...) de este hotspot — ver Hotspot.verbs. */
-  activeVerbMenuHotspotId: string | null;
+  /** No null mientras está abierto el menú de acción (Examinar/Interactuar/
+   * Interactuar con/Cerrar) de este hotspot — ver Hotspot.actionMenuEnabled. */
+  activeActionMenuHotspotId: string | null;
 
   init: (bundle: AdventureCaseBundle, persisted: AdventureCaseState | null) => void;
   getActiveScene: () => Scene | null;
   getActiveNode: () => DialogueNode | null;
-  /** Si el hotspot tiene verbos definidos, abre el menú circular en vez de
-   * correr `onInteract` directo. */
+  /** Si el hotspot tiene el menú de acción activado (y el juego ya tiene la
+   * imagen base configurada en Ajustes), abre el menú en vez de correr
+   * `onInteract` directo. */
   interactHotspot: (hotspot: Hotspot) => void;
-  closeVerbMenu: () => void;
-  selectVerb: (verb: HotspotVerb) => void;
+  closeActionMenu: () => void;
+  selectAction: (kind: ActionMenuActionKind) => void;
   openDialogue: (nodeId: string) => void;
   advance: () => void;
   selectChoice: (next: string, setState?: Record<string, unknown>, addFlag?: string) => void;
@@ -79,7 +81,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   ringState: 'silent',
   ringAttempts: 0,
   transitioning: false,
-  activeVerbMenuHotspotId: null,
+  activeActionMenuHotspotId: null,
 
   init: (bundle, persisted) => {
     const startingSceneId = bundle.case.startingSceneId;
@@ -94,7 +96,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       ringState: 'silent',
       ringAttempts: 0,
       transitioning: false,
-      activeVerbMenuHotspotId: null,
+      activeActionMenuHotspotId: null,
     });
   },
 
@@ -133,21 +135,29 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       return;
     }
 
-    if (hotspot.verbs.length > 0) {
-      set({ activeVerbMenuHotspotId: hotspot.id });
+    // Sin `normalImagePath` configurado todavía en Ajustes, no hay nada que
+    // mostrar — se cae al click único de siempre en vez de abrir un menú
+    // vacío/roto.
+    if (hotspot.actionMenuEnabled && state.bundle?.siteSettings.actionMenu.normalImagePath) {
+      set({ activeActionMenuHotspotId: hotspot.id });
       return;
     }
 
     get().runActions(hotspot.onInteract);
   },
 
-  closeVerbMenu: () => {
-    set({ activeVerbMenuHotspotId: null });
+  closeActionMenu: () => {
+    set({ activeActionMenuHotspotId: null });
   },
 
-  selectVerb: (verb) => {
-    set({ activeVerbMenuHotspotId: null });
-    get().runActions(verb.onInteract);
+  selectAction: (kind) => {
+    const hotspotId = get().activeActionMenuHotspotId;
+    set({ activeActionMenuHotspotId: null });
+    if (kind === 'close' || !hotspotId) return;
+    const hotspot = get().getActiveScene()?.hotspots.find((h) => h.id === hotspotId);
+    if (!hotspot) return;
+    const actions = kind === 'examine' ? hotspot.onExamine : kind === 'interact' ? hotspot.onInteract : hotspot.onInteractWith;
+    get().runActions(actions);
   },
 
   openDialogue: (nodeId) => {
@@ -245,7 +255,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   },
 
   transitionToScene: (sceneId, fade) => {
-    set({ activeDialogueNodeId: null, activeInterfaceId: null, activeVerbMenuHotspotId: null, transitioning: true });
+    set({ activeDialogueNodeId: null, activeInterfaceId: null, activeActionMenuHotspotId: null, transitioning: true });
     const delay = fade === 'cut' ? 0 : SCENE_FADE_MS;
     window.setTimeout(() => {
       const scene = get().bundle?.scenes.find((s) => s.id === sceneId) ?? null;
@@ -268,7 +278,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       currentSceneId: sceneId,
       activeDialogueNodeId: null,
       activeInterfaceId: null,
-      activeVerbMenuHotspotId: null,
+      activeActionMenuHotspotId: null,
       officeInteractions: [],
       ringState: 'silent',
       ringAttempts: 0,
@@ -283,7 +293,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       currentSceneId: '',
       activeDialogueNodeId: null,
       activeInterfaceId: null,
-      activeVerbMenuHotspotId: null,
+      activeActionMenuHotspotId: null,
       caseState: createEmptyAdventureCaseState(''),
       officeInteractions: [],
       ringState: 'silent',

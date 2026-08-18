@@ -1,11 +1,12 @@
 import { useRef, useState, type JSX, type ReactNode } from 'react';
 import type {
   Hotspot as HotspotData,
-  HotspotVerb,
   PolygonPoint,
   Scene,
   SiteSettings,
 } from '../game-engine/scene-engine/schemas';
+import { ActionMenu } from './ActionMenu';
+import type { ActionMenuActionKind } from './adventureRuntime.store';
 import { cursorCssValue } from './cursorCss';
 import { translate } from '../i18n/translate';
 import { buildEditableObjects } from './editor/editableObjects';
@@ -13,7 +14,6 @@ import { EditableBox, type EditableRect } from './editor/EditableBox';
 import { HotspotLabelHandle } from './editor/HotspotLabelHandle';
 import { PolygonPointEditor } from './editor/PolygonPointEditor';
 import { HotspotArea } from './Hotspot';
-import { HotspotVerbMenu } from './HotspotVerbMenu';
 import { MENU_POSITION_CLASSES, MenuButtonView } from './MenuButtonView';
 import { MENU_TITLE_POSITION_CLASSES, MenuTitleView } from './MenuTitleView';
 import { PlaceholderLayer } from './PlaceholderLayer';
@@ -36,9 +36,9 @@ export function SceneViewer({
   polygonDraftPoints,
   onAddPolygonDraftPoint,
   onClosePolygonDraft,
-  activeVerbMenuHotspotId,
-  onSelectVerb,
-  onCloseVerbMenu,
+  activeActionMenuHotspotId,
+  onSelectAction,
+  onCloseActionMenu,
 }: {
   gameId: string;
   scene: Scene;
@@ -62,10 +62,10 @@ export function SceneViewer({
   polygonDraftPoints?: PolygonPoint[] | null;
   onAddPolygonDraftPoint?: (point: PolygonPoint) => void;
   onClosePolygonDraft?: () => void;
-  /** Id del hotspot con el menú circular de verbos abierto — ver Hotspot.verbs. */
-  activeVerbMenuHotspotId?: string | null;
-  onSelectVerb?: (verb: HotspotVerb) => void;
-  onCloseVerbMenu?: () => void;
+  /** Id del hotspot con el menú de acción abierto — ver Hotspot.actionMenuEnabled. */
+  activeActionMenuHotspotId?: string | null;
+  onSelectAction?: (kind: ActionMenuActionKind) => void;
+  onCloseActionMenu?: () => void;
 }): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -216,24 +216,22 @@ export function SceneViewer({
         )}
 
         {!editMode &&
-          activeVerbMenuHotspotId &&
-          onSelectVerb &&
-          onCloseVerbMenu &&
+          activeActionMenuHotspotId &&
+          onSelectAction &&
+          onCloseActionMenu &&
           (() => {
-            const activeHotspot = scene.hotspots.find((h) => h.id === activeVerbMenuHotspotId);
+            const activeHotspot = scene.hotspots.find((h) => h.id === activeActionMenuHotspotId);
             if (!activeHotspot) return null;
             return (
-              <HotspotVerbMenu
+              <ActionMenu
+                gameId={gameId}
                 anchor={{
                   x: activeHotspot.area.x + activeHotspot.area.width / 2,
                   y: activeHotspot.area.y + activeHotspot.area.height / 2,
                 }}
-                stageWidth={width}
-                stageHeight={height}
-                verbs={activeHotspot.verbs}
-                strings={strings}
-                onSelectVerb={onSelectVerb}
-                onClose={onCloseVerbMenu}
+                actionMenu={siteSettings.actionMenu}
+                onSelectAction={onSelectAction}
+                onClose={onCloseActionMenu}
               />
             );
           })()}

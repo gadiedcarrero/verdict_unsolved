@@ -1,8 +1,8 @@
 import type {
   HotspotShape,
-  HotspotVerb,
   PolygonPoint,
   Scene,
+  SceneAction,
   TextStyleOverride,
 } from '../../game-engine/scene-engine/schemas';
 import { resolveLabelPosition } from '../hotspotLabel';
@@ -28,9 +28,13 @@ export type EditableObject = {
   /** Dónde se ancla el tooltip (automático o arrastrado a mano), null si
    * todavía no hay hotspot. */
   labelPosition: PolygonPoint | null;
-  /** Si no está vacío, un click abre el menú circular de verbos en vez de
-   * correr `onInteract` directo. [] en objetos sin hotspot todavía. */
-  verbs: HotspotVerb[];
+  /** Si es true, un click abre el menú de acción (Examinar/Interactuar/
+   * Interactuar con/Cerrar) en vez de correr `onInteract` directo. false en
+   * objetos sin hotspot todavía. */
+  actionMenuEnabled: boolean;
+  onInteract: SceneAction[];
+  onExamine: SceneAction[];
+  onInteractWith: SceneAction[];
 };
 
 /**
@@ -56,7 +60,10 @@ export function buildEditableObjects(scene: Scene): EditableObject[] {
       points: null,
       labelStyle: hotspot?.labelStyle,
       labelPosition: hotspot ? resolveLabelPosition(hotspot) : null,
-      verbs: hotspot?.verbs ?? [],
+      actionMenuEnabled: hotspot?.actionMenuEnabled ?? false,
+      onInteract: hotspot?.onInteract ?? [],
+      onExamine: hotspot?.onExamine ?? [],
+      onInteractWith: hotspot?.onInteractWith ?? [],
     };
   });
 
@@ -72,7 +79,10 @@ export function buildEditableObjects(scene: Scene): EditableObject[] {
       points: hotspot.points ?? null,
       labelStyle: hotspot.labelStyle,
       labelPosition: resolveLabelPosition(hotspot),
-      verbs: hotspot.verbs,
+      actionMenuEnabled: hotspot.actionMenuEnabled,
+      onInteract: hotspot.onInteract,
+      onExamine: hotspot.onExamine,
+      onInteractWith: hotspot.onInteractWith,
     }));
 
   return [...spriteObjects, ...zoneObjects];
