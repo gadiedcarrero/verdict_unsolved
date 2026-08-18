@@ -28,6 +28,7 @@ import { InterfaceHost } from './interfaces/InterfaceHost';
 import { IntroScene } from './IntroScene';
 import { MENU_BUTTON_ACTION_CONTINUE, MENU_BUTTON_ACTION_QUIT } from './menuButtonActions';
 import { MenuScene } from './MenuScene';
+import { resizeCursorImage } from './resizeCursorImage';
 import { SceneViewer } from './SceneViewer';
 
 type EditorTab = 'scene' | 'characters' | 'settings';
@@ -92,7 +93,20 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   // en `pnpm dev`). Arranca directo en modo edición en dev — como el editor
   // de Unity — para no depender de que ya exista una escena jugable.
   const [editMode, setEditMode] = useState(() => import.meta.env.DEV);
-  const [editorTab, setEditorTab] = useState<EditorTab>('scene');
+
+  // Qué pestaña del editor está abierta (Escena/Personajes/Ajustes). Se
+  // persiste porque cada "Guardar cambios" recarga la página entera (ver
+  // handleSave) — sin esto, guardar en Ajustes te devolvía siempre a la
+  // pestaña Escena, dando la sensación de que "no guardó".
+  const editorTabStorageKey = `verdictUnsolved.editorTab.${gameId}`;
+  const [editorTab, setEditorTabState] = useState<EditorTab>(() => {
+    const stored = localStorage.getItem(editorTabStorageKey);
+    return stored === 'scene' || stored === 'characters' || stored === 'settings' ? stored : 'scene';
+  });
+  function setEditorTab(tab: EditorTab): void {
+    localStorage.setItem(editorTabStorageKey, tab);
+    setEditorTabState(tab);
+  }
 
   // Qué escena se está editando: puede ser distinta de `currentSceneId`
   // (la del juego real) — el editor deja navegar/editar cualquier escena.
@@ -778,9 +792,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setUploadingCursor(kind);
     setSiteSettingsSaveMessage(null);
     try {
-      const ext = file.name.split('.').pop() || 'png';
-      const buffer = new Uint8Array(await file.arrayBuffer());
-      const result = await window.api.saveCursorImage(gameId, `cursor-${kind}`, ext, buffer);
+      // Redimensionado acá (no solo guardado tal cual): un cursor CSS con
+      // una imagen grande (p. ej. una foto de varios cientos de px) no se
+      // ve — el navegador la ignora y muestra el cursor normal, como si el
+      // cambio nunca se hubiera guardado.
+      const buffer = await resizeCursorImage(file);
+      const result = await window.api.saveCursorImage(gameId, `cursor-${kind}`, 'png', buffer);
       if (result.ok) {
         const base = editedSiteSettings ?? baseSiteSettings;
         setEditedSiteSettings({

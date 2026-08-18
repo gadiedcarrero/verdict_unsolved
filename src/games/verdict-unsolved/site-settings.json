@@ -1,7 +1,11 @@
 {
   "hotspotLabelStyle": {
-    "fontFamily": "sans",
+    "fontFamily": "comic-sans",
     "fontSize": 10,
     "color": "#e6eaef"
+  },
+  "cursor": {
+    "defaultCursorPath": "cursors/cursor-default.png",
+    "hoverCursorPath": "cursors/cursor-hover.png"
   }
 }
