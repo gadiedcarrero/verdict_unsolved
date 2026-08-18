@@ -655,6 +655,7 @@ function ObjectFields({
   onLabelTextChange,
   onLabelStyleChange,
   onResetShape,
+  onRemoveZone,
 }: {
   object: EditableObject;
   strings: Record<string, string>;
@@ -663,6 +664,7 @@ function ObjectFields({
   onLabelTextChange: (text: string) => void;
   onLabelStyleChange: (patch: Partial<TextStyleOverride> | null) => void;
   onResetShape: () => void;
+  onRemoveZone: () => void;
 }): JSX.Element {
   const hasCustomStyle = object.labelStyle !== undefined;
   const isPolygon = object.shape === 'polygon';
@@ -675,10 +677,26 @@ function ObjectFields({
           {object.kind === 'zone' && <span className="ml-1 text-sky-400">· zona</span>}
           {isPolygon && <span className="ml-1 text-amber-accent">· forma libre</span>}
         </p>
-        <label className="flex shrink-0 items-center gap-1 text-[9px] text-graphite-400">
-          <input type="checkbox" checked={object.interactable} onChange={(event) => onInteractableChange(event.target.checked)} />
-          interactuable
-        </label>
+        <div className="flex shrink-0 items-center gap-2">
+          <label className="flex items-center gap-1 text-[9px] text-graphite-400">
+            <input
+              type="checkbox"
+              checked={object.interactable}
+              onChange={(event) => onInteractableChange(event.target.checked)}
+            />
+            interactuable
+          </label>
+          {object.labelKey && (
+            <button
+              type="button"
+              onClick={onRemoveZone}
+              title={object.kind === 'sprite' ? 'Elimina la zona clickeable, la imagen queda' : 'Elimina la zona'}
+              className="text-[9px] text-graphite-500 uppercase hover:text-red-400"
+            >
+              eliminar
+            </button>
+          )}
+        </div>
       </div>
 
       {object.labelKey && (
@@ -886,6 +904,7 @@ export function SceneEditorPanel({
   polygonDraftPointCount,
   onCancelPolygonDraft,
   onResetShape,
+  onRemoveZone,
 }: {
   gameId: string;
   scene: Scene | null;
@@ -921,6 +940,7 @@ export function SceneEditorPanel({
   polygonDraftPointCount: number | null;
   onCancelPolygonDraft: () => void;
   onResetShape: (objectId: string) => void;
+  onRemoveZone: (objectId: string) => void;
 }): JSX.Element {
   return (
     <div className="text-xs text-graphite-200">
@@ -1009,6 +1029,7 @@ export function SceneEditorPanel({
                   }
                   onLabelStyleChange={(patch) => onLabelStyleChange(object.id, patch)}
                   onResetShape={() => onResetShape(object.id)}
+                  onRemoveZone={() => onRemoveZone(object.id)}
                 />
               ))}
             </>

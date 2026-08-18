@@ -326,6 +326,16 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
   }
 
+  // Elimina la zona clickeable de un objeto. Si tenía capa/imagen propia
+  // (sprite), la capa queda — solo deja de ser interactuable, como si nunca
+  // se hubiera tildado. Si era una zona pura (sin imagen), desaparece del
+  // todo de la lista de objetos.
+  function removeHotspot(objectId: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({ ...base, hotspots: base.hotspots.filter((h) => h.id !== objectId) });
+  }
+
   function addPolygonDraftPoint(point: PolygonPoint): void {
     setPolygonDraft((prev) => (prev ? { ...prev, points: [...prev.points, point] } : prev));
   }
@@ -762,6 +772,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   polygonDraftPointCount={polygonDraft?.points.length ?? null}
                   onCancelPolygonDraft={cancelPolygonDraft}
                   onResetShape={resetShape}
+                  onRemoveZone={removeHotspot}
                 />
               ) : editorTab === 'characters' ? (
                 <CharacterEditorPanel
