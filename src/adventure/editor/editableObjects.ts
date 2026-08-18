@@ -1,4 +1,5 @@
 import type { HotspotShape, PolygonPoint, Scene, TextStyleOverride } from '../../game-engine/scene-engine/schemas';
+import { resolveLabelPosition } from '../hotspotLabel';
 import type { EditableRect } from './EditableBox';
 
 export type EditableObject = {
@@ -18,6 +19,9 @@ export type EditableObject = {
   points: PolygonPoint[] | null;
   /** Override de tipografía del tooltip para este hotspot, si tiene. */
   labelStyle: TextStyleOverride | undefined;
+  /** Dónde se ancla el tooltip (automático o arrastrado a mano), null si
+   * todavía no hay hotspot. */
+  labelPosition: PolygonPoint | null;
 };
 
 /**
@@ -42,6 +46,7 @@ export function buildEditableObjects(scene: Scene): EditableObject[] {
       shape: 'rect',
       points: null,
       labelStyle: hotspot?.labelStyle,
+      labelPosition: hotspot ? resolveLabelPosition(hotspot) : null,
     };
   });
 
@@ -56,6 +61,7 @@ export function buildEditableObjects(scene: Scene): EditableObject[] {
       shape: hotspot.shape,
       points: hotspot.points ?? null,
       labelStyle: hotspot.labelStyle,
+      labelPosition: resolveLabelPosition(hotspot),
     }));
 
   return [...spriteObjects, ...zoneObjects];

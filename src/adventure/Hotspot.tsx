@@ -1,5 +1,6 @@
-import type { CSSProperties, JSX } from 'react';
+import { useState, type CSSProperties, type JSX } from 'react';
 import type { Hotspot as HotspotData, TextStyle } from '../game-engine/scene-engine/schemas';
+import { resolveLabelPosition } from './hotspotLabel';
 import { translate } from '../i18n/translate';
 
 const FONT_FAMILY_CLASSES: Record<TextStyle['fontFamily'], string> = {
@@ -25,6 +26,11 @@ export function HotspotArea({
   const { area } = hotspot;
   const displayLabel = translate(strings, hotspot.label);
   const isPolygon = hotspot.shape === 'polygon' && (hotspot.points?.length ?? 0) >= 3;
+  // El tooltip no puede vivir DENTRO del botón: un clip-path recorta a sus
+  // hijos también, así que un tooltip posicionado fuera del contorno del
+  // polígono (arriba de la forma) quedaba invisible. Se renderizan como
+  // hermanos y el hover se maneja a mano en vez de con group-hover de CSS.
+  const [hovering, setHovering] = useState(false);
 
   const areaStyle: CSSProperties = isPolygon
     ? {
@@ -41,37 +47,42 @@ export function HotspotArea({
         height: `${area.height}%`,
       };
 
-  // Rectángulo: el tooltip flota arriba de la propia caja (chica). Polígono:
-  // la "caja" del botón es todo el stage (para que el clip-path defina el
-  // área real), así que el tooltip se ancla directo al borde superior del
-  // bounding box en vez de relativo al botón.
-  const labelStyleProps: CSSProperties = isPolygon
-    ? { left: `${area.x + area.width / 2}%`, top: `${area.y}%`, transform: 'translate(-50%, -140%)' }
-    : { left: '50%', top: '-1.5rem', transform: 'translateX(-50%)' };
+  const labelPosition = resolveLabelPosition(hotspot);
+  const labelStyleProps: CSSProperties = {
+    left: `${labelPosition.x}%`,
+    top: `${labelPosition.y}%`,
+    transform: 'translate(-50%, -140%)',
+  };
+
+  function setHover(value: boolean): void {
+    setHovering(value);
+    onHoverChange?.(value);
+  }
 
   return (
-    <button
-      type="button"
-      aria-label={displayLabel}
-      onClick={() => onInteract(hotspot)}
-      onMouseEnter={() => onHoverChange?.(true)}
-      onMouseLeave={() => onHoverChange?.(false)}
-      onFocus={() => onHoverChange?.(true)}
-      onBlur={() => onHoverChange?.(false)}
-      className="group absolute cursor-pointer"
-      style={{
-        ...areaStyle,
-        // Por encima de cualquier capa de escena (zIndex 1-4), para que el
-        // clic siempre llegue al hotspot y no a la capa/placeholder debajo.
-        zIndex: 50,
-      }}
-    >
+    <>
+      <button
+        type="button"
+        aria-label={displayLabel}
+        onClick={() => onInteract(hotspot)}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        onFocus={() => setHover(true)}
+        onBlur={() => setHover(false)}
+        className="absolute cursor-pointer"
+        style={{
+          ...areaStyle,
+          // Por encima de cualquier capa de escena (zIndex 1-4), para que el
+          // clic siempre llegue al hotspot y no a la capa/placeholder debajo.
+          zIndex: 50,
+        }}
+      />
       <span
-        className={`pointer-events-none absolute rounded bg-graphite-950/90 px-2 py-1 whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100 ${FONT_FAMILY_CLASSES[labelStyle.fontFamily]}`}
-        style={{ ...labelStyleProps, fontSize: `${labelStyle.fontSize}px`, color: labelStyle.color }}
+        className={`pointer-events-none absolute rounded bg-graphite-950/90 px-2 py-1 whitespace-nowrap transition-opacity ${FONT_FAMILY_CLASSES[labelStyle.fontFamily]} ${hovering ? 'opacity-100' : 'opacity-0'}`}
+        style={{ ...labelStyleProps, fontSize: `${labelStyle.fontSize}px`, color: labelStyle.color, zIndex: 51 }}
       >
         {displayLabel}
       </span>
-    </button>
+    </>
   );
 }

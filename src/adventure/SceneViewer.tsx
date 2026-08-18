@@ -3,6 +3,7 @@ import type { Hotspot as HotspotData, PolygonPoint, Scene, SiteSettings } from '
 import { translate } from '../i18n/translate';
 import { buildEditableObjects } from './editor/editableObjects';
 import { EditableBox, type EditableRect } from './editor/EditableBox';
+import { HotspotLabelHandle } from './editor/HotspotLabelHandle';
 import { PolygonPointEditor } from './editor/PolygonPointEditor';
 import { HotspotArea } from './Hotspot';
 import { MENU_POSITION_CLASSES, MenuButtonView } from './MenuButtonView';
@@ -23,6 +24,7 @@ export function SceneViewer({
   editMode = false,
   onObjectRectChange,
   onPolygonPointsChange,
+  onLabelPositionChange,
   polygonDraftPoints,
   onAddPolygonDraftPoint,
   onClosePolygonDraft,
@@ -43,6 +45,8 @@ export function SceneViewer({
   onObjectRectChange?: (objectId: string, rect: EditableRect) => void;
   /** Mover un vértice de una zona de forma libre ya creada. */
   onPolygonPointsChange?: (objectId: string, points: PolygonPoint[]) => void;
+  /** Arrastrar el tooltip de un hotspot a otra posición. */
+  onLabelPositionChange?: (objectId: string, position: PolygonPoint) => void;
   /** Zona de forma libre en proceso de trazado (ver "Crear zona" en el panel) — no null mientras se están juntando puntos. */
   polygonDraftPoints?: PolygonPoint[] | null;
   onAddPolygonDraftPoint?: (point: PolygonPoint) => void;
@@ -146,27 +150,35 @@ export function SceneViewer({
           onObjectRectChange &&
           buildEditableObjects(scene).map((object) => {
             const label = `${object.labelKey ? translate(strings, object.labelKey) : object.id}${object.interactable ? '' : ' · no interactuable'}`;
-            if (object.shape === 'polygon' && object.points) {
-              return (
-                <PolygonPointEditor
-                  key={object.id}
-                  points={object.points}
-                  closed
-                  stageRef={stageRef}
-                  label={label}
-                  onChange={(points) => onPolygonPointsChange?.(object.id, points)}
-                />
-              );
-            }
             return (
-              <EditableBox
-                key={object.id}
-                label={label}
-                colorClassName={object.kind === 'zone' ? 'border-sky-400' : 'border-amber-accent'}
-                rect={object.rect}
-                stageRef={stageRef}
-                onChange={(rect) => onObjectRectChange(object.id, rect)}
-              />
+              <div key={object.id} className="contents">
+                {object.shape === 'polygon' && object.points ? (
+                  <PolygonPointEditor
+                    points={object.points}
+                    closed
+                    stageRef={stageRef}
+                    label={label}
+                    onChange={(points) => onPolygonPointsChange?.(object.id, points)}
+                  />
+                ) : (
+                  <EditableBox
+                    label={label}
+                    colorClassName={object.kind === 'zone' ? 'border-sky-400' : 'border-amber-accent'}
+                    rect={object.rect}
+                    stageRef={stageRef}
+                    onChange={(rect) => onObjectRectChange(object.id, rect)}
+                  />
+                )}
+                {object.labelKey && object.labelPosition && onLabelPositionChange && (
+                  <HotspotLabelHandle
+                    position={object.labelPosition}
+                    text={translate(strings, object.labelKey)}
+                    labelStyle={resolveTextStyle(siteSettings.hotspotLabelStyle, object.labelStyle)}
+                    stageRef={stageRef}
+                    onChange={(position) => onLabelPositionChange(object.id, position)}
+                  />
+                )}
+              </div>
             );
           })}
 

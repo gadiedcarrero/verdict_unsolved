@@ -44,6 +44,7 @@ type PolygonDraft = {
   onInteract: SceneAction[];
   repeatable: boolean;
   labelStyle: TextStyleOverride | undefined;
+  labelOffset: PolygonPoint | undefined;
   points: PolygonPoint[];
 };
 
@@ -257,6 +258,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         onInteract: [],
         repeatable: true,
         labelStyle: undefined,
+        labelOffset: undefined,
         points: [],
       });
       return;
@@ -306,6 +308,15 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
   }
 
+  function updateLabelPosition(objectId: string, position: PolygonPoint): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      hotspots: base.hotspots.map((h) => (h.id === objectId ? { ...h, labelOffset: position } : h)),
+    });
+  }
+
   // "Reiniciar forma": saca el hotspot existente y arranca un trazado nuevo
   // con el mismo id/texto/acciones — solo cambian los puntos.
   function resetShape(objectId: string): void {
@@ -322,6 +333,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       onInteract: hotspot.onInteract,
       repeatable: hotspot.repeatable,
       labelStyle: hotspot.labelStyle,
+      labelOffset: hotspot.labelOffset,
       points: [],
     });
   }
@@ -358,6 +370,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       repeatable: polygonDraft.repeatable,
       interactable: polygonDraft.interactable,
       labelStyle: polygonDraft.labelStyle,
+      labelOffset: polygonDraft.labelOffset,
     };
     setEditedScene({ ...base, hotspots: [...base.hotspots, newHotspot] });
     if (polygonDraft.labelText !== null) {
@@ -866,6 +879,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 editMode={editorTab === 'scene'}
                 onObjectRectChange={updateObjectRect}
                 onPolygonPointsChange={updatePolygonPoints}
+                onLabelPositionChange={updateLabelPosition}
                 polygonDraftPoints={polygonDraft?.points ?? null}
                 onAddPolygonDraftPoint={addPolygonDraftPoint}
                 onClosePolygonDraft={closePolygonDraft}

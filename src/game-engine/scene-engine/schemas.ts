@@ -94,6 +94,9 @@ export const HotspotSchema = z.object({
   /** Pisa, campo a campo, la tipografía general del sitio
    * (SiteSettings.hotspotLabelStyle) para el tooltip de esta zona. */
   labelStyle: TextStyleOverrideSchema.optional(),
+  /** Posición del tooltip, en % del stage — si no está, se calcula sola
+   * (centro-arriba del bounding box). Se arrastra desde el editor. */
+  labelOffset: PolygonPointSchema.optional(),
 });
 
 export const CharacterSchema = z.object({
