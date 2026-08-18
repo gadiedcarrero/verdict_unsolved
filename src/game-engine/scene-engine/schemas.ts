@@ -38,6 +38,9 @@ export const SceneActionSchema = z.discriminatedUnion('type', [
 
 export const HotspotSchema = z.object({
   id: z.string(),
+  /** Clave de traducción (ver locales/es.json del caso), no el texto en sí —
+   * así el nombre que aparece al pasar el mouse puede traducirse a otros
+   * idiomas más adelante sin tocar la escena. */
   label: z.string(),
   area: z.object({
     x: z.number(),
@@ -47,6 +50,9 @@ export const HotspotSchema = z.object({
   }),
   onInteract: z.array(SceneActionSchema),
   repeatable: z.boolean().default(true),
+  /** Si es false, la zona existe (para referencia/edición) pero no responde
+   * al mouse durante la partida — p. ej. un objeto decorativo marcado. */
+  interactable: z.boolean().default(true),
 });
 
 export const DialogueChoiceSchema = z.object({
@@ -132,6 +138,8 @@ export const AdventureCaseBundleSchema = z.object({
   mirrorHints: z.array(MirrorHintSchema),
   agents: z.array(AgentDefSchema),
   equipmentItems: z.array(EquipmentItemSchema),
+  /** Diccionario clave → texto en español. Ver docs sobre i18n en el editor. */
+  strings: z.record(z.string(), z.string()),
 });
 
 export type SceneLayer = z.infer<typeof SceneLayerSchema>;
@@ -147,3 +155,4 @@ export type MirrorHint = z.infer<typeof MirrorHintSchema>;
 export type AgentDef = z.infer<typeof AgentDefSchema>;
 export type EquipmentItem = z.infer<typeof EquipmentItemSchema>;
 export type AdventureCaseBundle = z.infer<typeof AdventureCaseBundleSchema>;
+export type LocaleStrings = z.infer<typeof AdventureCaseBundleSchema>['strings'];

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type JSX, type ReactNode, type RefObject } from 'react';
 import type { Hotspot as HotspotData, Scene } from '../game-engine/scene-engine/schemas';
+import { translate } from '../i18n/translate';
 import { buildEditableObjects } from './editor/editableObjects';
 import { EditableBox, type EditableRect } from './editor/EditableBox';
 import { HotspotArea } from './Hotspot';
@@ -44,6 +45,7 @@ function useStageSize(containerRef: RefObject<HTMLDivElement | null>): { width: 
 
 export function SceneViewer({
   scene,
+  strings,
   transitioning,
   layerOverrides,
   onInteract,
@@ -52,6 +54,8 @@ export function SceneViewer({
   onObjectRectChange,
 }: {
   scene: Scene;
+  /** Diccionario clave → texto (locales/es.json del caso). */
+  strings: Record<string, string>;
   transitioning: boolean;
   /** assetPath alternativo por layer id (p. ej. el teléfono cambia de imagen mientras suena). */
   layerOverrides?: Record<string, string> | undefined;
@@ -95,22 +99,25 @@ export function SceneViewer({
           ))}
 
         {!editMode &&
-          scene.hotspots.map((hotspot) => (
-            <HotspotArea
-              key={hotspot.id}
-              hotspot={hotspot}
-              onInteract={onInteract}
-              onHoverChange={(hovering) => setHoveredId(hovering ? hotspot.id : null)}
-            />
-          ))}
+          scene.hotspots
+            .filter((hotspot) => hotspot.interactable)
+            .map((hotspot) => (
+              <HotspotArea
+                key={hotspot.id}
+                hotspot={hotspot}
+                strings={strings}
+                onInteract={onInteract}
+                onHoverChange={(hovering) => setHoveredId(hovering ? hotspot.id : null)}
+              />
+            ))}
 
         {editMode &&
           onObjectRectChange &&
           buildEditableObjects(scene).map((object) => (
             <EditableBox
               key={object.id}
-              label={`${object.id}${object.kind === 'fixed' ? ' · fijo' : object.interactable ? '' : ' · no interactuable'}`}
-              colorClassName={object.kind === 'fixed' ? 'border-sky-400' : 'border-amber-accent'}
+              label={`${object.labelKey ? translate(strings, object.labelKey) : object.id}${object.interactable ? '' : ' · no interactuable'}`}
+              colorClassName={object.kind === 'zone' ? 'border-sky-400' : 'border-amber-accent'}
               rect={object.rect}
               stageRef={stageRef}
               onChange={(rect) => onObjectRectChange(object.id, rect)}

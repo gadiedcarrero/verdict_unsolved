@@ -3,38 +3,110 @@
   "act": 1,
   "background": "backgrounds/oficina-noche-lluvia.png",
   "layers": [
-    { "id": "telefono", "assetPath": "layers/telefono.png", "x": 16, "y": 66, "width": 13, "height": 14, "zIndex": 2 },
-    { "id": "fotografia", "assetPath": "layers/fotografia-boca-abajo.png", "x": 30, "y": 74, "width": 10, "height": 8, "zIndex": 3 },
-    { "id": "cenicero", "assetPath": "layers/cenicero-cigarrillo.png", "x": 76, "y": 65, "width": 8, "height": 7, "zIndex": 2 },
-    { "id": "computadora", "assetPath": "layers/computadora-apagada.png", "x": 36, "y": 33, "width": 27, "height": 48, "zIndex": 2 }
+    {
+      "id": "telefono",
+      "assetPath": "layers/telefono.png",
+      "x": 14.779975043402779,
+      "y": 63.59958526234568,
+      "width": 13,
+      "height": 14,
+      "zIndex": 2
+    },
+    {
+      "id": "fotografia",
+      "assetPath": "layers/fotografia-boca-abajo.png",
+      "x": 25.930763527199076,
+      "y": 74.43885030864197,
+      "width": 10,
+      "height": 8,
+      "zIndex": 3
+    },
+    {
+      "id": "cenicero",
+      "assetPath": "layers/cenicero-cigarrillo.png",
+      "x": 73.51564308449075,
+      "y": 63.15015753600823,
+      "width": 8,
+      "height": 7,
+      "zIndex": 2
+    },
+    {
+      "id": "computadora",
+      "assetPath": "layers/computadora-apagada.png",
+      "x": 34.659487123842595,
+      "y": 31.49537037037037,
+      "width": 28.43455222800926,
+      "height": 52.05574845679013,
+      "zIndex": 2
+    }
   ],
   "hotspots": [
     {
       "id": "fotografia",
-      "label": "Fotografía boca abajo",
-      "area": { "x": 30, "y": 74, "width": 10, "height": 8 },
-      "onInteract": [{ "type": "dialogue", "nodeId": "photo-1" }],
+      "label": "hotspot.oficina-acto1.fotografia",
+      "area": {
+        "x": 25.930763527199076,
+        "y": 74.43885030864197,
+        "width": 10,
+        "height": 8
+      },
+      "onInteract": [
+        {
+          "type": "dialogue",
+          "nodeId": "photo-1"
+        }
+      ],
       "repeatable": true
     },
     {
       "id": "cajon",
-      "label": "Cajón cerrado",
-      "area": { "x": 45, "y": 88, "width": 8, "height": 8 },
-      "onInteract": [{ "type": "dialogue", "nodeId": "cajon-1" }],
+      "label": "hotspot.oficina-acto1.cajon",
+      "area": {
+        "x": 44.76829246238426,
+        "y": 89.13128536522633,
+        "width": 8,
+        "height": 8
+      },
+      "onInteract": [
+        {
+          "type": "dialogue",
+          "nodeId": "cajon-1"
+        }
+      ],
       "repeatable": true
     },
     {
       "id": "computadora",
-      "label": "Computadora",
-      "area": { "x": 36, "y": 33, "width": 27, "height": 48 },
-      "onInteract": [{ "type": "dialogue", "nodeId": "zero-network-boot" }],
+      "label": "hotspot.oficina-acto1.computadora",
+      "area": {
+        "x": 34.659487123842595,
+        "y": 31.49537037037037,
+        "width": 28.43455222800926,
+        "height": 52.05574845679013
+      },
+      "onInteract": [
+        {
+          "type": "dialogue",
+          "nodeId": "zero-network-boot"
+        }
+      ],
       "repeatable": true
     },
     {
       "id": "telefono",
-      "label": "Teléfono",
-      "area": { "x": 16, "y": 66, "width": 13, "height": 14 },
-      "onInteract": [{ "type": "dialogue", "nodeId": "telefono-idle" }],
+      "label": "hotspot.oficina-acto1.telefono",
+      "area": {
+        "x": 14.779975043402779,
+        "y": 63.59958526234568,
+        "width": 13,
+        "height": 14
+      },
+      "onInteract": [
+        {
+          "type": "dialogue",
+          "nodeId": "telefono-idle"
+        }
+      ],
       "repeatable": true
     }
   ]

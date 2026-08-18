@@ -9,7 +9,7 @@
   "hotspots": [
     {
       "id": "telefono-llamada",
-      "label": "Teléfono (llamada en curso)",
+      "label": "hotspot.oficina-llamada.telefono-llamada",
       "area": { "x": 16, "y": 66, "width": 13, "height": 14 },
       "onInteract": [{ "type": "dialogue", "nodeId": "director-respuesta" }],
       "repeatable": true

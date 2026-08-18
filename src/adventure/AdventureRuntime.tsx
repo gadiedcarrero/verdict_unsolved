@@ -1,6 +1,7 @@
 import { useEffect, useState, type JSX } from 'react';
 import type { EditableRect } from './editor/EditableBox';
 import { SceneEditorPanel } from './editor/SceneEditorPanel';
+import { slugify, uniqueId } from './editor/slug';
 import { activeAdventureCaseResult } from '../game-engine/scene-engine/activeAdventureCase';
 import type { Scene } from '../game-engine/scene-engine/schemas';
 import { useSaveStore } from '../game-engine/save-system/save.store';
@@ -29,10 +30,13 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
   const getActiveScene = useAdventureRuntimeStore((s) => s.getActiveScene);
   const getActiveNode = useAdventureRuntimeStore((s) => s.getActiveNode);
 
-  // Modo edición: arrastrar/redimensionar capas y hotspots sobre la escena y
-  // guardar las coordenadas directo en el JSON fuente (solo en `pnpm dev`).
+  // Modo edición: arrastrar/redimensionar objetos, crear zonas nuevas y
+  // guardar todo directo en el JSON fuente (solo en `pnpm dev`).
   const [editMode, setEditMode] = useState(false);
   const [editedScene, setEditedScene] = useState<Scene | null>(null);
+  // Texto (clave → texto en ES) nuevo o editado en esta sesión de edición,
+  // pendiente de fundirse con locales/es.json al guardar.
+  const [pendingStrings, setPendingStrings] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
@@ -48,6 +52,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
 
   useEffect(() => {
     setEditedScene(null);
+    setPendingStrings({});
     setSaveMessage(null);
   }, [currentSceneId]);
 
@@ -103,38 +108,69 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     });
   }
 
-  // Solo aplica a objetos con capa propia (los "fijos" sin capa siempre son
-  // interactuables, no existirían como hotspot si no). Tildar agrega un
-  // hotspot nuevo sin acción todavía (onInteract: []) para completar a mano
-  // en el JSON; destildar lo saca.
+  // Tilda/destilda si un objeto responde al mouse. Si todavía no tiene
+  // hotspot (capa puramente decorativa), tildar crea uno nuevo con una clave
+  // de traducción propia; si ya existe, solo cambia su flag `interactable`
+  // (la zona sigue ahí, solo deja de reaccionar).
   function toggleInteractable(objectId: string, interactable: boolean): void {
-    setEditedScene((prev) => {
-      const base = prev ?? baseScene;
-      if (!base) return prev;
-      const layer = base.layers.find((l) => l.id === objectId);
-      if (!layer) return base;
-      const hasHotspot = base.hotspots.some((h) => h.id === objectId);
-
-      if (interactable && !hasHotspot) {
-        return {
-          ...base,
-          hotspots: [
-            ...base.hotspots,
-            {
-              id: layer.id,
-              label: layer.id,
-              area: { x: layer.x, y: layer.y, width: layer.width ?? 10, height: layer.height ?? 10 },
-              onInteract: [],
-              repeatable: true,
-            },
-          ],
-        };
-      }
-      if (!interactable && hasHotspot) {
-        return { ...base, hotspots: base.hotspots.filter((h) => h.id !== objectId) };
-      }
-      return base;
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    const hasHotspot = base.hotspots.some((h) => h.id === objectId);
+    if (hasHotspot) {
+      setEditedScene({
+        ...base,
+        hotspots: base.hotspots.map((h) => (h.id === objectId ? { ...h, interactable } : h)),
+      });
+      return;
+    }
+    const layer = base.layers.find((l) => l.id === objectId);
+    if (!layer) return;
+    const labelKey = `hotspot.${base.id}.${objectId}`;
+    setEditedScene({
+      ...base,
+      hotspots: [
+        ...base.hotspots,
+        {
+          id: layer.id,
+          label: labelKey,
+          area: { x: layer.x, y: layer.y, width: layer.width ?? 10, height: layer.height ?? 10 },
+          onInteract: [],
+          repeatable: true,
+          interactable,
+        },
+      ],
     });
+    setPendingStrings((prev) => (labelKey in prev ? prev : { ...prev, [labelKey]: objectId }));
+  }
+
+  // Crea una zona nueva (sin capa/imagen propia) directamente sobre la
+  // escena — el flujo que pediste: nombre + texto al pasar el mouse +
+  // interactuable, todo desde el panel.
+  function createZone(name: string, labelText: string, interactable: boolean): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    const taken = new Set([...base.hotspots.map((h) => h.id), ...base.layers.map((l) => l.id)]);
+    const id = uniqueId(slugify(name), taken);
+    const labelKey = `hotspot.${base.id}.${id}`;
+    setEditedScene({
+      ...base,
+      hotspots: [
+        ...base.hotspots,
+        {
+          id,
+          label: labelKey,
+          area: { x: 40, y: 40, width: 15, height: 15 },
+          onInteract: [],
+          repeatable: true,
+          interactable,
+        },
+      ],
+    });
+    setPendingStrings((prev) => ({ ...prev, [labelKey]: labelText }));
+  }
+
+  function setLabelText(labelKey: string, text: string): void {
+    setPendingStrings((prev) => ({ ...prev, [labelKey]: text }));
   }
 
   async function handleSave(): Promise<void> {
@@ -150,8 +186,9 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
       ...(editedScene.onEnter ? { onEnter: editedScene.onEnter } : {}),
     };
     try {
-      const result = await window.api.saveSceneLayout(editedScene.id, payload);
+      const result = await window.api.saveSceneLayout(editedScene.id, payload, pendingStrings);
       setSaveMessage(result.ok ? 'Guardado en el JSON de la escena.' : `Error: ${result.error}`);
+      if (result.ok) setPendingStrings({});
     } catch (error) {
       setSaveMessage(
         `Error: ${error instanceof Error ? error.message : String(error)} (¿reiniciaste "pnpm dev" después de sumar el editor?)`,
@@ -160,6 +197,8 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
       setSaving(false);
     }
   }
+
+  const strings = { ...bundle.strings, ...pendingStrings };
 
   return (
     <div className="relative h-screen w-screen bg-graphite-950">
@@ -187,6 +226,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
       </div>
       <SceneViewer
         scene={displayScene}
+        strings={strings}
         transitioning={transitioning}
         layerOverrides={layerOverrides}
         onInteract={interactHotspot}
@@ -196,11 +236,15 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
         {editMode ? (
           <SceneEditorPanel
             scene={displayScene}
+            strings={strings}
             onObjectRectChange={updateObjectRect}
             onToggleInteractable={toggleInteractable}
+            onLabelTextChange={setLabelText}
+            onCreateZone={createZone}
             onSave={() => void handleSave()}
             onDiscard={() => {
               setEditedScene(null);
+              setPendingStrings({});
               setSaveMessage(null);
             }}
             hasChanges={editedScene !== null}

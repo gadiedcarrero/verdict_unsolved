@@ -3,37 +3,47 @@ import type { EditableRect } from './EditableBox';
 
 export type EditableObject = {
   id: string;
-  /** 'sprite' = tiene su propia capa/imagen. 'fixed' = solo hotspot, la imagen ya está pintada en el fondo. */
-  kind: 'sprite' | 'fixed';
+  /** 'sprite' = tiene su propia capa/imagen. 'zone' = solo una zona sobre el fondo, sin imagen aparte. */
+  kind: 'sprite' | 'zone';
   rect: EditableRect;
-  /** Para 'sprite': si existe un hotspot con el mismo id. Para 'fixed': siempre true (no existiría si no). */
+  /** Si existe un hotspot para este id, su valor de `interactable`. Si no
+   * existe ningún hotspot todavía (capa puramente decorativa), false. */
   interactable: boolean;
+  /** Clave de traducción del hotspot (label), o null si todavía no tiene uno. */
+  labelKey: string | null;
 };
 
 /**
  * Une capas y hotspots en una sola lista de "objetos" para el editor visual:
  * cuando una capa y un hotspot comparten id, se editan como una sola caja
  * (misma posición para el arte y la zona clicable) en vez de dos separadas.
+ * Los hotspots sin capa (zonas puras sobre el fondo, creadas a mano en el
+ * editor) aparecen igual, marcados como 'zone'.
  */
 export function buildEditableObjects(scene: Scene): EditableObject[] {
-  const hotspotIds = new Set(scene.hotspots.map((h) => h.id));
+  const hotspotById = new Map(scene.hotspots.map((h) => [h.id, h]));
   const layerIds = new Set(scene.layers.map((l) => l.id));
 
-  const spriteObjects: EditableObject[] = scene.layers.map((layer) => ({
-    id: layer.id,
-    kind: 'sprite',
-    rect: { x: layer.x, y: layer.y, width: layer.width ?? 10, height: layer.height ?? 10 },
-    interactable: hotspotIds.has(layer.id),
-  }));
+  const spriteObjects: EditableObject[] = scene.layers.map((layer) => {
+    const hotspot = hotspotById.get(layer.id);
+    return {
+      id: layer.id,
+      kind: 'sprite',
+      rect: { x: layer.x, y: layer.y, width: layer.width ?? 10, height: layer.height ?? 10 },
+      interactable: hotspot?.interactable ?? false,
+      labelKey: hotspot?.label ?? null,
+    };
+  });
 
-  const fixedObjects: EditableObject[] = scene.hotspots
+  const zoneObjects: EditableObject[] = scene.hotspots
     .filter((hotspot) => !layerIds.has(hotspot.id))
     .map((hotspot) => ({
       id: hotspot.id,
-      kind: 'fixed',
+      kind: 'zone',
       rect: hotspot.area,
-      interactable: true,
+      interactable: hotspot.interactable,
+      labelKey: hotspot.label,
     }));
 
-  return [...spriteObjects, ...fixedObjects];
+  return [...spriteObjects, ...zoneObjects];
 }
