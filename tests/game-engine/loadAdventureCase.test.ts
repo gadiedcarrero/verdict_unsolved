@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adventureCaseBundleRaw } from '@/cases/case-001-la-ultima-llamada';
+import { gameBundleRaw as adventureCaseBundleRaw } from '@/games/verdict-unsolved';
 import { loadAdventureCase } from '@/game-engine/scene-engine/loadAdventureCase';
 
 describe('loadAdventureCase', () => {

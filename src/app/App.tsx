@@ -1,7 +1,7 @@
 import { useEffect, useState, type JSX } from 'react';
 import { AdventureRuntime } from '../adventure/AdventureRuntime';
 import { usePreferencesStore } from '../game-engine/preferences/preferences.store';
-import { SplashScreen } from './SplashScreen';
+import { ProjectHub } from './ProjectHub';
 
 function usePreferencesEffect(): void {
   const textScale = usePreferencesStore((s) => s.textScale);
@@ -17,12 +17,12 @@ function usePreferencesEffect(): void {
 }
 
 export function App(): JSX.Element {
-  const [entered, setEntered] = useState(false);
+  const [gameId, setGameId] = useState<string | null>(null);
   usePreferencesEffect();
 
-  if (!entered) {
-    return <SplashScreen onEnter={() => setEntered(true)} />;
+  if (!gameId) {
+    return <ProjectHub onOpenGame={setGameId} />;
   }
 
-  return <AdventureRuntime onExit={() => setEntered(false)} />;
+  return <AdventureRuntime gameId={gameId} onExit={() => setGameId(null)} />;
 }

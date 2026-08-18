@@ -44,6 +44,15 @@ type AdventureRuntimeState = {
   applyStatePatch: (patch: Partial<AdventureCaseState>) => void;
   addFlag: (flag: string) => void;
   transitionToScene: (sceneId: string, fade: FadeKind) => void;
+  /** Botón "Play desde acá" del editor: arranca el juego en `sceneId` sin
+   * tocar el save real (a diferencia de `transitionToScene`, que persiste si
+   * el caso ya está registrado) — para probar cualquier punto de la historia
+   * sin tener que rejugar desde el principio. */
+  playFromScene: (sceneId: string) => void;
+  /** Vuelve el store a su estado inicial — se usa al salir al selector de
+   * proyectos, para que abrir el mismo juego u otro distinto siempre vuelva
+   * a correr `init()` de cero en vez de arrastrar el bundle anterior. */
+  reset: () => void;
 };
 
 function persistIfRegistered(state: AdventureCaseState): void {
@@ -217,5 +226,33 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       if (scene?.onEnter) get().runActions(scene.onEnter);
       window.setTimeout(() => set({ transitioning: false }), 50);
     }, delay);
+  },
+
+  playFromScene: (sceneId) => {
+    const scene = get().bundle?.scenes.find((s) => s.id === sceneId) ?? null;
+    set({
+      currentSceneId: sceneId,
+      activeDialogueNodeId: null,
+      activeInterfaceId: null,
+      officeInteractions: [],
+      ringState: 'silent',
+      ringAttempts: 0,
+      transitioning: false,
+    });
+    if (scene?.onEnter) get().runActions(scene.onEnter);
+  },
+
+  reset: () => {
+    set({
+      bundle: null,
+      currentSceneId: '',
+      activeDialogueNodeId: null,
+      activeInterfaceId: null,
+      caseState: createEmptyAdventureCaseState(''),
+      officeInteractions: [],
+      ringState: 'silent',
+      ringAttempts: 0,
+      transitioning: false,
+    });
   },
 }));

@@ -8,6 +8,7 @@ import { PlaceholderLayer } from './PlaceholderLayer';
 import { useStageSize } from './useStageSize';
 
 export function SceneViewer({
+  gameId,
   scene,
   strings,
   transitioning,
@@ -17,6 +18,7 @@ export function SceneViewer({
   editMode = false,
   onObjectRectChange,
 }: {
+  gameId: string;
   scene: Scene;
   /** Diccionario clave → texto (locales/es.json del caso). */
   strings: Record<string, string>;
@@ -45,7 +47,11 @@ export function SceneViewer({
     <div ref={containerRef} className="flex h-full w-full items-center justify-center bg-graphite-950">
       <div ref={stageRef} className="relative overflow-hidden bg-graphite-950" style={{ width, height }}>
         {activeBackground ? (
-          <PlaceholderLayer assetPath={activeBackground.assetPath} className="absolute inset-0 h-full w-full object-cover" />
+          <PlaceholderLayer
+            gameId={gameId}
+            assetPath={activeBackground.assetPath}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-xs tracking-widest text-graphite-600 uppercase">
             Sin fondo — agregá uno en el editor
@@ -57,6 +63,7 @@ export function SceneViewer({
           .map((layer) => (
             <PlaceholderLayer
               key={layer.id}
+              gameId={gameId}
               assetPath={layerOverrides?.[layer.id] ?? layer.assetPath}
               glow={hoveredId === layer.id}
               className="absolute object-contain"

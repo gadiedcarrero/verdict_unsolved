@@ -2,18 +2,38 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { app, ipcMain } from 'electron';
 
-const CASE_DIR = 'src/cases/case-001-la-ultima-llamada';
-const SCENES_DIR = `${CASE_DIR}/scenes`;
-const STRINGS_FILE = `${CASE_DIR}/locales/es.json`;
-const CHARACTERS_FILE = `${CASE_DIR}/characters.json`;
-const ASSETS_DIR = 'assets/cases/case-001-la-ultima-llamada';
-const PORTRAITS_DIR = `${ASSETS_DIR}/portraits`;
-const BACKGROUNDS_DIR = `${ASSETS_DIR}/backgrounds`;
-
-// Patrón en vez de lista fija: permite crear escenas/personajes nuevos desde
-// el editor sin tener que sumar cada id acá a mano.
+// Patrón en vez de lista fija: permite crear juegos/escenas/personajes
+// nuevos desde el editor sin tener que sumar cada id acá a mano. También es
+// la única defensa contra path traversal — un gameId/sceneId/characterId
+// tipo "../../algo" nunca matchea esto, así que nunca llega a join().
 const ID_PATTERN = /^[a-z0-9-]+$/;
 const EXT_PATTERN = /^[a-z0-9]{1,5}$/i;
+
+function gameDir(gameId: string): string {
+  return `src/games/${gameId}`;
+}
+function scenesDir(gameId: string): string {
+  return `${gameDir(gameId)}/scenes`;
+}
+function stringsFile(gameId: string): string {
+  return `${gameDir(gameId)}/locales/es.json`;
+}
+function charactersFile(gameId: string): string {
+  return `${gameDir(gameId)}/characters.json`;
+}
+function assetsDir(gameId: string): string {
+  return `assets/games/${gameId}`;
+}
+function portraitsDir(gameId: string): string {
+  return `${assetsDir(gameId)}/portraits`;
+}
+function backgroundsDir(gameId: string): string {
+  return `${assetsDir(gameId)}/backgrounds`;
+}
+
+function isValidId(value: unknown): value is string {
+  return typeof value === 'string' && ID_PATTERN.test(value);
+}
 
 function isStringRecord(value: unknown): value is Record<string, string> {
   return (
@@ -23,8 +43,8 @@ function isStringRecord(value: unknown): value is Record<string, string> {
   );
 }
 
-async function mergeStrings(patch: Record<string, string>): Promise<void> {
-  const filePath = join(app.getAppPath(), STRINGS_FILE);
+async function mergeStrings(gameId: string, patch: Record<string, string>): Promise<void> {
+  const filePath = join(app.getAppPath(), stringsFile(gameId));
   const current = JSON.parse(await readFile(filePath, 'utf-8')) as Record<string, string>;
   const merged = { ...current, ...patch };
   const sorted = Object.fromEntries(Object.entries(merged).sort(([a], [b]) => a.localeCompare(b)));
@@ -34,19 +54,22 @@ async function mergeStrings(patch: Record<string, string>): Promise<void> {
 export function registerSceneEditorHandlers(): void {
   ipcMain.handle(
     'scene-editor:save',
-    async (_event, sceneId: unknown, scene: unknown, stringsPatch: unknown) => {
+    async (_event, gameId: unknown, sceneId: unknown, scene: unknown, stringsPatch: unknown) => {
       if (app.isPackaged) {
         return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
       }
-      if (typeof sceneId !== 'string' || !ID_PATTERN.test(sceneId)) {
+      if (!isValidId(gameId)) {
+        return { ok: false, error: `Id de juego inválido: ${String(gameId)}` };
+      }
+      if (!isValidId(sceneId)) {
         return { ok: false, error: `Id de escena inválido: ${String(sceneId)}` };
       }
       try {
-        const filePath = join(app.getAppPath(), SCENES_DIR, `${sceneId}.json`);
+        const filePath = join(app.getAppPath(), scenesDir(gameId), `${sceneId}.json`);
         await writeFile(filePath, `${JSON.stringify(scene, null, 2)}\n`, 'utf-8');
 
         if (isStringRecord(stringsPatch) && Object.keys(stringsPatch).length > 0) {
-          await mergeStrings(stringsPatch);
+          await mergeStrings(gameId, stringsPatch);
         }
         return { ok: true };
       } catch (error) {
@@ -55,33 +78,42 @@ export function registerSceneEditorHandlers(): void {
     },
   );
 
-  ipcMain.handle('scene-editor:save-characters', async (_event, characters: unknown, stringsPatch: unknown) => {
-    if (app.isPackaged) {
-      return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
-    }
-    if (!Array.isArray(characters)) {
-      return { ok: false, error: 'Formato de personajes inválido.' };
-    }
-    try {
-      const filePath = join(app.getAppPath(), CHARACTERS_FILE);
-      await writeFile(filePath, `${JSON.stringify(characters, null, 2)}\n`, 'utf-8');
-
-      if (isStringRecord(stringsPatch) && Object.keys(stringsPatch).length > 0) {
-        await mergeStrings(stringsPatch);
-      }
-      return { ok: true };
-    } catch (error) {
-      return { ok: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  });
-
   ipcMain.handle(
-    'scene-editor:save-portrait',
-    async (_event, characterId: unknown, ext: unknown, data: unknown) => {
+    'scene-editor:save-characters',
+    async (_event, gameId: unknown, characters: unknown, stringsPatch: unknown) => {
       if (app.isPackaged) {
         return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
       }
-      if (typeof characterId !== 'string' || !ID_PATTERN.test(characterId)) {
+      if (!isValidId(gameId)) {
+        return { ok: false, error: `Id de juego inválido: ${String(gameId)}` };
+      }
+      if (!Array.isArray(characters)) {
+        return { ok: false, error: 'Formato de personajes inválido.' };
+      }
+      try {
+        const filePath = join(app.getAppPath(), charactersFile(gameId));
+        await writeFile(filePath, `${JSON.stringify(characters, null, 2)}\n`, 'utf-8');
+
+        if (isStringRecord(stringsPatch) && Object.keys(stringsPatch).length > 0) {
+          await mergeStrings(gameId, stringsPatch);
+        }
+        return { ok: true };
+      } catch (error) {
+        return { ok: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    'scene-editor:save-portrait',
+    async (_event, gameId: unknown, characterId: unknown, ext: unknown, data: unknown) => {
+      if (app.isPackaged) {
+        return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
+      }
+      if (!isValidId(gameId)) {
+        return { ok: false, error: `Id de juego inválido: ${String(gameId)}` };
+      }
+      if (!isValidId(characterId)) {
         return { ok: false, error: `Id de personaje inválido: ${String(characterId)}` };
       }
       if (typeof ext !== 'string' || !EXT_PATTERN.test(ext)) {
@@ -91,10 +123,10 @@ export function registerSceneEditorHandlers(): void {
         return { ok: false, error: 'Datos de imagen inválidos.' };
       }
       try {
-        const dir = join(app.getAppPath(), PORTRAITS_DIR);
+        const dir = join(app.getAppPath(), portraitsDir(gameId));
         await mkdir(dir, { recursive: true });
         const relativePath = `portraits/${characterId}.${ext.toLowerCase()}`;
-        const filePath = join(app.getAppPath(), ASSETS_DIR, relativePath);
+        const filePath = join(app.getAppPath(), assetsDir(gameId), relativePath);
         await writeFile(filePath, Buffer.from(data));
         return { ok: true, path: relativePath };
       } catch (error) {
@@ -105,11 +137,14 @@ export function registerSceneEditorHandlers(): void {
 
   ipcMain.handle(
     'scene-editor:save-background',
-    async (_event, fileId: unknown, ext: unknown, data: unknown) => {
+    async (_event, gameId: unknown, fileId: unknown, ext: unknown, data: unknown) => {
       if (app.isPackaged) {
         return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
       }
-      if (typeof fileId !== 'string' || !ID_PATTERN.test(fileId)) {
+      if (!isValidId(gameId)) {
+        return { ok: false, error: `Id de juego inválido: ${String(gameId)}` };
+      }
+      if (!isValidId(fileId)) {
         return { ok: false, error: `Id de fondo inválido: ${String(fileId)}` };
       }
       if (typeof ext !== 'string' || !EXT_PATTERN.test(ext)) {
@@ -119,10 +154,10 @@ export function registerSceneEditorHandlers(): void {
         return { ok: false, error: 'Datos de imagen inválidos.' };
       }
       try {
-        const dir = join(app.getAppPath(), BACKGROUNDS_DIR);
+        const dir = join(app.getAppPath(), backgroundsDir(gameId));
         await mkdir(dir, { recursive: true });
         const relativePath = `backgrounds/${fileId}.${ext.toLowerCase()}`;
-        const filePath = join(app.getAppPath(), ASSETS_DIR, relativePath);
+        const filePath = join(app.getAppPath(), assetsDir(gameId), relativePath);
         await writeFile(filePath, Buffer.from(data));
         return { ok: true, path: relativePath };
       } catch (error) {

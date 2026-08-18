@@ -8,5 +8,5 @@ dist-electron/
 coverage/
 
 # Carpeta de trabajo con arte fuente sin procesar (mismo criterio que
-# Downloads): las copias en uso viven en assets/cases/.../
+# Downloads): las copias en uso viven en assets/games/<gameId>/.../
 Imagenes/

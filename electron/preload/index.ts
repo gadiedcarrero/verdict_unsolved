@@ -2,16 +2,16 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { DesktopApi } from '../../shared/desktop-api';
 
 const api: DesktopApi = {
-  saveGame: (data) => ipcRenderer.invoke('save:write', data),
-  loadGame: () => ipcRenderer.invoke('save:read'),
-  saveSceneLayout: (sceneId, scene, stringsPatch) =>
-    ipcRenderer.invoke('scene-editor:save', sceneId, scene, stringsPatch),
-  saveCharacters: (characters, stringsPatch) =>
-    ipcRenderer.invoke('scene-editor:save-characters', characters, stringsPatch),
-  saveCharacterPortrait: (characterId, ext, data) =>
-    ipcRenderer.invoke('scene-editor:save-portrait', characterId, ext, data),
-  saveSceneBackground: (fileId, ext, data) =>
-    ipcRenderer.invoke('scene-editor:save-background', fileId, ext, data),
+  saveGame: (gameId, data) => ipcRenderer.invoke('save:write', gameId, data),
+  loadGame: (gameId) => ipcRenderer.invoke('save:read', gameId),
+  saveSceneLayout: (gameId, sceneId, scene, stringsPatch) =>
+    ipcRenderer.invoke('scene-editor:save', gameId, sceneId, scene, stringsPatch),
+  saveCharacters: (gameId, characters, stringsPatch) =>
+    ipcRenderer.invoke('scene-editor:save-characters', gameId, characters, stringsPatch),
+  saveCharacterPortrait: (gameId, characterId, ext, data) =>
+    ipcRenderer.invoke('scene-editor:save-portrait', gameId, characterId, ext, data),
+  saveSceneBackground: (gameId, fileId, ext, data) =>
+    ipcRenderer.invoke('scene-editor:save-background', gameId, fileId, ext, data),
 };
 
 contextBridge.exposeInMainWorld('api', api);

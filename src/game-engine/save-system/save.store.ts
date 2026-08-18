@@ -8,7 +8,10 @@ import {
 
 type SaveState = SaveData & {
   isLoaded: boolean;
-  load: () => Promise<void>;
+  /** Recordado desde `load(gameId)` para que `persist()` sepa a qué archivo
+   * escribir sin que cada acción del juego tenga que pasarlo de nuevo. */
+  loadedGameId: string | null;
+  load: (gameId: string) => Promise<void>;
   persist: () => Promise<void>;
   addMoney: (amount: number) => void;
   addReputation: (amount: number) => void;
@@ -33,19 +36,22 @@ function snapshot(state: SaveState): SaveData {
 export const useSaveStore = create<SaveState>((set, get) => ({
   ...createEmptySave(),
   isLoaded: false,
+  loadedGameId: null,
 
-  load: async () => {
+  load: async (gameId) => {
     try {
-      const data = await window.api.loadGame();
-      set({ ...data, isLoaded: true });
+      const data = await window.api.loadGame(gameId);
+      set({ ...data, isLoaded: true, loadedGameId: gameId });
     } catch (error) {
       console.error('No se pudo cargar la partida guardada, se inicia con datos vacíos.', error);
-      set({ isLoaded: true });
+      set({ isLoaded: true, loadedGameId: gameId });
     }
   },
 
   persist: async () => {
-    await window.api.saveGame(snapshot(get()));
+    const gameId = get().loadedGameId;
+    if (!gameId) return;
+    await window.api.saveGame(gameId, snapshot(get()));
   },
 
   addMoney: (amount) => {

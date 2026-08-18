@@ -6,7 +6,7 @@ export const SAVE_SCHEMA_VERSION = 3 as const;
 
 /**
  * Estados persistentes del Caso 001 "La última llamada" (ver
- * docs/case-001-la-ultima-llamada/00-guion-original.md, sección 4).
+ * docs/verdict-unsolved/00-guion-original.md, sección 4).
  * Antes de `registered = true` (Escena 2, aceptar el caso) este objeto vive
  * solo en memoria del runtime; a partir de ahí cada cambio se persiste.
  */

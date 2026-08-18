@@ -12,7 +12,7 @@ const DEFAULT_SLIDE_MS = 2500;
  * el botón "Comenzar") dispara `scene.onIntroComplete`, típicamente un
  * `transitionTo` al menú. Ver Scene.kind en schemas.ts.
  */
-export function IntroScene({ scene }: { scene: Scene }): JSX.Element {
+export function IntroScene({ gameId, scene }: { gameId: string; scene: Scene }): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const { width, height } = useStageSize(containerRef);
   const [index, setIndex] = useState(0);
@@ -40,7 +40,7 @@ export function IntroScene({ scene }: { scene: Scene }): JSX.Element {
     <div ref={containerRef} className="flex h-screen w-screen items-center justify-center bg-graphite-950">
       <div className="relative overflow-hidden bg-graphite-950" style={{ width, height }}>
         {current ? (
-          <PlaceholderLayer assetPath={current.assetPath} className="absolute inset-0 h-full w-full object-cover" />
+          <PlaceholderLayer gameId={gameId} assetPath={current.assetPath} className="absolute inset-0 h-full w-full object-cover" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-xs tracking-widest text-graphite-600 uppercase">
             Sin fondos — agregá uno en el editor

@@ -1,12 +1,12 @@
 import { useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { translate } from '../../i18n/translate';
 import type { Character } from '../../game-engine/scene-engine/schemas';
+import { gameAssetUrl } from '../gameAssetUrl';
 
-const CASE_ASSET_BASE = '/cases/case-001-la-ultima-llamada';
 const inputClassName =
   'w-full rounded border border-graphite-700 bg-graphite-900 px-1.5 py-1 text-[10px] text-graphite-100';
 
-function PortraitPreview({ portrait }: { portrait: string | null }): JSX.Element {
+function PortraitPreview({ gameId, portrait }: { gameId: string; portrait: string | null }): JSX.Element {
   const [failed, setFailed] = useState(false);
   if (!portrait || failed) {
     return (
@@ -17,7 +17,7 @@ function PortraitPreview({ portrait }: { portrait: string | null }): JSX.Element
   }
   return (
     <img
-      src={`${CASE_ASSET_BASE}/${portrait}`}
+      src={gameAssetUrl(gameId, portrait)}
       alt=""
       onError={() => setFailed(true)}
       className="h-10 w-10 shrink-0 rounded-full border border-graphite-700 object-cover"
@@ -26,6 +26,7 @@ function PortraitPreview({ portrait }: { portrait: string | null }): JSX.Element
 }
 
 function CharacterFields({
+  gameId,
   character,
   strings,
   onNameTextChange,
@@ -33,6 +34,7 @@ function CharacterFields({
   onUploadPortrait,
   uploading,
 }: {
+  gameId: string;
   character: Character;
   strings: Record<string, string>;
   onNameTextChange: (text: string) => void;
@@ -50,7 +52,7 @@ function CharacterFields({
 
   return (
     <div className="mb-2 flex gap-2 border-b border-graphite-800 pb-2">
-      <PortraitPreview portrait={character.portrait} />
+      <PortraitPreview gameId={gameId} portrait={character.portrait} />
       <div className="min-w-0 flex-1">
         <p className="mb-1 truncate text-graphite-100">{character.id}</p>
         <label className="mb-1 flex flex-col">
@@ -143,6 +145,7 @@ function CreateCharacterForm({
 }
 
 export function CharacterEditorPanel({
+  gameId,
   characters,
   strings,
   uploadingId,
@@ -151,6 +154,7 @@ export function CharacterEditorPanel({
   onUploadPortrait,
   onCreateCharacter,
 }: {
+  gameId: string;
   characters: Character[];
   strings: Record<string, string>;
   uploadingId: string | null;
@@ -171,6 +175,7 @@ export function CharacterEditorPanel({
       {characters.map((character) => (
         <CharacterFields
           key={character.id}
+          gameId={gameId}
           character={character}
           strings={strings}
           uploading={uploadingId === character.id}

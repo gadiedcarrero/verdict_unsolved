@@ -3,7 +3,7 @@ import { CharacterEditorPanel } from './editor/CharacterEditorPanel';
 import type { EditableRect } from './editor/EditableBox';
 import { SceneEditorPanel } from './editor/SceneEditorPanel';
 import { slugify, uniqueId } from './editor/slug';
-import { activeAdventureCaseResult } from '../game-engine/scene-engine/activeAdventureCase';
+import { getGameProject } from '../game-engine/scene-engine/gameProjects';
 import type { Character, Scene, SceneKind } from '../game-engine/scene-engine/schemas';
 import { useSaveStore } from '../game-engine/save-system/save.store';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
@@ -14,7 +14,9 @@ import { SceneViewer } from './SceneViewer';
 
 type EditorTab = 'scene' | 'characters';
 
-export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Element {
+export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: () => void }): JSX.Element {
+  const project = getGameProject(gameId);
+
   const load = useSaveStore((s) => s.load);
   const isLoaded = useSaveStore((s) => s.isLoaded);
   const persistedAdventureState = useSaveStore((s) => s.adventureCaseState);
@@ -33,6 +35,8 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
   const selectChoice = useAdventureRuntimeStore((s) => s.selectChoice);
   const getActiveScene = useAdventureRuntimeStore((s) => s.getActiveScene);
   const getActiveNode = useAdventureRuntimeStore((s) => s.getActiveNode);
+  const playFromScene = useAdventureRuntimeStore((s) => s.playFromScene);
+  const resetRuntime = useAdventureRuntimeStore((s) => s.reset);
 
   // Modo edición: arrastrar/redimensionar objetos, crear zonas nuevas, editar
   // el roster de personajes, y guardar todo directo en el JSON fuente (solo
@@ -62,14 +66,14 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
   const [uploadingPortraitId, setUploadingPortraitId] = useState<string | null>(null);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void load(gameId);
+  }, [load, gameId]);
 
   useEffect(() => {
-    if (isLoaded && activeAdventureCaseResult.ok && !bundle) {
-      init(activeAdventureCaseResult.data, persistedAdventureState);
+    if (isLoaded && project?.result.ok && !bundle) {
+      init(project.result.data, persistedAdventureState);
     }
-  }, [isLoaded, bundle, init, persistedAdventureState]);
+  }, [isLoaded, bundle, init, persistedAdventureState, project]);
 
   const activeEditorSceneId = editorSceneId ?? currentSceneId;
 
@@ -79,13 +83,21 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     setSaveMessage(null);
   }, [activeEditorSceneId]);
 
-  if (!activeAdventureCaseResult.ok) {
+  if (!project) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-graphite-950 p-8 text-center text-graphite-200">
+        Proyecto &quot;{gameId}&quot; no encontrado.
+      </div>
+    );
+  }
+
+  if (!project.result.ok) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-graphite-950 p-8 text-center text-graphite-200">
         <p>
-          No se pudo cargar el caso.
+          No se pudo cargar el juego.
           <br />
-          <span className="text-sm text-graphite-400">{activeAdventureCaseResult.error}</span>
+          <span className="text-sm text-graphite-400">{project.result.error}</span>
         </p>
       </div>
     );
@@ -104,7 +116,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
   const baseCharacters = bundle.characters;
   const displayCharacters = editedCharacters ?? baseCharacters;
   // El teléfono muestra la pantalla de llamada entrante mientras suena, en
-  // vez de una capa fija — ver docs/case-001-la-ultima-llamada/01-mapeo-escenas.md.
+  // vez de una capa fija — ver docs/verdict-unsolved/01-mapeo-escenas.md.
   const layerOverrides =
     ringState === 'ringing' && currentSceneId === 'oficina-acto1'
       ? { telefono: 'layers/telefono-llamada-entrante.png' }
@@ -212,7 +224,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
       }
       const ext = file.name.split('.').pop() || 'png';
       const buffer = new Uint8Array(await file.arrayBuffer());
-      const result = await window.api.saveSceneBackground(`${base.id}-${bgId}`, ext, buffer);
+      const result = await window.api.saveSceneBackground(gameId, `${base.id}-${bgId}`, ext, buffer);
       if (result.ok) {
         setEditedScene({ ...base, backgrounds: [...base.backgrounds, { id: bgId, assetPath: result.path }] });
       } else {
@@ -272,7 +284,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     setCreatingScene(true);
     setSaveMessage(null);
     try {
-      const result = await window.api.saveSceneLayout(id, newScene, {});
+      const result = await window.api.saveSceneLayout(gameId, id, newScene, {});
       if (result.ok) {
         window.location.reload();
         return;
@@ -290,7 +302,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     setSaving(true);
     setSaveMessage(null);
     try {
-      const result = await window.api.saveSceneLayout(editedScene.id, editedScene, pendingStrings);
+      const result = await window.api.saveSceneLayout(gameId, editedScene.id, editedScene, pendingStrings);
       setSaveMessage(result.ok ? 'Guardado en el JSON de la escena.' : `Error: ${result.error}`);
       if (result.ok) setPendingStrings({});
     } catch (error) {
@@ -328,7 +340,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     try {
       const buffer = new Uint8Array(await file.arrayBuffer());
       const ext = file.name.split('.').pop() || 'png';
-      const result = await window.api.saveCharacterPortrait(characterId, ext, buffer);
+      const result = await window.api.saveCharacterPortrait(gameId, characterId, ext, buffer);
       if (result.ok) {
         updateCharacter(characterId, { portrait: result.path });
       } else {
@@ -346,7 +358,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
     setCharacterSaving(true);
     setCharacterSaveMessage(null);
     try {
-      const result = await window.api.saveCharacters(editedCharacters, pendingCharacterStrings);
+      const result = await window.api.saveCharacters(gameId, editedCharacters, pendingCharacterStrings);
       setCharacterSaveMessage(result.ok ? 'Guardado en characters.json.' : `Error: ${result.error}`);
       if (result.ok) setPendingCharacterStrings({});
     } catch (error) {
@@ -361,6 +373,19 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
   return (
     <div className="relative h-screen w-screen bg-graphite-950">
       <div className="absolute top-4 right-4 z-10 flex gap-2">
+        {import.meta.env.DEV && editMode && displayScene && (
+          <button
+            type="button"
+            onClick={() => {
+              playFromScene(activeEditorSceneId);
+              setEditMode(false);
+            }}
+            title="Arranca el juego en la escena que estás editando, sin tocar el save real — como el Play de Unity."
+            className="rounded border border-emerald-500/70 px-3 py-1 text-[11px] tracking-widest text-emerald-400 uppercase transition-colors hover:bg-emerald-500 hover:text-graphite-950"
+          >
+            ▶ Play desde acá
+          </button>
+        )}
         {import.meta.env.DEV && (
           <button
             type="button"
@@ -379,7 +404,10 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
         )}
         <button
           type="button"
-          onClick={onExit}
+          onClick={() => {
+            resetRuntime();
+            onExit();
+          }}
           className="rounded border border-graphite-700 px-3 py-1 text-[11px] tracking-widest text-graphite-400 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
         >
           Salir
@@ -419,6 +447,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
               {editorTab === 'scene' ? (
                 <SceneEditorPanel
+                  gameId={gameId}
                   scene={displayScene}
                   strings={strings}
                   sceneOptions={allScenes.map((s) => ({ id: s.id, act: s.act }))}
@@ -440,6 +469,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
                 />
               ) : (
                 <CharacterEditorPanel
+                  gameId={gameId}
                   characters={displayCharacters}
                   strings={strings}
                   uploadingId={uploadingPortraitId}
@@ -490,6 +520,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
           <div className="min-w-0 flex-1">
             {displayScene ? (
               <SceneViewer
+                gameId={gameId}
                 scene={displayScene}
                 strings={strings}
                 transitioning={transitioning}
@@ -506,11 +537,12 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
           </div>
         </div>
       ) : displayScene?.kind === 'intro' ? (
-        <IntroScene key={displayScene.id} scene={displayScene} />
+        <IntroScene key={displayScene.id} gameId={gameId} scene={displayScene} />
       ) : displayScene ? (
         // Modo juego: la escena vuelve a ocupar toda la pantalla, como
         // siempre — el editor no deja rastro.
         <SceneViewer
+          gameId={gameId}
           scene={displayScene}
           strings={strings}
           transitioning={transitioning}
@@ -522,6 +554,7 @@ export function AdventureRuntime({ onExit }: { onExit: () => void }): JSX.Elemen
           ) : (
             activeNode && (
               <DialogueOverlay
+                gameId={gameId}
                 node={activeNode}
                 characters={displayCharacters}
                 strings={strings}

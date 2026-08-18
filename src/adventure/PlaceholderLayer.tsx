@@ -1,30 +1,26 @@
 import { useState, type CSSProperties, type JSX } from 'react';
-
-const CASE_ASSET_BASE = '/cases/case-001-la-ultima-llamada';
-
-function resolveAssetUrl(relativePath: string): string {
-  return `${CASE_ASSET_BASE}/${relativePath}`;
-}
+import { gameAssetUrl } from './gameAssetUrl';
 
 const GLOW_FILTER =
   'drop-shadow(0 0 6px rgba(224,166,54,0.9)) drop-shadow(0 0 16px rgba(224,166,54,0.55))';
 
 /**
  * Capa de escena tolerante a arte faltante: si `assetPath` no existe todavía
- * en /assets/cases/case-001-la-ultima-llamada/, cae a un bloque con la ruta
- * como etiqueta en vez de romper el render. Ver
- * docs/case-001-la-ultima-llamada/02-manifiesto-assets.md.
+ * en assets/games/<gameId>/, cae a un bloque con la ruta como etiqueta en
+ * vez de romper el render.
  *
  * `glow`: en vez de resaltar el hotspot con un rectángulo, aplicamos un
  * drop-shadow — para un PNG con transparencia eso sigue la silueta real del
  * objeto, no su bounding box.
  */
 export function PlaceholderLayer({
+  gameId,
   assetPath,
   style,
   className = '',
   glow = false,
 }: {
+  gameId: string;
   assetPath: string;
   style?: CSSProperties;
   className?: string;
@@ -50,7 +46,7 @@ export function PlaceholderLayer({
 
   return (
     <img
-      src={resolveAssetUrl(assetPath)}
+      src={gameAssetUrl(gameId, assetPath)}
       alt=""
       style={{ ...style, ...glowStyle }}
       className={className}

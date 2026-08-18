@@ -1,10 +1,17 @@
 import { useState, type JSX } from 'react';
 import type { Character, DialogueNode } from '../game-engine/scene-engine/schemas';
+import { gameAssetUrl } from './gameAssetUrl';
 import { translate } from '../i18n/translate';
 
-const CASE_ASSET_BASE = '/cases/case-001-la-ultima-llamada';
-
-function CharacterPortrait({ portrait, color }: { portrait: string; color: string }): JSX.Element {
+function CharacterPortrait({
+  gameId,
+  portrait,
+  color,
+}: {
+  gameId: string;
+  portrait: string;
+  color: string;
+}): JSX.Element {
   const [failed, setFailed] = useState(false);
 
   if (failed) {
@@ -20,7 +27,7 @@ function CharacterPortrait({ portrait, color }: { portrait: string; color: strin
 
   return (
     <img
-      src={`${CASE_ASSET_BASE}/${portrait}`}
+      src={gameAssetUrl(gameId, portrait)}
       alt=""
       onError={() => setFailed(true)}
       className="h-14 w-14 shrink-0 rounded-full border-2 object-cover"
@@ -30,12 +37,14 @@ function CharacterPortrait({ portrait, color }: { portrait: string; color: strin
 }
 
 export function DialogueOverlay({
+  gameId,
   node,
   characters,
   strings,
   onAdvance,
   onChoose,
 }: {
+  gameId: string;
   node: DialogueNode;
   characters: Character[];
   strings: Record<string, string>;
@@ -53,7 +62,9 @@ export function DialogueOverlay({
     // escena (zIndex 1-4), para que nunca quede tapado ni robado el clic.
     <div className="absolute inset-x-0 bottom-0 z-100 flex justify-center p-6">
       <div className="flex w-full max-w-2xl gap-3 rounded border border-graphite-700 bg-graphite-900/95 p-5 shadow-2xl backdrop-blur">
-        {character?.portrait && <CharacterPortrait portrait={character.portrait} color={character.color} />}
+        {character?.portrait && (
+          <CharacterPortrait gameId={gameId} portrait={character.portrait} color={character.color} />
+        )}
 
         <div className="min-w-0 flex-1">
           {node.terminalBlock && (

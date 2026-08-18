@@ -14,7 +14,7 @@ import esStrings from './locales/es.json';
 const sceneModules = import.meta.glob<{ default: unknown }>('./scenes/*.json', { eager: true });
 const scenes = Object.values(sceneModules).map((mod) => mod.default);
 
-export const adventureCaseBundleRaw = {
+export const gameBundleRaw = {
   case: caseMeta,
   scenes,
   dialogues: { ...dialoguesScene1, ...dialoguesScene2, ...dialoguesScene3To5 },

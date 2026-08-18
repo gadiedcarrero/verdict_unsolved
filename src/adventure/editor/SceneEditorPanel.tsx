@@ -1,11 +1,11 @@
 import { useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { translate } from '../../i18n/translate';
 import type { Scene, SceneKind } from '../../game-engine/scene-engine/schemas';
+import { gameAssetUrl } from '../gameAssetUrl';
 import type { EditableObject } from './editableObjects';
 import { buildEditableObjects } from './editableObjects';
 import type { EditableRect } from './EditableBox';
 
-const CASE_ASSET_BASE = '/cases/case-001-la-ultima-llamada';
 const inputClassName =
   'w-full rounded border border-graphite-700 bg-graphite-900 px-1.5 py-1 text-[10px] text-graphite-100';
 
@@ -109,6 +109,7 @@ function SceneSwitcher({
 }
 
 function BackgroundThumb({
+  gameId,
   assetPath,
   label,
   durationMs,
@@ -116,6 +117,7 @@ function BackgroundThumb({
   onRemove,
   onDurationChange,
 }: {
+  gameId: string;
   assetPath: string;
   label: string;
   durationMs: number | undefined;
@@ -133,7 +135,7 @@ function BackgroundThumb({
           </div>
         ) : (
           <img
-            src={`${CASE_ASSET_BASE}/${assetPath}`}
+            src={gameAssetUrl(gameId, assetPath)}
             alt=""
             onError={() => setFailed(true)}
             className="h-14 w-24 rounded border border-graphite-700 object-cover"
@@ -168,12 +170,14 @@ function BackgroundThumb({
 }
 
 function BackgroundsSection({
+  gameId,
   scene,
   uploading,
   onAddBackground,
   onRemoveBackground,
   onDurationChange,
 }: {
+  gameId: string;
   scene: Scene;
   uploading: boolean;
   onAddBackground: (file: File) => void;
@@ -201,6 +205,7 @@ function BackgroundsSection({
         {scene.backgrounds.map((bg, index) => (
           <BackgroundThumb
             key={bg.id}
+            gameId={gameId}
             assetPath={bg.assetPath}
             label={`BG ${index + 1}`}
             durationMs={bg.durationMs}
@@ -376,6 +381,7 @@ function CreateZoneForm({
 }
 
 export function SceneEditorPanel({
+  gameId,
   scene,
   strings,
   sceneOptions,
@@ -395,6 +401,7 @@ export function SceneEditorPanel({
   onLabelTextChange,
   onCreateZone,
 }: {
+  gameId: string;
   scene: Scene | null;
   strings: Record<string, string>;
   sceneOptions: { id: string; act: number }[];
@@ -443,6 +450,7 @@ export function SceneEditorPanel({
           </label>
 
           <BackgroundsSection
+            gameId={gameId}
             scene={scene}
             uploading={uploadingBackground}
             onAddBackground={onAddBackground}
