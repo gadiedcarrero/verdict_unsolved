@@ -78,6 +78,39 @@ sus resultados en cuanto exista:
   — todo lo que la IA genere puede escribirse por el mismo camino que ya usa
   el editor manual, sin una ruta de guardado aparte.
 
+## Biblioteca de imágenes (historial por slot)
+
+Requisito del usuario: para cualquier imagen (generada por IA o subida a
+mano) tiene que poder (1) pedir que se **rehaga** si no le gusta, y (2)
+**descargarla, retocarla en un programa externo, y subir su propia versión**
+— más control, no queda atado a lo que devuelve la IA.
+
+**Modelo elegido: galería por slot, no un pool central desacoplado.** Cada
+slot de imagen (cursor default, cursor hover, cada una de las 5 del menú de
+acción, cada fondo de escena, cada retrato de personaje) tiene **su propio
+historial**: la imagen actual + todas las versiones anteriores, generadas o
+subidas. Ni "regenerar" ni "subir una nueva" borra lo anterior — agrega una
+versión y la marca como actual. Se puede volver a cualquier versión previa, y
+descargar cualquiera de ellas en cualquier momento. Una imagen sigue
+perteneciendo a un solo slot (no se comparte entre dos usos distintos) —
+más simple, y no cambia cómo el motor ya referencia sus assets
+(`SiteSettings.cursor.defaultCursorPath`, etc. siguen siendo una sola ruta:
+la de la versión marcada como actual).
+
+**Implica un cambio real de storage:** hoy cada subida (`scene-editor:save-cursor`,
+`save-action-menu-image`, `save-background`, `save-portrait`) **sobrescribe**
+el mismo archivo — no hay historial posible así. Para esto, cada subida
+necesita un nombre de archivo versionado (no reusar el mismo nombre), y un
+IPC nuevo para listar las versiones existentes de un slot (se puede derivar
+del propio filesystem, listando archivos que matchean el patrón del slot,
+sin necesitar una tabla/manifest aparte).
+
+**Cuándo se construye:** no ahora. Hoy solo hay subida manual — con un único
+archivo por slot el historial no aporta gran cosa. Se construye **junto con
+la generación por IA** (cuando "rehacer" realmente empiece a producir
+versiones para comparar), para diseñar el flujo de subida versionada y el de
+regenerar por IA a la vez, en vez de migrar el storage dos veces.
+
 ## Problema abierto: minijuegos
 
 Generar la **lógica** de un minijuego libre con IA no es confiable (mucho
@@ -99,4 +132,6 @@ generar el roster de personajes + sus dos imágenes**. Ya existe el editor de
 personajes y el slot de retrato — falta la key de OpenAI/imagen en Ajustes y
 el llamado que arma el roster a partir del texto. Punto de partida natural
 para probar el patrón completo (IA → JSON del motor → editor visual) antes de
-extenderlo a escenas y zonas.
+extenderlo a escenas y zonas — y el punto donde conviene diseñar el storage
+versionado de la Biblioteca de imágenes (arriba), ya que ahí es donde
+"rehacer una imagen" empieza a importar de verdad.
