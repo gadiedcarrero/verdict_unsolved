@@ -1,5 +1,6 @@
 import type {
   HotspotShape,
+  InteractWithTarget,
   PolygonPoint,
   Scene,
   SceneAction,
@@ -34,7 +35,7 @@ export type EditableObject = {
   actionMenuEnabled: boolean;
   onInteract: SceneAction[];
   onExamine: SceneAction[];
-  onInteractWith: SceneAction[];
+  interactWithTargets: InteractWithTarget[];
 };
 
 /**
@@ -63,7 +64,7 @@ export function buildEditableObjects(scene: Scene): EditableObject[] {
       actionMenuEnabled: hotspot?.actionMenuEnabled ?? false,
       onInteract: hotspot?.onInteract ?? [],
       onExamine: hotspot?.onExamine ?? [],
-      onInteractWith: hotspot?.onInteractWith ?? [],
+      interactWithTargets: hotspot?.interactWithTargets ?? [],
     };
   });
 
@@ -82,7 +83,7 @@ export function buildEditableObjects(scene: Scene): EditableObject[] {
       actionMenuEnabled: hotspot.actionMenuEnabled,
       onInteract: hotspot.onInteract,
       onExamine: hotspot.onExamine,
-      onInteractWith: hotspot.onInteractWith,
+      interactWithTargets: hotspot.interactWithTargets,
     }));
 
   return [...spriteObjects, ...zoneObjects];

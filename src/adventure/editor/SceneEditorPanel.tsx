@@ -5,6 +5,7 @@ import type {
   DialogueNode,
   FontFamily,
   HotspotShape,
+  InteractWithTarget,
   MenuAppearance,
   MenuButton,
   MenuButtonStyle,
@@ -750,32 +751,124 @@ function ActionComposer({
   );
 }
 
-function ActionMenuFields({
-  enabled,
-  onExamine,
-  onInteract,
-  onInteractWith,
+/** "Interactuar con" no corre una acción fija: cada objeto puede combinarse
+ * con varios otros (diario + tijera, diario + lupa...), cada combinación
+ * con su propia acción — en el juego, elegir "Interactuar con" pone al
+ * juego a esperar el segundo click; si el par tiene una entrada acá, corre
+ * esa acción, si no muestra un mensaje genérico (ver interactWith.noMatch). */
+function InteractWithTargetsSection({
+  targets,
   dialogueNodes,
   strings,
   sceneOptions,
   characters,
-  onSetEnabled,
-  onExamineChange,
-  onInteractChange,
-  onInteractWithChange,
+  otherObjects,
+  onAddTarget,
+  onRemoveTarget,
+  onTargetChange,
 }: {
-  enabled: boolean;
-  onExamine: SceneAction[];
-  onInteract: SceneAction[];
-  onInteractWith: SceneAction[];
+  targets: InteractWithTarget[];
   dialogueNodes: Record<string, DialogueNode>;
   strings: Record<string, string>;
   sceneOptions: { id: string; act: number }[];
   characters: Character[];
+  otherObjects: { id: string; label: string }[];
+  onAddTarget: (targetObjectId: string) => void;
+  onRemoveTarget: (targetObjectId: string) => void;
+  onTargetChange: (targetObjectId: string, patch: Partial<ActionComposerValue>) => void;
+}): JSX.Element {
+  const [newTargetId, setNewTargetId] = useState('');
+  const availableObjects = otherObjects.filter((o) => !targets.some((t) => t.targetObjectId === o.id));
+
+  return (
+    <div className="mb-2">
+      <p className="mb-1 text-[9px] font-semibold tracking-widest text-graphite-400 uppercase">Interactuar con</p>
+      {targets.map((target) => {
+        const targetLabel = otherObjects.find((o) => o.id === target.targetObjectId)?.label ?? target.targetObjectId;
+        return (
+          <div key={target.targetObjectId} className="mb-2 rounded border border-graphite-700 bg-graphite-900/60 p-2">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <p className="text-[10px] text-graphite-300">+ {targetLabel}</p>
+              <button
+                type="button"
+                onClick={() => onRemoveTarget(target.targetObjectId)}
+                className="text-[9px] text-graphite-500 uppercase hover:text-red-400"
+              >
+                eliminar
+              </button>
+            </div>
+            <ActionComposer
+              label="Acción"
+              actions={target.onInteract}
+              dialogueNodes={dialogueNodes}
+              strings={strings}
+              sceneOptions={sceneOptions}
+              characters={characters}
+              onChange={(patch) => onTargetChange(target.targetObjectId, patch)}
+            />
+          </div>
+        );
+      })}
+      {availableObjects.length > 0 && (
+        <div className="flex gap-1">
+          <select value={newTargetId} onChange={(event) => setNewTargetId(event.target.value)} className={inputClassName}>
+            <option value="">(elegir objeto)</option>
+            {availableObjects.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => {
+              if (!newTargetId) return;
+              onAddTarget(newTargetId);
+              setNewTargetId('');
+            }}
+            disabled={!newTargetId}
+            className="shrink-0 rounded border border-amber-accent px-2 py-1 text-[9px] font-semibold tracking-widest text-amber-accent uppercase transition-colors hover:bg-amber-accent hover:text-graphite-950 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            + Agregar
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ActionMenuFields({
+  enabled,
+  onExamine,
+  onInteract,
+  interactWithTargets,
+  dialogueNodes,
+  strings,
+  sceneOptions,
+  characters,
+  otherObjects,
+  onSetEnabled,
+  onExamineChange,
+  onInteractChange,
+  onAddInteractWithTarget,
+  onRemoveInteractWithTarget,
+  onInteractWithTargetChange,
+}: {
+  enabled: boolean;
+  onExamine: SceneAction[];
+  onInteract: SceneAction[];
+  interactWithTargets: InteractWithTarget[];
+  dialogueNodes: Record<string, DialogueNode>;
+  strings: Record<string, string>;
+  sceneOptions: { id: string; act: number }[];
+  characters: Character[];
+  otherObjects: { id: string; label: string }[];
   onSetEnabled: (enabled: boolean) => void;
   onExamineChange: (patch: Partial<ActionComposerValue>) => void;
   onInteractChange: (patch: Partial<ActionComposerValue>) => void;
-  onInteractWithChange: (patch: Partial<ActionComposerValue>) => void;
+  onAddInteractWithTarget: (targetObjectId: string) => void;
+  onRemoveInteractWithTarget: (targetObjectId: string) => void;
+  onInteractWithTargetChange: (targetObjectId: string, patch: Partial<ActionComposerValue>) => void;
 }): JSX.Element {
   return (
     <div className="mt-2 border-t border-graphite-800 pt-2">
@@ -807,14 +900,16 @@ function ActionMenuFields({
             characters={characters}
             onChange={onInteractChange}
           />
-          <ActionComposer
-            label="Interactuar con"
-            actions={onInteractWith}
+          <InteractWithTargetsSection
+            targets={interactWithTargets}
             dialogueNodes={dialogueNodes}
             strings={strings}
             sceneOptions={sceneOptions}
             characters={characters}
-            onChange={onInteractWithChange}
+            otherObjects={otherObjects}
+            onAddTarget={onAddInteractWithTarget}
+            onRemoveTarget={onRemoveInteractWithTarget}
+            onTargetChange={onInteractWithTargetChange}
           />
         </div>
       )}
@@ -828,6 +923,7 @@ function ObjectFields({
   sceneOptions,
   dialogueNodes,
   characters,
+  otherObjects,
   onRectChange,
   onInteractableChange,
   onLabelTextChange,
@@ -837,13 +933,16 @@ function ObjectFields({
   onSetActionMenuEnabled,
   onExamineActionChange,
   onInteractActionChange,
-  onInteractWithActionChange,
+  onAddInteractWithTarget,
+  onRemoveInteractWithTarget,
+  onInteractWithTargetChange,
 }: {
   object: EditableObject;
   strings: Record<string, string>;
   sceneOptions: { id: string; act: number }[];
   dialogueNodes: Record<string, DialogueNode>;
   characters: Character[];
+  otherObjects: { id: string; label: string }[];
   onRectChange: (rect: EditableRect) => void;
   onInteractableChange: (interactable: boolean) => void;
   onLabelTextChange: (text: string) => void;
@@ -853,7 +952,9 @@ function ObjectFields({
   onSetActionMenuEnabled: (enabled: boolean) => void;
   onExamineActionChange: (patch: Partial<ActionComposerValue>) => void;
   onInteractActionChange: (patch: Partial<ActionComposerValue>) => void;
-  onInteractWithActionChange: (patch: Partial<ActionComposerValue>) => void;
+  onAddInteractWithTarget: (targetObjectId: string) => void;
+  onRemoveInteractWithTarget: (targetObjectId: string) => void;
+  onInteractWithTargetChange: (targetObjectId: string, patch: Partial<ActionComposerValue>) => void;
 }): JSX.Element {
   const hasCustomStyle = object.labelStyle !== undefined;
   const isPolygon = object.shape === 'polygon';
@@ -984,15 +1085,18 @@ function ObjectFields({
           enabled={object.actionMenuEnabled}
           onExamine={object.onExamine}
           onInteract={object.onInteract}
-          onInteractWith={object.onInteractWith}
+          interactWithTargets={object.interactWithTargets}
           dialogueNodes={dialogueNodes}
           strings={strings}
           sceneOptions={sceneOptions}
           characters={characters}
+          otherObjects={otherObjects.filter((o) => o.id !== object.id)}
           onSetEnabled={onSetActionMenuEnabled}
           onExamineChange={onExamineActionChange}
           onInteractChange={onInteractActionChange}
-          onInteractWithChange={onInteractWithActionChange}
+          onAddInteractWithTarget={onAddInteractWithTarget}
+          onRemoveInteractWithTarget={onRemoveInteractWithTarget}
+          onInteractWithTargetChange={onInteractWithTargetChange}
         />
       )}
     </div>
@@ -1116,7 +1220,9 @@ export function SceneEditorPanel({
   onSetActionMenuEnabled,
   onExamineActionChange,
   onInteractActionChange,
-  onInteractWithActionChange,
+  onAddInteractWithTarget,
+  onRemoveInteractWithTarget,
+  onInteractWithTargetChange,
 }: {
   gameId: string;
   scene: Scene | null;
@@ -1157,7 +1263,9 @@ export function SceneEditorPanel({
   onSetActionMenuEnabled: (objectId: string, enabled: boolean) => void;
   onExamineActionChange: (objectId: string, patch: Partial<ActionComposerValue>) => void;
   onInteractActionChange: (objectId: string, patch: Partial<ActionComposerValue>) => void;
-  onInteractWithActionChange: (objectId: string, patch: Partial<ActionComposerValue>) => void;
+  onAddInteractWithTarget: (objectId: string, targetObjectId: string) => void;
+  onRemoveInteractWithTarget: (objectId: string, targetObjectId: string) => void;
+  onInteractWithTargetChange: (objectId: string, targetObjectId: string, patch: Partial<ActionComposerValue>) => void;
 }): JSX.Element {
   return (
     <div className="text-xs text-graphite-200">
@@ -1234,28 +1342,41 @@ export function SceneEditorPanel({
                 <CreateZoneForm onCreate={onCreateZone} />
               )}
 
-              {buildEditableObjects(scene).map((object) => (
-                <ObjectFields
-                  key={object.id}
-                  object={object}
-                  strings={strings}
-                  sceneOptions={sceneOptions}
-                  dialogueNodes={scene.dialogueNodes}
-                  characters={characters}
-                  onRectChange={(rect) => onObjectRectChange(object.id, rect)}
-                  onInteractableChange={(interactable) => onToggleInteractable(object.id, interactable)}
-                  onLabelTextChange={(text) =>
-                    onLabelTextChange(object.labelKey ?? `hotspot.${scene.id}.${object.id}`, text)
-                  }
-                  onLabelStyleChange={(patch) => onLabelStyleChange(object.id, patch)}
-                  onResetShape={() => onResetShape(object.id)}
-                  onRemoveZone={() => onRemoveZone(object.id)}
-                  onSetActionMenuEnabled={(enabled) => onSetActionMenuEnabled(object.id, enabled)}
-                  onExamineActionChange={(patch) => onExamineActionChange(object.id, patch)}
-                  onInteractActionChange={(patch) => onInteractActionChange(object.id, patch)}
-                  onInteractWithActionChange={(patch) => onInteractWithActionChange(object.id, patch)}
-                />
-              ))}
+              {(() => {
+                const editableObjects = buildEditableObjects(scene);
+                const otherObjects = editableObjects
+                  .filter((o) => o.labelKey)
+                  .map((o) => ({ id: o.id, label: o.labelKey ? translate(strings, o.labelKey) : o.id }));
+                return editableObjects.map((object) => (
+                  <ObjectFields
+                    key={object.id}
+                    object={object}
+                    strings={strings}
+                    sceneOptions={sceneOptions}
+                    dialogueNodes={scene.dialogueNodes}
+                    characters={characters}
+                    otherObjects={otherObjects}
+                    onRectChange={(rect) => onObjectRectChange(object.id, rect)}
+                    onInteractableChange={(interactable) => onToggleInteractable(object.id, interactable)}
+                    onLabelTextChange={(text) =>
+                      onLabelTextChange(object.labelKey ?? `hotspot.${scene.id}.${object.id}`, text)
+                    }
+                    onLabelStyleChange={(patch) => onLabelStyleChange(object.id, patch)}
+                    onResetShape={() => onResetShape(object.id)}
+                    onRemoveZone={() => onRemoveZone(object.id)}
+                    onSetActionMenuEnabled={(enabled) => onSetActionMenuEnabled(object.id, enabled)}
+                    onExamineActionChange={(patch) => onExamineActionChange(object.id, patch)}
+                    onInteractActionChange={(patch) => onInteractActionChange(object.id, patch)}
+                    onAddInteractWithTarget={(targetObjectId) => onAddInteractWithTarget(object.id, targetObjectId)}
+                    onRemoveInteractWithTarget={(targetObjectId) =>
+                      onRemoveInteractWithTarget(object.id, targetObjectId)
+                    }
+                    onInteractWithTargetChange={(targetObjectId, patch) =>
+                      onInteractWithTargetChange(object.id, targetObjectId, patch)
+                    }
+                  />
+                ));
+              })()}
             </>
           )}
         </>

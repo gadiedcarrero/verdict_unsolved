@@ -65,6 +65,16 @@ export const PolygonPointSchema = z.object({ x: z.number(), y: z.number() });
 
 export const HotspotShapeSchema = z.enum(['rect', 'polygon']);
 
+/** Una combinación posible para "Interactuar con": clickear este objeto,
+ * elegir Interactuar con, y después clickear `targetObjectId` — si existe
+ * una entrada para ese par, corre `onInteract`; si no, el juego muestra un
+ * mensaje genérico (ver `interactWith.noMatch` en locales) y cancela el
+ * modo combinar. */
+export const InteractWithTargetSchema = z.object({
+  targetObjectId: z.string(),
+  onInteract: z.array(SceneActionSchema),
+});
+
 export const HotspotSchema = z.object({
   id: z.string(),
   /** Clave de traducción (ver locales/es.json del caso), no el texto en sí —
@@ -104,8 +114,9 @@ export const HotspotSchema = z.object({
   /** Solo si `actionMenuEnabled`. */
   onExamine: z.array(SceneActionSchema).default([]),
   /** Solo si `actionMenuEnabled` — "Interactuar" reusa `onInteract` de
-   * arriba (mismo campo que el click único de siempre). */
-  onInteractWith: z.array(SceneActionSchema).default([]),
+   * arriba (mismo campo que el click único de siempre). "Interactuar con"
+   * no corre una acción fija: ver `interactWithTargets`. */
+  interactWithTargets: z.array(InteractWithTargetSchema).default([]),
 });
 
 export const CharacterSchema = z.object({
@@ -363,6 +374,7 @@ export type SceneLayer = z.infer<typeof SceneLayerSchema>;
 export type InterfaceId = z.infer<typeof InterfaceIdSchema>;
 export type SceneAction = z.infer<typeof SceneActionSchema>;
 export type Hotspot = z.infer<typeof HotspotSchema>;
+export type InteractWithTarget = z.infer<typeof InteractWithTargetSchema>;
 export type HotspotShape = z.infer<typeof HotspotShapeSchema>;
 export type PolygonPoint = z.infer<typeof PolygonPointSchema>;
 export type TextStyle = z.infer<typeof TextStyleSchema>;

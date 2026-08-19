@@ -39,6 +39,8 @@ export function SceneViewer({
   activeActionMenuHotspotId,
   onSelectAction,
   onCloseActionMenu,
+  combiningHotspotId,
+  interactWithFallbackVisible,
 }: {
   gameId: string;
   scene: Scene;
@@ -66,6 +68,11 @@ export function SceneViewer({
   activeActionMenuHotspotId?: string | null;
   onSelectAction?: (kind: ActionMenuActionKind) => void;
   onCloseActionMenu?: () => void;
+  /** Id del primer objeto elegido para "Interactuar con" — no null mientras
+   * el juego espera el segundo click. Ver combiningHotspotId en el store. */
+  combiningHotspotId?: string | null;
+  /** True brevemente tras intentar una combinación sin acción programada. */
+  interactWithFallbackVisible?: boolean;
 }): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -134,19 +141,30 @@ export function SceneViewer({
           ))}
 
         {!editMode &&
-          scene.hotspots
-            .filter((hotspot) => hotspot.interactable)
-            .map((hotspot) => (
-              <HotspotArea
-                key={hotspot.id}
-                hotspot={hotspot}
-                strings={strings}
-                labelStyle={resolveTextStyle(siteSettings.hotspotLabelStyle, hotspot.labelStyle)}
-                hoverCursor={cursorCssValue(gameId, siteSettings.cursor.hoverCursorPath, 'pointer')}
-                onInteract={onInteract}
-                onHoverChange={(hovering) => setHoveredId(hovering ? hotspot.id : null)}
-              />
-            ))}
+          (() => {
+            const combiningSource = combiningHotspotId
+              ? scene.hotspots.find((h) => h.id === combiningHotspotId)
+              : null;
+            const combiningSourceLabel = combiningSource ? translate(strings, combiningSource.label) : null;
+            return scene.hotspots
+              .filter((hotspot) => hotspot.interactable)
+              .map((hotspot) => (
+                <HotspotArea
+                  key={hotspot.id}
+                  hotspot={hotspot}
+                  strings={strings}
+                  labelStyle={resolveTextStyle(siteSettings.hotspotLabelStyle, hotspot.labelStyle)}
+                  hoverCursor={cursorCssValue(gameId, siteSettings.cursor.hoverCursorPath, 'pointer')}
+                  overrideLabel={
+                    combiningSourceLabel && hotspot.id !== combiningHotspotId
+                      ? `Interactuar ${combiningSourceLabel} con ${translate(strings, hotspot.label)}`
+                      : undefined
+                  }
+                  onInteract={onInteract}
+                  onHoverChange={(hovering) => setHoveredId(hovering ? hotspot.id : null)}
+                />
+              ));
+          })()}
 
         {scene.kind === 'menu' && scene.menuTitle && (
           <div className={MENU_TITLE_POSITION_CLASSES[scene.menuAppearance.position]}>
@@ -237,6 +255,15 @@ export function SceneViewer({
               />
             );
           })()}
+
+        {!editMode && interactWithFallbackVisible && (
+          <div
+            className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded bg-graphite-950/90 px-4 py-2 text-sm text-graphite-100"
+            style={{ zIndex: 400 }}
+          >
+            {translate(strings, 'interactWith.noMatch')}
+          </div>
+        )}
 
         <div
           aria-hidden="true"

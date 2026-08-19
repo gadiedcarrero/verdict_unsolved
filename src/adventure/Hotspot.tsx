@@ -9,6 +9,7 @@ export function HotspotArea({
   strings,
   labelStyle,
   hoverCursor,
+  overrideLabel,
   onInteract,
   onHoverChange,
 }: {
@@ -18,11 +19,15 @@ export function HotspotArea({
   labelStyle: TextStyle;
   /** Valor CSS `cursor` (ver cursorCss.ts) — undefined = flecha/pointer normal. */
   hoverCursor?: string | undefined;
+  /** Mientras el juego espera el segundo objeto de un "Interactuar con",
+   * pisa el nombre normal del hotspot por "Interactuar <origen> con
+   * <este>" — ver combiningHotspotId en el store. */
+  overrideLabel?: string | undefined;
   onInteract: (hotspot: HotspotData) => void;
   onHoverChange?: (hovering: boolean) => void;
 }): JSX.Element {
   const { area } = hotspot;
-  const displayLabel = translate(strings, hotspot.label);
+  const displayLabel = overrideLabel ?? translate(strings, hotspot.label);
   const isPolygon = hotspot.shape === 'polygon' && (hotspot.points?.length ?? 0) >= 3;
   // El tooltip no puede vivir DENTRO del botón: un clip-path recorta a sus
   // hijos también, así que un tooltip posicionado fuera del contorno del

@@ -34,16 +34,31 @@ type AdventureRuntimeState = {
   /** No null mientras está abierto el menú de acción (Examinar/Interactuar/
    * Interactuar con/Cerrar) de este hotspot — ver Hotspot.actionMenuEnabled. */
   activeActionMenuHotspotId: string | null;
+  /** No null mientras el juego espera el segundo click de un "Interactuar
+   * con" — el valor es el id del primer objeto elegido. Cualquier click en
+   * un hotspot mientras esto no es null se interpreta como el segundo
+   * objeto de la combinación, no como su interacción normal. */
+  combiningHotspotId: string | null;
+  /** True brevemente cuando se intentó una combinación sin `onInteract`
+   * programado — ver `interactWith.noMatch` en locales. */
+  interactWithFallbackVisible: boolean;
 
   init: (bundle: AdventureCaseBundle, persisted: AdventureCaseState | null) => void;
   getActiveScene: () => Scene | null;
   getActiveNode: () => DialogueNode | null;
-  /** Si el hotspot tiene el menú de acción activado (y el juego ya tiene la
-   * imagen base configurada en Ajustes), abre el menú en vez de correr
-   * `onInteract` directo. */
+  /** Si el juego está en modo "combinar" (ver combiningHotspotId), el click
+   * se interpreta como el segundo objeto en vez de correr la interacción
+   * normal del hotspot. Si no, y el hotspot tiene el menú de acción
+   * activado (con la imagen base ya configurada en Ajustes), abre el menú
+   * en vez de correr `onInteract` directo. */
   interactHotspot: (hotspot: Hotspot) => void;
   closeActionMenu: () => void;
   selectAction: (kind: ActionMenuActionKind) => void;
+  /** Segundo click de un "Interactuar con" — busca en `interactWithTargets`
+   * del primer objeto una entrada para este segundo id; si existe corre su
+   * `onInteract`, si no muestra el mensaje genérico. Sale del modo
+   * combinar de cualquier manera. */
+  selectCombineTarget: (targetHotspotId: string) => void;
   openDialogue: (nodeId: string) => void;
   advance: () => void;
   selectChoice: (next: string, setState?: Record<string, unknown>, addFlag?: string) => void;
@@ -87,6 +102,8 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   ringAttempts: 0,
   transitioning: false,
   activeActionMenuHotspotId: null,
+  combiningHotspotId: null,
+  interactWithFallbackVisible: false,
 
   init: (bundle, persisted) => {
     const startingSceneId = bundle.case.startingSceneId;
@@ -102,6 +119,8 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       ringAttempts: 0,
       transitioning: false,
       activeActionMenuHotspotId: null,
+      combiningHotspotId: null,
+      interactWithFallbackVisible: false,
     });
   },
 
@@ -118,6 +137,12 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
 
   interactHotspot: (hotspot) => {
     const state = get();
+
+    if (state.combiningHotspotId) {
+      get().selectCombineTarget(hotspot.id);
+      return;
+    }
+
     const isOfficeExploration =
       state.currentSceneId === 'oficina-acto1' &&
       hotspot.id !== 'telefono' &&
@@ -159,10 +184,27 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
     const hotspotId = get().activeActionMenuHotspotId;
     set({ activeActionMenuHotspotId: null });
     if (kind === 'close' || !hotspotId) return;
+    if (kind === 'interactWith') {
+      set({ combiningHotspotId: hotspotId });
+      return;
+    }
     const hotspot = get().getActiveScene()?.hotspots.find((h) => h.id === hotspotId);
     if (!hotspot) return;
-    const actions = kind === 'examine' ? hotspot.onExamine : kind === 'interact' ? hotspot.onInteract : hotspot.onInteractWith;
-    get().runActions(actions);
+    get().runActions(kind === 'examine' ? hotspot.onExamine : hotspot.onInteract);
+  },
+
+  selectCombineTarget: (targetHotspotId) => {
+    const sourceId = get().combiningHotspotId;
+    set({ combiningHotspotId: null });
+    if (!sourceId || sourceId === targetHotspotId) return;
+    const source = get().getActiveScene()?.hotspots.find((h) => h.id === sourceId);
+    const match = source?.interactWithTargets.find((t) => t.targetObjectId === targetHotspotId);
+    if (match) {
+      get().runActions(match.onInteract);
+      return;
+    }
+    set({ interactWithFallbackVisible: true });
+    window.setTimeout(() => set({ interactWithFallbackVisible: false }), 1800);
   },
 
   openDialogue: (nodeId) => {
@@ -267,7 +309,14 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   },
 
   transitionToScene: (sceneId, fade, onComplete) => {
-    set({ activeDialogueNodeId: null, activeInterfaceId: null, activeActionMenuHotspotId: null, transitioning: true });
+    set({
+      activeDialogueNodeId: null,
+      activeInterfaceId: null,
+      activeActionMenuHotspotId: null,
+      combiningHotspotId: null,
+      interactWithFallbackVisible: false,
+      transitioning: true,
+    });
     const delay = fade === 'cut' ? 0 : SCENE_FADE_MS;
     window.setTimeout(() => {
       const scene = get().bundle?.scenes.find((s) => s.id === sceneId) ?? null;
@@ -294,6 +343,8 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       activeDialogueNodeId: null,
       activeInterfaceId: null,
       activeActionMenuHotspotId: null,
+      combiningHotspotId: null,
+      interactWithFallbackVisible: false,
       officeInteractions: [],
       ringState: 'silent',
       ringAttempts: 0,
@@ -309,6 +360,8 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       activeDialogueNodeId: null,
       activeInterfaceId: null,
       activeActionMenuHotspotId: null,
+      combiningHotspotId: null,
+      interactWithFallbackVisible: false,
       caseState: createEmptyAdventureCaseState(''),
       officeInteractions: [],
       ringState: 'silent',

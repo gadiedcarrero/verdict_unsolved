@@ -47,7 +47,7 @@
       "interactable": true,
       "actionMenuEnabled": true,
       "onExamine": [],
-      "onInteractWith": []
+      "interactWithTargets": []
     },
     {
       "id": "fotografia",
@@ -82,7 +82,7 @@
       "interactable": true,
       "actionMenuEnabled": true,
       "onExamine": [],
-      "onInteractWith": []
+      "interactWithTargets": []
     },
     {
       "id": "laptop",
@@ -125,7 +125,7 @@
       "interactable": true,
       "actionMenuEnabled": true,
       "onExamine": [],
-      "onInteractWith": []
+      "interactWithTargets": []
     },
     {
       "id": "vaso",
@@ -180,7 +180,7 @@
       "interactable": true,
       "actionMenuEnabled": true,
       "onExamine": [],
-      "onInteractWith": []
+      "interactWithTargets": []
     },
     {
       "id": "cenizero",
@@ -235,7 +235,7 @@
       "interactable": true,
       "actionMenuEnabled": true,
       "onExamine": [],
-      "onInteractWith": []
+      "interactWithTargets": []
     },
     {
       "id": "diario",
@@ -270,7 +270,7 @@
       "interactable": true,
       "actionMenuEnabled": true,
       "onExamine": [],
-      "onInteractWith": []
+      "interactWithTargets": []
     },
     {
       "id": "lampara",
@@ -353,7 +353,7 @@
       },
       "actionMenuEnabled": true,
       "onExamine": [],
-      "onInteractWith": []
+      "interactWithTargets": []
     },
     {
       "id": "sobretodo",
@@ -428,7 +428,7 @@
       },
       "actionMenuEnabled": true,
       "onExamine": [],
-      "onInteractWith": []
+      "interactWithTargets": []
     },
     {
       "id": "sombrero",
@@ -479,7 +479,7 @@
       "interactable": true,
       "actionMenuEnabled": true,
       "onExamine": [],
-      "onInteractWith": []
+      "interactWithTargets": []
     }
   ],
   "introSkippable": true,
@@ -492,5 +492,6 @@
     "fontSize": 16,
     "fontColor": "#e6eaef",
     "hoverColor": "#e0a636"
-  }
+  },
+  "dialogueNodes": {}
 }

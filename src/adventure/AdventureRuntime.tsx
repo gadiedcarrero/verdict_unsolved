@@ -11,6 +11,7 @@ import type {
   DialogueNode,
   Hotspot,
   HotspotShape,
+  InteractWithTarget,
   MenuAppearance,
   PolygonPoint,
   Scene,
@@ -49,7 +50,7 @@ type PolygonDraft = {
   labelOffset: PolygonPoint | undefined;
   actionMenuEnabled: boolean;
   onExamine: SceneAction[];
-  onInteractWith: SceneAction[];
+  interactWithTargets: InteractWithTarget[];
   points: PolygonPoint[];
 };
 
@@ -93,6 +94,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const activeActionMenuHotspotId = useAdventureRuntimeStore((s) => s.activeActionMenuHotspotId);
   const selectAction = useAdventureRuntimeStore((s) => s.selectAction);
   const closeActionMenu = useAdventureRuntimeStore((s) => s.closeActionMenu);
+  const combiningHotspotId = useAdventureRuntimeStore((s) => s.combiningHotspotId);
+  const interactWithFallbackVisible = useAdventureRuntimeStore((s) => s.interactWithFallbackVisible);
   const advance = useAdventureRuntimeStore((s) => s.advance);
   const selectChoice = useAdventureRuntimeStore((s) => s.selectChoice);
   const getActiveScene = useAdventureRuntimeStore((s) => s.getActiveScene);
@@ -295,7 +298,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           interactable,
           actionMenuEnabled: false,
           onExamine: [],
-          onInteractWith: [],
+          interactWithTargets: [],
         },
       ],
     });
@@ -324,7 +327,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         labelOffset: undefined,
         actionMenuEnabled: false,
         onExamine: [],
-        onInteractWith: [],
+        interactWithTargets: [],
         points: [],
       });
       return;
@@ -344,7 +347,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           interactable,
           actionMenuEnabled: false,
           onExamine: [],
-          onInteractWith: [],
+          interactWithTargets: [],
         },
       ],
     });
@@ -379,11 +382,10 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
   }
 
-  type ActionSlot = 'onExamine' | 'onInteract' | 'onInteractWith';
+  type ActionSlot = 'onExamine' | 'onInteract';
   const ACTION_SLOT_KEY: Record<ActionSlot, string> = {
     onExamine: 'examine',
     onInteract: 'interact',
-    onInteractWith: 'interactWith',
   };
 
   function dialogueNodeIdFor(sceneId: string, objectId: string, slot: ActionSlot): string {
@@ -434,6 +436,97 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
   }
 
+  function interactWithNodeId(sceneId: string, objectId: string, targetObjectId: string): string {
+    return `dialogue.${sceneId}.${objectId}.interactWith.${targetObjectId}`;
+  }
+
+  function interactWithComposerValue(base: Scene, objectId: string, targetObjectId: string): ActionComposerValue {
+    const entry = base.hotspots
+      .find((h) => h.id === objectId)
+      ?.interactWithTargets.find((t) => t.targetObjectId === targetObjectId);
+    const actions = entry?.onInteract ?? [];
+    const sceneAction = actions.find((a) => a.type === 'transitionTo');
+    const dialogueAction = actions.find((a) => a.type === 'dialogue');
+    const node = dialogueAction?.type === 'dialogue' ? base.dialogueNodes[dialogueAction.nodeId] : undefined;
+    return {
+      sceneId: sceneAction?.type === 'transitionTo' ? sceneAction.sceneId : '',
+      characterId: node?.speaker ?? '',
+      dialogueText: node ? (strings[node.line] ?? '') : '',
+    };
+  }
+
+  // "Interactuar con" no corre una acción fija — cada combinación de dos
+  // objetos (diario + tijera) tiene la suya, guardada en
+  // Hotspot.interactWithTargets. Ver combiningHotspotId/selectCombineTarget
+  // en el store para cómo se resuelve en el juego.
+  function updateInteractWithTargetAction(
+    objectId: string,
+    targetObjectId: string,
+    patch: Partial<ActionComposerValue>,
+  ): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    const next = { ...interactWithComposerValue(base, objectId, targetObjectId), ...patch };
+    const nodeId = interactWithNodeId(base.id, objectId, targetObjectId);
+
+    const actions: SceneAction[] = [];
+    if (next.sceneId) actions.push({ type: 'transitionTo', sceneId: next.sceneId, fade: 'fade' });
+    if (next.characterId) actions.push({ type: 'dialogue', nodeId });
+
+    const dialogueNodes: Record<string, DialogueNode> = { ...base.dialogueNodes };
+    if (next.characterId) {
+      dialogueNodes[nodeId] = { id: nodeId, speaker: next.characterId, line: nodeId };
+      setPendingStrings((prev) => ({ ...prev, [nodeId]: next.dialogueText }));
+    } else {
+      delete dialogueNodes[nodeId];
+    }
+
+    setEditedScene({
+      ...base,
+      dialogueNodes,
+      hotspots: base.hotspots.map((h) =>
+        h.id === objectId
+          ? {
+              ...h,
+              interactWithTargets: h.interactWithTargets.map((t) =>
+                t.targetObjectId === targetObjectId ? { ...t, onInteract: actions } : t,
+              ),
+            }
+          : h,
+      ),
+    });
+  }
+
+  function addInteractWithTarget(objectId: string, targetObjectId: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      hotspots: base.hotspots.map((h) =>
+        h.id === objectId
+          ? { ...h, interactWithTargets: [...h.interactWithTargets, { targetObjectId, onInteract: [] }] }
+          : h,
+      ),
+    });
+  }
+
+  function removeInteractWithTarget(objectId: string, targetObjectId: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    const nodeId = interactWithNodeId(base.id, objectId, targetObjectId);
+    const dialogueNodes = { ...base.dialogueNodes };
+    delete dialogueNodes[nodeId];
+    setEditedScene({
+      ...base,
+      dialogueNodes,
+      hotspots: base.hotspots.map((h) =>
+        h.id === objectId
+          ? { ...h, interactWithTargets: h.interactWithTargets.filter((t) => t.targetObjectId !== targetObjectId) }
+          : h,
+      ),
+    });
+  }
+
   function updatePolygonPoints(objectId: string, points: PolygonPoint[]): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
@@ -473,7 +566,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       labelOffset: hotspot.labelOffset,
       actionMenuEnabled: hotspot.actionMenuEnabled,
       onExamine: hotspot.onExamine,
-      onInteractWith: hotspot.onInteractWith,
+      interactWithTargets: hotspot.interactWithTargets,
       points: [],
     });
   }
@@ -513,7 +606,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       labelOffset: polygonDraft.labelOffset,
       actionMenuEnabled: polygonDraft.actionMenuEnabled,
       onExamine: polygonDraft.onExamine,
-      onInteractWith: polygonDraft.onInteractWith,
+      interactWithTargets: polygonDraft.interactWithTargets,
     };
     setEditedScene({ ...base, hotspots: [...base.hotspots, newHotspot] });
     if (polygonDraft.labelText !== null) {
@@ -1037,7 +1130,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onSetActionMenuEnabled={setActionMenuEnabled}
                   onExamineActionChange={(objectId, patch) => updateActionComposer(objectId, 'onExamine', patch)}
                   onInteractActionChange={(objectId, patch) => updateActionComposer(objectId, 'onInteract', patch)}
-                  onInteractWithActionChange={(objectId, patch) => updateActionComposer(objectId, 'onInteractWith', patch)}
+                  onAddInteractWithTarget={addInteractWithTarget}
+                  onRemoveInteractWithTarget={removeInteractWithTarget}
+                  onInteractWithTargetChange={updateInteractWithTargetAction}
                 />
               ) : editorTab === 'characters' ? (
                 <CharacterEditorPanel
@@ -1175,6 +1270,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           activeActionMenuHotspotId={activeActionMenuHotspotId}
           onSelectAction={selectAction}
           onCloseActionMenu={closeActionMenu}
+          combiningHotspotId={combiningHotspotId}
+          interactWithFallbackVisible={interactWithFallbackVisible}
         >
           {activeInterfaceId ? (
             <InterfaceHost interfaceId={activeInterfaceId} />
