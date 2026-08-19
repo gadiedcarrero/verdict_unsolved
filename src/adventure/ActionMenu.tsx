@@ -1,8 +1,9 @@
 import { useState, type JSX } from 'react';
 import type { ActionMenuActionKind } from './adventureRuntime.store';
+import { cursorCssValue } from './cursorCss';
 import { gameAssetUrl } from './gameAssetUrl';
 import { translate } from '../i18n/translate';
-import type { ActionMenuSettings, PolygonPoint } from '../game-engine/scene-engine/schemas';
+import type { ActionMenuSettings, CursorSettings, PolygonPoint } from '../game-engine/scene-engine/schemas';
 
 const MENU_WIDTH_PX = 220;
 
@@ -35,6 +36,7 @@ export function ActionMenu({
   anchor,
   actionMenu,
   strings,
+  cursor,
   onSelectAction,
   onClose,
 }: {
@@ -43,6 +45,10 @@ export function ActionMenu({
   anchor: { x: number; y: number };
   actionMenu: ActionMenuSettings;
   strings: Record<string, string>;
+  /** El cursor custom del juego no puede volver a la flecha nativa del
+   * sistema en ningún punto de la pantalla, ni siquiera acá arriba del
+   * menú — mismo criterio que el resto del stage (ver cursorCss.ts). */
+  cursor: CursorSettings;
   onSelectAction: (kind: ActionMenuActionKind) => void;
   onClose: () => void;
 }): JSX.Element | null {
@@ -52,10 +58,17 @@ export function ActionMenu({
 
   const hoveredZone = ZONES.find((z) => z.kind === hovered);
   const imagePath = (hoveredZone && actionMenu[hoveredZone.imageField]) || actionMenu.normalImagePath;
+  const defaultCursor = cursorCssValue(gameId, cursor.defaultCursorPath, 'default');
+  const zoneCursor = cursorCssValue(gameId, cursor.hoverCursorPath, 'pointer');
 
   return (
     <>
-      <div className="fixed inset-0 cursor-default" style={{ zIndex: 300 }} onClick={onClose} aria-hidden="true" />
+      <div
+        className="fixed inset-0"
+        style={{ zIndex: 300, cursor: defaultCursor }}
+        onClick={onClose}
+        aria-hidden="true"
+      />
       <div
         className="absolute -translate-x-1/2 -translate-y-1/2"
         style={{ left: `${anchor.x}%`, top: `${anchor.y}%`, width: MENU_WIDTH_PX, zIndex: 301 }}
@@ -82,7 +95,7 @@ export function ActionMenu({
                 points={points.map((p) => `${p.x},${p.y}`).join(' ')}
                 fill="transparent"
                 pointerEvents="all"
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: zoneCursor }}
                 onMouseEnter={() => setHovered(zone.kind)}
                 onMouseLeave={() => setHovered((h) => (h === zone.kind ? null : h))}
                 onClick={() => onSelectAction(zone.kind)}

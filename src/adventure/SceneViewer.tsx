@@ -231,6 +231,7 @@ export function SceneViewer({
                 }}
                 actionMenu={siteSettings.actionMenu}
                 strings={strings}
+                cursor={siteSettings.cursor}
                 onSelectAction={onSelectAction}
                 onClose={onCloseActionMenu}
               />
