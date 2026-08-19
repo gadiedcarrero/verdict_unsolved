@@ -21,7 +21,13 @@
     {
       "id": "nueva-partida",
       "label": "menu.menu-inicio.nueva-partida",
-      "onClick": []
+      "onClick": [
+        {
+          "type": "transitionTo",
+          "sceneId": "escena-1",
+          "fade": "fade"
+        }
+      ]
     },
     {
       "id": "continuar",
