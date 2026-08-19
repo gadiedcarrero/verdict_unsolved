@@ -208,6 +208,15 @@ export const SceneSchema = z.object({
   backgrounds: z.array(SceneBackgroundSchema),
   layers: z.array(SceneLayerSchema),
   hotspots: z.array(HotspotSchema),
+  /** Nodos de diálogo de una sola línea, generados por el editor visual al
+   * definir qué dice un personaje en una acción de un objeto (Examinar/
+   * Interactuar/Interactuar con) — clave = id autogenerado
+   * `dialogue.<escena>.<objeto>.<slot>`, referenciado desde el
+   * `onInteract`/etc. del hotspot como `{type:'dialogue', nodeId}`. Se
+   * funden con el diccionario `dialogues` del bundle al cargar (ver
+   * loadAdventureCase.ts) — viven acá y no en dialogues/*.json porque ese
+   * archivo es para el guion armado a mano, no para reacciones puntuales. */
+  dialogueNodes: z.record(z.string(), DialogueNodeSchema).default({}),
   /** Acciones que corren automáticamente al entrar a la escena (p. ej. abrir un diálogo). */
   onEnter: z.array(SceneActionSchema).optional(),
   /** Solo `kind: "intro"`: si se puede saltar la secuencia con un botón

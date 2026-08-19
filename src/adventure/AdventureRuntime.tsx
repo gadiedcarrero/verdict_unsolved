@@ -2,12 +2,13 @@ import { useEffect, useState, type JSX } from 'react';
 import { CharacterEditorPanel } from './editor/CharacterEditorPanel';
 import type { EditableRect } from './editor/EditableBox';
 import { boundingBoxOfPoints } from './editor/polygonUtils';
-import { SceneEditorPanel, type ActionKind } from './editor/SceneEditorPanel';
+import { SceneEditorPanel, type ActionComposerValue } from './editor/SceneEditorPanel';
 import { SiteSettingsPanel, type ActionMenuImageKind, type ActionMenuZoneKey } from './editor/SiteSettingsPanel';
 import { slugify, uniqueId } from './editor/slug';
 import { getGameProject } from '../game-engine/scene-engine/gameProjects';
 import type {
   Character,
+  DialogueNode,
   Hotspot,
   HotspotShape,
   MenuAppearance,
@@ -378,24 +379,58 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
   }
 
-  function buildActionList(kind: ActionKind, value: string): SceneAction[] {
-    if (kind === 'none') return [];
-    if (kind === 'dialogue') return value ? [{ type: 'dialogue', nodeId: value }] : [];
-    return value ? [{ type: 'transitionTo', sceneId: value, fade: 'fade' }] : [];
+  type ActionSlot = 'onExamine' | 'onInteract' | 'onInteractWith';
+  const ACTION_SLOT_KEY: Record<ActionSlot, string> = {
+    onExamine: 'examine',
+    onInteract: 'interact',
+    onInteractWith: 'interactWith',
+  };
+
+  function dialogueNodeIdFor(sceneId: string, objectId: string, slot: ActionSlot): string {
+    return `dialogue.${sceneId}.${objectId}.${ACTION_SLOT_KEY[slot]}`;
   }
 
-  function updateHotspotAction(
-    objectId: string,
-    field: 'onExamine' | 'onInteract' | 'onInteractWith',
-    kind: ActionKind,
-    value: string,
-  ): void {
+  function actionComposerValue(base: Scene, objectId: string, slot: ActionSlot): ActionComposerValue {
+    const actions = base.hotspots.find((h) => h.id === objectId)?.[slot] ?? [];
+    const sceneAction = actions.find((a) => a.type === 'transitionTo');
+    const dialogueAction = actions.find((a) => a.type === 'dialogue');
+    const node = dialogueAction?.type === 'dialogue' ? base.dialogueNodes[dialogueAction.nodeId] : undefined;
+    return {
+      sceneId: sceneAction?.type === 'transitionTo' ? sceneAction.sceneId : '',
+      characterId: node?.speaker ?? '',
+      dialogueText: node ? (strings[node.line] ?? '') : '',
+    };
+  }
+
+  // Compone hasta dos cosas por acción de objeto (Examinar/Interactuar/
+  // Interactuar con): a qué escena pasa, y qué dice qué personaje — en ese
+  // orden (ver runActions/transitionToScene en el store, que difieren el
+  // diálogo hasta después del fundido). El diálogo es una línea suelta,
+  // autogenerada acá y guardada en Scene.dialogueNodes, no un nodo del
+  // guion armado a mano con choices — para eso se sigue editando el JSON
+  // de dialogues/ directamente.
+  function updateActionComposer(objectId: string, slot: ActionSlot, patch: Partial<ActionComposerValue>): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
-    const actions = buildActionList(kind, value);
+    const next = { ...actionComposerValue(base, objectId, slot), ...patch };
+    const nodeId = dialogueNodeIdFor(base.id, objectId, slot);
+
+    const actions: SceneAction[] = [];
+    if (next.sceneId) actions.push({ type: 'transitionTo', sceneId: next.sceneId, fade: 'fade' });
+    if (next.characterId) actions.push({ type: 'dialogue', nodeId });
+
+    const dialogueNodes: Record<string, DialogueNode> = { ...base.dialogueNodes };
+    if (next.characterId) {
+      dialogueNodes[nodeId] = { id: nodeId, speaker: next.characterId, line: nodeId };
+      setPendingStrings((prev) => ({ ...prev, [nodeId]: next.dialogueText }));
+    } else {
+      delete dialogueNodes[nodeId];
+    }
+
     setEditedScene({
       ...base,
-      hotspots: base.hotspots.map((h) => (h.id === objectId ? { ...h, [field]: actions } : h)),
+      dialogueNodes,
+      hotspots: base.hotspots.map((h) => (h.id === objectId ? { ...h, [slot]: actions } : h)),
     });
   }
 
@@ -656,6 +691,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       backgrounds: [],
       layers: [],
       hotspots: [],
+      dialogueNodes: {},
       introSkippable: true,
       menuTitle: null,
       menuButtons: [],
@@ -966,6 +1002,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   gameId={gameId}
                   scene={displayScene}
                   strings={strings}
+                  characters={displayCharacters}
                   sceneOptions={allScenes.map((s) => ({ id: s.id, act: s.act }))}
                   activeSceneId={activeEditorSceneId}
                   creatingScene={creatingScene}
@@ -998,11 +1035,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onResetShape={resetShape}
                   onRemoveZone={removeHotspot}
                   onSetActionMenuEnabled={setActionMenuEnabled}
-                  onExamineActionChange={(objectId, kind, value) => updateHotspotAction(objectId, 'onExamine', kind, value)}
-                  onInteractActionChange={(objectId, kind, value) => updateHotspotAction(objectId, 'onInteract', kind, value)}
-                  onInteractWithActionChange={(objectId, kind, value) =>
-                    updateHotspotAction(objectId, 'onInteractWith', kind, value)
-                  }
+                  onExamineActionChange={(objectId, patch) => updateActionComposer(objectId, 'onExamine', patch)}
+                  onInteractActionChange={(objectId, patch) => updateActionComposer(objectId, 'onInteract', patch)}
+                  onInteractWithActionChange={(objectId, patch) => updateActionComposer(objectId, 'onInteractWith', patch)}
                 />
               ) : editorTab === 'characters' ? (
                 <CharacterEditorPanel

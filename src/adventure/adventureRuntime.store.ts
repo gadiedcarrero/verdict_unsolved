@@ -53,7 +53,12 @@ type AdventureRuntimeState = {
   runActions: (actions: SceneAction[]) => void;
   applyStatePatch: (patch: Partial<AdventureCaseState>) => void;
   addFlag: (flag: string) => void;
-  transitionToScene: (sceneId: string, fade: FadeKind) => void;
+  /** `onComplete` corre después del fundido y de `scene.onEnter` — la usa
+   * `runActions` para encadenar lo que venga después de un `transitionTo`
+   * (p. ej. "cambiar de escena y ADEMÁS hacer hablar a un personaje": sin
+   * esto, el diálogo se abría en el mismo tick, antes de que la pantalla
+   * llegara a fundirse a la escena nueva). */
+  transitionToScene: (sceneId: string, fade: FadeKind, onComplete?: () => void) => void;
   /** Botón "Play desde acá" del editor: arranca el juego en `sceneId` sin
    * tocar el save real (a diferencia de `transitionToScene`, que persiste si
    * el caso ya está registrado) — para probar cualquier punto de la historia
@@ -206,7 +211,8 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   },
 
   runActions: (actions) => {
-    for (const action of actions) {
+    for (let i = 0; i < actions.length; i++) {
+      const action = actions[i]!;
       switch (action.type) {
         case 'dialogue':
           get().openDialogue(action.nodeId);
@@ -217,9 +223,15 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
         case 'addFlag':
           get().addFlag(action.flag);
           break;
-        case 'transitionTo':
-          get().transitionToScene(action.sceneId, action.fade);
-          break;
+        case 'transitionTo': {
+          // Lo que venga después en la lista (p. ej. hacer hablar a un
+          // personaje) se difiere hasta que la escena nueva termine de
+          // entrar — si no, se disparaba en el mismo tick, antes de que
+          // la pantalla llegara a fundirse a la escena nueva.
+          const remaining = actions.slice(i + 1);
+          get().transitionToScene(action.sceneId, action.fade, remaining.length > 0 ? () => get().runActions(remaining) : undefined);
+          return;
+        }
         case 'openInterface':
           get().openInterfacePanel(action.interfaceId);
           break;
@@ -254,7 +266,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
     persistIfRegistered(get().caseState);
   },
 
-  transitionToScene: (sceneId, fade) => {
+  transitionToScene: (sceneId, fade, onComplete) => {
     set({ activeDialogueNodeId: null, activeInterfaceId: null, activeActionMenuHotspotId: null, transitioning: true });
     const delay = fade === 'cut' ? 0 : SCENE_FADE_MS;
     window.setTimeout(() => {
@@ -268,7 +280,10 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       }));
       persistIfRegistered(get().caseState);
       if (scene?.onEnter) get().runActions(scene.onEnter);
-      window.setTimeout(() => set({ transitioning: false }), 50);
+      window.setTimeout(() => {
+        set({ transitioning: false });
+        onComplete?.();
+      }, 50);
     }, delay);
   },
 

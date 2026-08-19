@@ -1,6 +1,8 @@
 import { useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { translate } from '../../i18n/translate';
 import type {
+  Character,
+  DialogueNode,
   FontFamily,
   HotspotShape,
   MenuAppearance,
@@ -650,56 +652,99 @@ function MenuSettings({
   );
 }
 
-export type ActionKind = 'none' | 'dialogue' | 'scene';
+export type ActionComposerValue = { sceneId: string; characterId: string; dialogueText: string };
 
-function actionKindOf(actions: SceneAction[]): { kind: ActionKind; value: string } {
-  const action = actions[0];
-  const kind: ActionKind = action?.type === 'dialogue' ? 'dialogue' : action?.type === 'transitionTo' ? 'scene' : 'none';
-  const value = action?.type === 'dialogue' ? action.nodeId : action?.type === 'transitionTo' ? action.sceneId : '';
-  return { kind, value };
+function findAction<T extends SceneAction['type']>(
+  actions: SceneAction[],
+  type: T,
+): Extract<SceneAction, { type: T }> | undefined {
+  return actions.find((a): a is Extract<SceneAction, { type: T }> => a.type === type);
 }
 
-function ActionFields({
+function resolveActionComposerValue(
+  actions: SceneAction[],
+  dialogueNodes: Record<string, DialogueNode>,
+  strings: Record<string, string>,
+): ActionComposerValue {
+  const sceneAction = findAction(actions, 'transitionTo');
+  const dialogueAction = findAction(actions, 'dialogue');
+  const node = dialogueAction ? dialogueNodes[dialogueAction.nodeId] : undefined;
+  return {
+    sceneId: sceneAction?.sceneId ?? '',
+    characterId: node?.speaker ?? '',
+    dialogueText: node ? (strings[node.line] ?? '') : '',
+  };
+}
+
+/** Compone hasta dos cosas por acción: a qué escena pasa, y qué dice qué
+ * personaje — en ese orden (primero el cambio de escena, después el
+ * diálogo). Vacío = no pasa nada al elegir esta acción. El diálogo es una
+ * línea suelta generada por el editor (Scene.dialogueNodes), no un nodo del
+ * guion armado a mano con choices/ramificaciones. */
+function ActionComposer({
   label,
   actions,
+  dialogueNodes,
+  strings,
   sceneOptions,
+  characters,
   onChange,
 }: {
   label: string;
   actions: SceneAction[];
+  dialogueNodes: Record<string, DialogueNode>;
+  strings: Record<string, string>;
   sceneOptions: { id: string; act: number }[];
-  onChange: (kind: ActionKind, value: string) => void;
+  characters: Character[];
+  onChange: (patch: Partial<ActionComposerValue>) => void;
 }): JSX.Element {
-  const { kind, value } = actionKindOf(actions);
+  const value = resolveActionComposerValue(actions, dialogueNodes, strings);
 
   return (
-    <div className="mb-2">
+    <div className="mb-2 border-b border-graphite-800 pb-2 last:border-b-0 last:pb-0 last:mb-0">
+      <p className="mb-1 text-[9px] font-semibold tracking-widest text-graphite-400 uppercase">{label}</p>
       <label className="mb-1 flex flex-col">
-        <span className="text-[9px] text-graphite-500 uppercase">{label}</span>
-        <select value={kind} onChange={(event) => onChange(event.target.value as ActionKind, '')} className={inputClassName}>
-          <option value="none">(sin definir)</option>
-          <option value="dialogue">Diálogo (id del nodo)</option>
-          <option value="scene">Ir a escena</option>
-        </select>
-      </label>
-      {kind === 'dialogue' && (
-        <input
-          type="text"
-          placeholder="id del nodo de diálogo"
-          value={value}
-          onChange={(event) => onChange('dialogue', event.target.value)}
+        <span className="text-[9px] text-graphite-500 uppercase">Escena que activa</span>
+        <select
+          value={value.sceneId}
+          onChange={(event) => onChange({ sceneId: event.target.value })}
           className={inputClassName}
-        />
-      )}
-      {kind === 'scene' && (
-        <select value={value} onChange={(event) => onChange('scene', event.target.value)} className={inputClassName}>
-          <option value="">(elegir escena)</option>
+        >
+          <option value="">(ninguna)</option>
           {sceneOptions.map((option) => (
             <option key={option.id} value={option.id}>
               {option.id}
             </option>
           ))}
         </select>
+      </label>
+      <label className="mb-1 flex flex-col">
+        <span className="text-[9px] text-graphite-500 uppercase">Personaje que habla</span>
+        <select
+          value={value.characterId}
+          onChange={(event) =>
+            onChange({ characterId: event.target.value, dialogueText: event.target.value ? value.dialogueText : '' })
+          }
+          className={inputClassName}
+        >
+          <option value="">(ninguno)</option>
+          {characters.map((character) => (
+            <option key={character.id} value={character.id}>
+              {translate(strings, character.name)}
+            </option>
+          ))}
+        </select>
+      </label>
+      {value.characterId && (
+        <label className="flex flex-col">
+          <span className="text-[9px] text-graphite-500 uppercase">Diálogo</span>
+          <textarea
+            value={value.dialogueText}
+            onChange={(event) => onChange({ dialogueText: event.target.value })}
+            rows={2}
+            className={inputClassName}
+          />
+        </label>
       )}
     </div>
   );
@@ -710,7 +755,10 @@ function ActionMenuFields({
   onExamine,
   onInteract,
   onInteractWith,
+  dialogueNodes,
+  strings,
   sceneOptions,
+  characters,
   onSetEnabled,
   onExamineChange,
   onInteractChange,
@@ -720,11 +768,14 @@ function ActionMenuFields({
   onExamine: SceneAction[];
   onInteract: SceneAction[];
   onInteractWith: SceneAction[];
+  dialogueNodes: Record<string, DialogueNode>;
+  strings: Record<string, string>;
   sceneOptions: { id: string; act: number }[];
+  characters: Character[];
   onSetEnabled: (enabled: boolean) => void;
-  onExamineChange: (kind: ActionKind, value: string) => void;
-  onInteractChange: (kind: ActionKind, value: string) => void;
-  onInteractWithChange: (kind: ActionKind, value: string) => void;
+  onExamineChange: (patch: Partial<ActionComposerValue>) => void;
+  onInteractChange: (patch: Partial<ActionComposerValue>) => void;
+  onInteractWithChange: (patch: Partial<ActionComposerValue>) => void;
 }): JSX.Element {
   return (
     <div className="mt-2 border-t border-graphite-800 pt-2">
@@ -736,14 +787,33 @@ function ActionMenuFields({
         <div className="rounded border border-amber-accent/40 bg-graphite-900/60 p-2">
           <p className="mb-2 text-[9px] text-graphite-500">
             El arte del menú se sube una sola vez para todo el juego en Ajustes → Menú de acción. Acá solo definís
-            qué hace cada botón en este objeto en particular.
+            qué pasa al elegir cada acción en este objeto en particular.
           </p>
-          <ActionFields label="Examinar" actions={onExamine} sceneOptions={sceneOptions} onChange={onExamineChange} />
-          <ActionFields label="Interactuar" actions={onInteract} sceneOptions={sceneOptions} onChange={onInteractChange} />
-          <ActionFields
+          <ActionComposer
+            label="Examinar"
+            actions={onExamine}
+            dialogueNodes={dialogueNodes}
+            strings={strings}
+            sceneOptions={sceneOptions}
+            characters={characters}
+            onChange={onExamineChange}
+          />
+          <ActionComposer
+            label="Interactuar"
+            actions={onInteract}
+            dialogueNodes={dialogueNodes}
+            strings={strings}
+            sceneOptions={sceneOptions}
+            characters={characters}
+            onChange={onInteractChange}
+          />
+          <ActionComposer
             label="Interactuar con"
             actions={onInteractWith}
+            dialogueNodes={dialogueNodes}
+            strings={strings}
             sceneOptions={sceneOptions}
+            characters={characters}
             onChange={onInteractWithChange}
           />
         </div>
@@ -756,6 +826,8 @@ function ObjectFields({
   object,
   strings,
   sceneOptions,
+  dialogueNodes,
+  characters,
   onRectChange,
   onInteractableChange,
   onLabelTextChange,
@@ -770,6 +842,8 @@ function ObjectFields({
   object: EditableObject;
   strings: Record<string, string>;
   sceneOptions: { id: string; act: number }[];
+  dialogueNodes: Record<string, DialogueNode>;
+  characters: Character[];
   onRectChange: (rect: EditableRect) => void;
   onInteractableChange: (interactable: boolean) => void;
   onLabelTextChange: (text: string) => void;
@@ -777,9 +851,9 @@ function ObjectFields({
   onResetShape: () => void;
   onRemoveZone: () => void;
   onSetActionMenuEnabled: (enabled: boolean) => void;
-  onExamineActionChange: (kind: ActionKind, value: string) => void;
-  onInteractActionChange: (kind: ActionKind, value: string) => void;
-  onInteractWithActionChange: (kind: ActionKind, value: string) => void;
+  onExamineActionChange: (patch: Partial<ActionComposerValue>) => void;
+  onInteractActionChange: (patch: Partial<ActionComposerValue>) => void;
+  onInteractWithActionChange: (patch: Partial<ActionComposerValue>) => void;
 }): JSX.Element {
   const hasCustomStyle = object.labelStyle !== undefined;
   const isPolygon = object.shape === 'polygon';
@@ -911,7 +985,10 @@ function ObjectFields({
           onExamine={object.onExamine}
           onInteract={object.onInteract}
           onInteractWith={object.onInteractWith}
+          dialogueNodes={dialogueNodes}
+          strings={strings}
           sceneOptions={sceneOptions}
+          characters={characters}
           onSetEnabled={onSetActionMenuEnabled}
           onExamineChange={onExamineActionChange}
           onInteractChange={onInteractActionChange}
@@ -1004,6 +1081,7 @@ export function SceneEditorPanel({
   gameId,
   scene,
   strings,
+  characters,
   sceneOptions,
   activeSceneId,
   creatingScene,
@@ -1043,6 +1121,7 @@ export function SceneEditorPanel({
   gameId: string;
   scene: Scene | null;
   strings: Record<string, string>;
+  characters: Character[];
   sceneOptions: { id: string; act: number }[];
   activeSceneId: string;
   creatingScene: boolean;
@@ -1076,9 +1155,9 @@ export function SceneEditorPanel({
   onResetShape: (objectId: string) => void;
   onRemoveZone: (objectId: string) => void;
   onSetActionMenuEnabled: (objectId: string, enabled: boolean) => void;
-  onExamineActionChange: (objectId: string, kind: ActionKind, value: string) => void;
-  onInteractActionChange: (objectId: string, kind: ActionKind, value: string) => void;
-  onInteractWithActionChange: (objectId: string, kind: ActionKind, value: string) => void;
+  onExamineActionChange: (objectId: string, patch: Partial<ActionComposerValue>) => void;
+  onInteractActionChange: (objectId: string, patch: Partial<ActionComposerValue>) => void;
+  onInteractWithActionChange: (objectId: string, patch: Partial<ActionComposerValue>) => void;
 }): JSX.Element {
   return (
     <div className="text-xs text-graphite-200">
@@ -1161,6 +1240,8 @@ export function SceneEditorPanel({
                   object={object}
                   strings={strings}
                   sceneOptions={sceneOptions}
+                  dialogueNodes={scene.dialogueNodes}
+                  characters={characters}
                   onRectChange={(rect) => onObjectRectChange(object.id, rect)}
                   onInteractableChange={(interactable) => onToggleInteractable(object.id, interactable)}
                   onLabelTextChange={(text) =>
@@ -1170,9 +1251,9 @@ export function SceneEditorPanel({
                   onResetShape={() => onResetShape(object.id)}
                   onRemoveZone={() => onRemoveZone(object.id)}
                   onSetActionMenuEnabled={(enabled) => onSetActionMenuEnabled(object.id, enabled)}
-                  onExamineActionChange={(kind, value) => onExamineActionChange(object.id, kind, value)}
-                  onInteractActionChange={(kind, value) => onInteractActionChange(object.id, kind, value)}
-                  onInteractWithActionChange={(kind, value) => onInteractWithActionChange(object.id, kind, value)}
+                  onExamineActionChange={(patch) => onExamineActionChange(object.id, patch)}
+                  onInteractActionChange={(patch) => onInteractActionChange(object.id, patch)}
+                  onInteractWithActionChange={(patch) => onInteractWithActionChange(object.id, patch)}
                 />
               ))}
             </>
