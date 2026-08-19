@@ -1,3 +1,4 @@
+import type { AiIntegrationsConfig } from './ai-integrations';
 import type { SaveData } from './save-data';
 
 export type SceneEditorSaveResult = { ok: true } | { ok: false; error: string };
@@ -49,4 +50,9 @@ export type DesktopApi = {
   /** Solo funciona en `pnpm dev` — sube una de las 5 imágenes del menú de
    * acción a assets/games/<gameId>/action-menu/ y devuelve la ruta relativa. */
   saveActionMenuImage: (gameId: string, fileId: string, ext: string, data: Uint8Array) => Promise<BackgroundSaveResult>;
+  /** Keys de proveedores de IA (OpenAI, ElevenLabs, imagen, Seedance) — vale
+   * para toda la plataforma, no por juego, y se guarda en userData (fuera
+   * del repo, nunca en un JSON que se commitea). */
+  readAiIntegrations: () => Promise<AiIntegrationsConfig>;
+  writeAiIntegrations: (config: AiIntegrationsConfig) => Promise<void>;
 };

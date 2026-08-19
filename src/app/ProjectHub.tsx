@@ -1,5 +1,6 @@
-import type { JSX } from 'react';
+import { useState, type JSX } from 'react';
 import { gameProjects } from '../game-engine/scene-engine/gameProjects';
+import { AiIntegrationsPanel } from './AiIntegrationsPanel';
 
 function prettifyId(id: string): string {
   return id
@@ -9,8 +10,19 @@ function prettifyId(id: string): string {
 }
 
 export function ProjectHub({ onOpenGame }: { onOpenGame: (gameId: string) => void }): JSX.Element {
+  const [showIntegrations, setShowIntegrations] = useState(false);
+
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center gap-10 bg-graphite-950 p-8">
+      <button
+        type="button"
+        onClick={() => setShowIntegrations(true)}
+        className="absolute top-4 right-4 rounded border border-graphite-700 px-3 py-1 text-[11px] tracking-widest text-graphite-400 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
+      >
+        ⚙ Integraciones IA
+      </button>
+      {showIntegrations && <AiIntegrationsPanel onClose={() => setShowIntegrations(false)} />}
+
       <div className="text-center">
         <h1 className="text-2xl font-black tracking-tight text-graphite-100 sm:text-3xl">
           VERDICT UNSOLVED <span className="text-graphite-500">ENGINE</span>

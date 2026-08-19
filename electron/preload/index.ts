@@ -17,6 +17,8 @@ const api: DesktopApi = {
     ipcRenderer.invoke('scene-editor:save-cursor', gameId, fileId, ext, data),
   saveActionMenuImage: (gameId, fileId, ext, data) =>
     ipcRenderer.invoke('scene-editor:save-action-menu-image', gameId, fileId, ext, data),
+  readAiIntegrations: () => ipcRenderer.invoke('ai-integrations:read'),
+  writeAiIntegrations: (config) => ipcRenderer.invoke('ai-integrations:write', config),
 };
 
 contextBridge.exposeInMainWorld('api', api);
