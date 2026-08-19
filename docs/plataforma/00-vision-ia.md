@@ -37,8 +37,9 @@ Cada paso ya tiene (o va a tener) su lugar concreto en el motor actual
    mano (ver `Scene.dialogueNodes` en `schemas.ts`).
 6. **Audio de diálogo.** Pendiente — se va a generar con ElevenLabs por API,
    una vez que el texto esté cerrado (ver memoria `project_dialogue_audio_elevenlabs`).
-7. **Video.** Seedance, para lo que necesite video generado en vez de capas
-   estáticas — todavía sin diseñar cómo entra al motor.
+7. **Video.** Seedance (vía fal.ai, ver más abajo), para lo que necesite
+   video generado en vez de capas estáticas — todavía sin diseñar cómo
+   entra al motor.
 8. **Minijuegos.** Sin resolver todavía — ver más abajo.
 
 ## Decisión: keys por proveedor, no un agregador único
@@ -46,8 +47,16 @@ Cada paso ya tiene (o va a tener) su lugar concreto en el motor actual
 Se evaluó usar una sola API que agrupe todos los proveedores pagos. **No hay
 un agregador serio que cubra bien texto + imagen + audio + video a la vez.**
 Los que agregan (OpenRouter y similares) son básicamente para LLMs de texto;
-para audio ElevenLabs es mejor que cualquier wrapper genérico, y lo mismo para
-imagen/video con proveedores específicos.
+para audio ElevenLabs es mejor que cualquier wrapper genérico.
+
+Para **imagen + video sí hay un agregador real y confiable: fal.ai**
+(fal.ai/dashboard/keys) — pago por uso, no suscripción, con Nano Banana,
+Seedance y varios modelos más bajo una sola key. Ojo con imitadores: se
+encontró un sitio (`seedances3.com`, y variantes similares como
+`seedanceai.io`/`seedance2.ai`) que se hace pasar por acceso a Seedance con
+una suscripción "todo incluido" sospechosamente barata — reseñas de Trustpilot
+los marcan como wrappers no oficiales con quejas de cobro sin poder cancelar.
+No usar; fal.ai es el camino real.
 
 Esto se confirmó revisando **PressForge Studio** (proyecto hermano del
 usuario, en `~/Desktop/ç` — el nombre de la carpeta es literalmente "ç", no
@@ -59,7 +68,8 @@ por separado `OPENAI_API_KEY` (guion, imágenes, voz OpenAI) y opcionalmente
 **Camino elegido:** el mismo patrón. ✅ **Implementado** — panel "Integraciones
 IA" (`src/app/AiIntegrationsPanel.tsx`), abierto desde el selector de
 proyectos porque es global a la plataforma, no por juego. Un slot de API key
-por proveedor: OpenAI, ElevenLabs, imagen (OpenAI o Nano Banana), Seedance
+por proveedor: OpenAI, ElevenLabs, fal.ai (imagen — Nano Banana y otros — y
+video — Seedance y otros — con una sola key)
 (sin slot para Claude — no es una API que el juego corriendo llame en
 runtime, es asistencia de programación durante el desarrollo). Las keys se
 guardan vía IPC en `userData` (`electron/main/ipc/aiIntegrationsHandlers.ts`),

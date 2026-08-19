@@ -7,8 +7,7 @@ const inputClassName =
 const FIELDS: { key: keyof AiIntegrationsConfig; label: string; hint: string }[] = [
   { key: 'openaiApiKey', label: 'OpenAI', hint: 'Guion, imágenes y voz de OpenAI' },
   { key: 'elevenLabsApiKey', label: 'ElevenLabs', hint: 'Voz premium de personajes' },
-  { key: 'imageApiKey', label: 'Imagen (Nano Banana u otro)', hint: 'Si no usás la de OpenAI para generar imágenes' },
-  { key: 'seedanceApiKey', label: 'Seedance', hint: 'Generación de video' },
+  { key: 'falApiKey', label: 'fal.ai', hint: 'Imagen (Nano Banana y otros) y video (Seedance y otros) — fal.ai/dashboard/keys' },
 ];
 
 /**

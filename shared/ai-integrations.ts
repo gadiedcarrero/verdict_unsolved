@@ -15,18 +15,17 @@ export type AiIntegrationsConfig = {
   openaiApiKey: string | null;
   /** Voz premium de personajes. */
   elevenLabsApiKey: string | null;
-  /** Generación de imágenes, si no se usa la de OpenAI (p. ej. Nano Banana). */
-  imageApiKey: string | null;
-  /** Generación de video. */
-  seedanceApiKey: string | null;
+  /** fal.ai — agregador real (pago por uso, no una suscripción envoltorio):
+   * cubre generación de imagen (Nano Banana y otros) y de video (Seedance y
+   * otros) con una sola key, en vez de una por modelo/proveedor. */
+  falApiKey: string | null;
 };
 
 export function createEmptyAiIntegrationsConfig(): AiIntegrationsConfig {
   return {
     openaiApiKey: null,
     elevenLabsApiKey: null,
-    imageApiKey: null,
-    seedanceApiKey: null,
+    falApiKey: null,
   };
 }
 
@@ -34,5 +33,5 @@ export function isAiIntegrationsConfig(value: unknown): value is AiIntegrationsC
   if (typeof value !== 'object' || value === null) return false;
   const v = value as Record<string, unknown>;
   const isKey = (x: unknown): boolean => x === null || typeof x === 'string';
-  return isKey(v['openaiApiKey']) && isKey(v['elevenLabsApiKey']) && isKey(v['imageApiKey']) && isKey(v['seedanceApiKey']);
+  return isKey(v['openaiApiKey']) && isKey(v['elevenLabsApiKey']) && isKey(v['falApiKey']);
 }
