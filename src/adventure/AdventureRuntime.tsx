@@ -61,6 +61,17 @@ const DEFAULT_MENU_APPEARANCE: MenuAppearance = {
   hoverColor: '#e0a636',
 };
 
+/** Recarga completa después de guardar, con un pequeño margen. El archivo se
+ * escribe desde el proceso de Electron, pero quien sirve el JSON a la
+ * página es Vite (proceso aparte, mirando el filesystem) — recargar
+ * inmediatamente después de que el IPC confirma "ok" puede ganarle a Vite
+ * a notar el cambio, y la página recargada trae el JSON viejo (una zona
+ * recién trazada "desaparecía" hasta cerrar y volver a abrir la app
+ * entera, que le da tiempo de sobra a Vite para ponerse al día). */
+function reloadAfterSave(): void {
+  window.setTimeout(() => window.location.reload(), 400);
+}
+
 export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: () => void }): JSX.Element {
   const project = getGameProject(gameId);
 
@@ -655,7 +666,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     try {
       const result = await window.api.saveSceneLayout(gameId, id, newScene, {});
       if (result.ok) {
-        window.location.reload();
+        reloadAfterSave();
         return;
       }
       setSaveMessage(`Error creando escena: ${result.error}`);
@@ -679,7 +690,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         // su texto bien y otras la clave cruda, según cuándo se habían
         // guardado. Recargar garantiza que lo que se ve siempre coincide
         // con lo que quedó en disco.
-        window.location.reload();
+        reloadAfterSave();
         return;
       }
       setSaveMessage(`Error: ${result.error}`);
@@ -740,7 +751,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       if (result.ok) {
         // Ver comentario en handleSave: recarga completa para no quedar con
         // el bundle en memoria desincronizado del JSON recién guardado.
-        window.location.reload();
+        reloadAfterSave();
         return;
       }
       setCharacterSaveMessage(`Error: ${result.error}`);
@@ -849,7 +860,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       if (result.ok) {
         // Ver comentario en handleSave: recarga completa para no quedar con
         // el bundle en memoria desincronizado del JSON recién guardado.
-        window.location.reload();
+        reloadAfterSave();
         return;
       }
       setSiteSettingsSaveMessage(`Error: ${result.error}`);
