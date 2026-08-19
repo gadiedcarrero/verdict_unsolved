@@ -6,11 +6,22 @@ import type {
   DialogueNode,
   Hotspot,
   InterfaceId,
+  MinigameTemplate,
   Scene,
   SceneAction,
 } from '../game-engine/scene-engine/schemas';
 
 export type ActionMenuActionKind = 'examine' | 'interact' | 'interactWith' | 'close';
+
+/** Minijuego actualmente abierto — ver openMinigame en SceneActionSchema.
+ * `sequenceLength` es específico de `template: "sequence"`; cuando se sume
+ * otro template esto también pasa a ser una unión por `template`. */
+export type ActiveMinigame = {
+  template: MinigameTemplate;
+  sequenceLength: number;
+  onSuccess: SceneAction[];
+  onFail: SceneAction[];
+};
 
 // 750 = un poco más que la transición CSS de 700ms (ver duration-700 en
 // SceneViewer) para que la escena ya haya cambiado cuando el fundido a
@@ -48,6 +59,8 @@ type AdventureRuntimeState = {
    * null en cada cambio de escena, así el fondo alternado de una escena no
    * se arrastra a la próxima vez que se entra ahí. */
   activeBackgroundId: string | null;
+  /** No null mientras hay un minijuego abierto — ver acción `openMinigame`. */
+  activeMinigame: ActiveMinigame | null;
 
   init: (bundle: AdventureCaseBundle, persisted: AdventureCaseState | null) => void;
   getActiveScene: () => Scene | null;
@@ -68,6 +81,9 @@ type AdventureRuntimeState = {
   /** Alterna `activeBackgroundId` entre dos ids — si ninguno está activo
    * todavía (fondo por defecto), pasa al que no sea `scene.backgrounds[0]`. */
   toggleBackground: (backgroundIdA: string, backgroundIdB: string) => void;
+  /** Corre `onSuccess` o `onFail` del minijuego activo según `success`, y lo
+   * cierra. Cancelar el minijuego (p. ej. "Salir") cuenta como fracaso. */
+  completeMinigame: (success: boolean) => void;
   openDialogue: (nodeId: string) => void;
   advance: () => void;
   selectChoice: (next: string, setState?: Record<string, unknown>, addFlag?: string) => void;
@@ -111,6 +127,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   combiningHotspotId: null,
   interactWithFallbackVisible: false,
   activeBackgroundId: null,
+  activeMinigame: null,
 
   init: (bundle, persisted) => {
     const startingSceneId = bundle.case.startingSceneId;
@@ -126,6 +143,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       combiningHotspotId: null,
       interactWithFallbackVisible: false,
       activeBackgroundId: null,
+      activeMinigame: null,
     });
   },
 
@@ -196,6 +214,13 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
     set({ activeBackgroundId: effective === backgroundIdA ? backgroundIdB : backgroundIdA });
   },
 
+  completeMinigame: (success) => {
+    const minigame = get().activeMinigame;
+    set({ activeMinigame: null });
+    if (!minigame) return;
+    get().runActions(success ? minigame.onSuccess : minigame.onFail);
+  },
+
   openDialogue: (nodeId) => {
     const node = get().bundle?.dialogues[nodeId];
     if (!node) return;
@@ -263,6 +288,16 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
         case 'toggleBackground':
           get().toggleBackground(action.backgroundIdA, action.backgroundIdB);
           break;
+        case 'openMinigame':
+          set({
+            activeMinigame: {
+              template: action.template,
+              sequenceLength: action.sequenceLength,
+              onSuccess: action.onSuccess,
+              onFail: action.onFail,
+            },
+          });
+          break;
         case 'continueGame': {
           const { caseState } = get();
           if (caseState.registered) {
@@ -298,6 +333,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       activeActionMenuHotspotId: null,
       combiningHotspotId: null,
       interactWithFallbackVisible: false,
+      activeMinigame: null,
       transitioning: true,
     });
     const delay = fade === 'cut' ? 0 : SCENE_FADE_MS;
@@ -330,6 +366,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       combiningHotspotId: null,
       interactWithFallbackVisible: false,
       activeBackgroundId: null,
+      activeMinigame: null,
       transitioning: false,
     });
     if (scene?.onEnter) get().runActions(scene.onEnter);
@@ -345,6 +382,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       combiningHotspotId: null,
       interactWithFallbackVisible: false,
       activeBackgroundId: null,
+      activeMinigame: null,
       caseState: createEmptyAdventureCaseState(''),
       transitioning: false,
     });

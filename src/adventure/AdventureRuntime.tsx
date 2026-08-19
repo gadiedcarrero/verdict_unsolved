@@ -13,6 +13,7 @@ import type {
   HotspotShape,
   InteractWithTarget,
   MenuAppearance,
+  MinigameOutcomeAction,
   PolygonPoint,
   Scene,
   SceneAction,
@@ -28,6 +29,7 @@ import { InterfaceHost } from './interfaces/InterfaceHost';
 import { IntroScene } from './IntroScene';
 import { MENU_BUTTON_ACTION_CONTINUE, MENU_BUTTON_ACTION_QUIT } from './menuButtonActions';
 import { MenuScene } from './MenuScene';
+import { MinigameHost } from './minigames/MinigameHost';
 import { resizeCursorImage } from './resizeCursorImage';
 import { SceneViewer } from './SceneViewer';
 
@@ -530,6 +532,99 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           ? { ...h, interactWithTargets: h.interactWithTargets.filter((t) => t.targetObjectId !== targetObjectId) }
           : h,
       ),
+    });
+  }
+
+  // "Interactuar" de un objeto puede componer escena+diálogo (lo de
+  // arriba) O abrir un minijuego — son alternativas, no se combinan. Un
+  // minijuego se detecta mirando si onInteract[0] es del tipo
+  // "openMinigame"; activarlo/desactivarlo reemplaza todo el campo.
+  function setMinigameEnabled(objectId: string, enabled: boolean): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      hotspots: base.hotspots.map((h) =>
+        h.id === objectId
+          ? {
+              ...h,
+              onInteract: enabled
+                ? [{ type: 'openMinigame', template: 'sequence', sequenceLength: 4, onSuccess: [], onFail: [] }]
+                : [],
+            }
+          : h,
+      ),
+    });
+  }
+
+  function updateMinigameSequenceLength(objectId: string, sequenceLength: number): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      hotspots: base.hotspots.map((h) => {
+        if (h.id !== objectId) return h;
+        const action = h.onInteract[0];
+        if (action?.type !== 'openMinigame') return h;
+        return { ...h, onInteract: [{ ...action, sequenceLength }] };
+      }),
+    });
+  }
+
+  function minigameOutcomeNodeId(sceneId: string, objectId: string, outcome: 'onSuccess' | 'onFail'): string {
+    return `dialogue.${sceneId}.${objectId}.minigame.${outcome}`;
+  }
+
+  function minigameOutcomeComposerValue(base: Scene, objectId: string, outcome: 'onSuccess' | 'onFail'): ActionComposerValue {
+    const action = base.hotspots.find((h) => h.id === objectId)?.onInteract[0];
+    const actions: SceneAction[] = action?.type === 'openMinigame' ? action[outcome] : [];
+    const backgroundAction = actions.find((a) => a.type === 'toggleBackground');
+    const sceneAction = actions.find((a) => a.type === 'transitionTo');
+    const dialogueAction = actions.find((a) => a.type === 'dialogue');
+    const node = dialogueAction?.type === 'dialogue' ? base.dialogueNodes[dialogueAction.nodeId] : undefined;
+    return {
+      backgroundIdA: backgroundAction?.type === 'toggleBackground' ? backgroundAction.backgroundIdA : '',
+      backgroundIdB: backgroundAction?.type === 'toggleBackground' ? backgroundAction.backgroundIdB : '',
+      sceneId: sceneAction?.type === 'transitionTo' ? sceneAction.sceneId : '',
+      characterId: node?.speaker ?? '',
+      dialogueText: node ? (strings[node.line] ?? '') : '',
+    };
+  }
+
+  function updateMinigameOutcome(
+    objectId: string,
+    outcome: 'onSuccess' | 'onFail',
+    patch: Partial<ActionComposerValue>,
+  ): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    const next = { ...minigameOutcomeComposerValue(base, objectId, outcome), ...patch };
+    const nodeId = minigameOutcomeNodeId(base.id, objectId, outcome);
+
+    const actions: MinigameOutcomeAction[] = [];
+    if (next.backgroundIdA && next.backgroundIdB) {
+      actions.push({ type: 'toggleBackground', backgroundIdA: next.backgroundIdA, backgroundIdB: next.backgroundIdB });
+    }
+    if (next.sceneId) actions.push({ type: 'transitionTo', sceneId: next.sceneId, fade: 'fade' });
+    if (next.characterId) actions.push({ type: 'dialogue', nodeId });
+
+    const dialogueNodes: Record<string, DialogueNode> = { ...base.dialogueNodes };
+    if (next.characterId) {
+      dialogueNodes[nodeId] = { id: nodeId, speaker: next.characterId, line: nodeId };
+      setPendingStrings((prev) => ({ ...prev, [nodeId]: next.dialogueText }));
+    } else {
+      delete dialogueNodes[nodeId];
+    }
+
+    setEditedScene({
+      ...base,
+      dialogueNodes,
+      hotspots: base.hotspots.map((h) => {
+        if (h.id !== objectId) return h;
+        const action = h.onInteract[0];
+        if (action?.type !== 'openMinigame') return h;
+        return { ...h, onInteract: [{ ...action, [outcome]: actions }] };
+      }),
     });
   }
 
@@ -1139,6 +1234,10 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onAddInteractWithTarget={addInteractWithTarget}
                   onRemoveInteractWithTarget={removeInteractWithTarget}
                   onInteractWithTargetChange={updateInteractWithTargetAction}
+                  onSetMinigameEnabled={setMinigameEnabled}
+                  onMinigameSequenceLengthChange={updateMinigameSequenceLength}
+                  onMinigameSuccessChange={(objectId, patch) => updateMinigameOutcome(objectId, 'onSuccess', patch)}
+                  onMinigameFailChange={(objectId, patch) => updateMinigameOutcome(objectId, 'onFail', patch)}
                 />
               ) : editorTab === 'characters' ? (
                 <CharacterEditorPanel
@@ -1290,6 +1389,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
               />
             )
           )}
+          <MinigameHost />
         </SceneViewer>
       ) : (
         <div className="flex h-screen w-screen items-center justify-center bg-graphite-950 text-graphite-200">

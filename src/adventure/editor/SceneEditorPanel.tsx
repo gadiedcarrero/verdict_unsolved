@@ -885,11 +885,103 @@ function InteractWithTargetsSection({
   );
 }
 
+/** "Interactuar" de un objeto compone escena+diálogo (como Examinar) O
+ * abre un minijuego — son alternativas, prender esto reemplaza lo que
+ * hubiera en "Interactuar" de arriba. onSuccess/onFail reusan el mismo
+ * ActionComposer que todo lo demás. */
+function MinigameSection({
+  minigameEnabled,
+  sequenceLength,
+  onSuccess,
+  onFail,
+  dialogueNodes,
+  strings,
+  sceneOptions,
+  characters,
+  backgroundOptions,
+  onSetMinigameEnabled,
+  onSequenceLengthChange,
+  onSuccessChange,
+  onFailChange,
+}: {
+  minigameEnabled: boolean;
+  sequenceLength: number;
+  onSuccess: SceneAction[];
+  onFail: SceneAction[];
+  dialogueNodes: Record<string, DialogueNode>;
+  strings: Record<string, string>;
+  sceneOptions: { id: string; act: number }[];
+  characters: Character[];
+  backgroundOptions: { id: string }[];
+  onSetMinigameEnabled: (enabled: boolean) => void;
+  onSequenceLengthChange: (length: number) => void;
+  onSuccessChange: (patch: Partial<ActionComposerValue>) => void;
+  onFailChange: (patch: Partial<ActionComposerValue>) => void;
+}): JSX.Element {
+  return (
+    <div className="mb-2">
+      <label className="mb-1 flex items-center gap-1 text-[9px] text-graphite-400">
+        <input
+          type="checkbox"
+          checked={minigameEnabled}
+          onChange={(event) => onSetMinigameEnabled(event.target.checked)}
+        />
+        Interactuar abre un minijuego (en vez de lo de arriba)
+      </label>
+      {minigameEnabled && (
+        <div className="rounded border border-sky-400/40 bg-graphite-900/60 p-2">
+          <label className="mb-2 flex flex-col">
+            <span className="text-[9px] text-graphite-500 uppercase">Plantilla</span>
+            <select value="sequence" disabled className={inputClassName}>
+              <option value="sequence">Memoria de secuencia</option>
+            </select>
+          </label>
+          <label className="mb-2 flex flex-col">
+            <span className="text-[9px] text-graphite-500 uppercase">Largo de la secuencia</span>
+            <input
+              type="number"
+              min={2}
+              max={9}
+              value={sequenceLength}
+              onChange={(event) => onSequenceLengthChange(Number(event.target.value))}
+              className={inputClassName}
+            />
+          </label>
+          <ActionComposer
+            label="Si gana"
+            actions={onSuccess}
+            dialogueNodes={dialogueNodes}
+            strings={strings}
+            sceneOptions={sceneOptions}
+            characters={characters}
+            backgroundOptions={backgroundOptions}
+            onChange={onSuccessChange}
+          />
+          <ActionComposer
+            label="Si pierde"
+            actions={onFail}
+            dialogueNodes={dialogueNodes}
+            strings={strings}
+            sceneOptions={sceneOptions}
+            characters={characters}
+            backgroundOptions={backgroundOptions}
+            onChange={onFailChange}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ActionMenuFields({
   enabled,
   onExamine,
   onInteract,
   interactWithTargets,
+  minigameEnabled,
+  minigameSequenceLength,
+  minigameOnSuccess,
+  minigameOnFail,
   dialogueNodes,
   strings,
   sceneOptions,
@@ -902,11 +994,19 @@ function ActionMenuFields({
   onAddInteractWithTarget,
   onRemoveInteractWithTarget,
   onInteractWithTargetChange,
+  onSetMinigameEnabled,
+  onMinigameSequenceLengthChange,
+  onMinigameSuccessChange,
+  onMinigameFailChange,
 }: {
   enabled: boolean;
   onExamine: SceneAction[];
   onInteract: SceneAction[];
   interactWithTargets: InteractWithTarget[];
+  minigameEnabled: boolean;
+  minigameSequenceLength: number;
+  minigameOnSuccess: SceneAction[];
+  minigameOnFail: SceneAction[];
   dialogueNodes: Record<string, DialogueNode>;
   strings: Record<string, string>;
   sceneOptions: { id: string; act: number }[];
@@ -919,6 +1019,10 @@ function ActionMenuFields({
   onAddInteractWithTarget: (targetObjectId: string) => void;
   onRemoveInteractWithTarget: (targetObjectId: string) => void;
   onInteractWithTargetChange: (targetObjectId: string, patch: Partial<ActionComposerValue>) => void;
+  onSetMinigameEnabled: (enabled: boolean) => void;
+  onMinigameSequenceLengthChange: (length: number) => void;
+  onMinigameSuccessChange: (patch: Partial<ActionComposerValue>) => void;
+  onMinigameFailChange: (patch: Partial<ActionComposerValue>) => void;
 }): JSX.Element {
   return (
     <div className="mt-2 border-t border-graphite-800 pt-2">
@@ -942,16 +1046,51 @@ function ActionMenuFields({
             backgroundOptions={backgroundOptions}
             onChange={onExamineChange}
           />
-          <ActionComposer
-            label="Interactuar"
-            actions={onInteract}
-            dialogueNodes={dialogueNodes}
-            strings={strings}
-            sceneOptions={sceneOptions}
-            characters={characters}
-            backgroundOptions={backgroundOptions}
-            onChange={onInteractChange}
-          />
+          {minigameEnabled ? (
+            <MinigameSection
+              minigameEnabled={minigameEnabled}
+              sequenceLength={minigameSequenceLength}
+              onSuccess={minigameOnSuccess}
+              onFail={minigameOnFail}
+              dialogueNodes={dialogueNodes}
+              strings={strings}
+              sceneOptions={sceneOptions}
+              characters={characters}
+              backgroundOptions={backgroundOptions}
+              onSetMinigameEnabled={onSetMinigameEnabled}
+              onSequenceLengthChange={onMinigameSequenceLengthChange}
+              onSuccessChange={onMinigameSuccessChange}
+              onFailChange={onMinigameFailChange}
+            />
+          ) : (
+            <>
+              <ActionComposer
+                label="Interactuar"
+                actions={onInteract}
+                dialogueNodes={dialogueNodes}
+                strings={strings}
+                sceneOptions={sceneOptions}
+                characters={characters}
+                backgroundOptions={backgroundOptions}
+                onChange={onInteractChange}
+              />
+              <MinigameSection
+                minigameEnabled={minigameEnabled}
+                sequenceLength={minigameSequenceLength}
+                onSuccess={minigameOnSuccess}
+                onFail={minigameOnFail}
+                dialogueNodes={dialogueNodes}
+                strings={strings}
+                sceneOptions={sceneOptions}
+                characters={characters}
+                backgroundOptions={backgroundOptions}
+                onSetMinigameEnabled={onSetMinigameEnabled}
+                onSequenceLengthChange={onMinigameSequenceLengthChange}
+                onSuccessChange={onMinigameSuccessChange}
+                onFailChange={onMinigameFailChange}
+              />
+            </>
+          )}
           <InteractWithTargetsSection
             targets={interactWithTargets}
             dialogueNodes={dialogueNodes}
@@ -990,6 +1129,10 @@ function ObjectFields({
   onAddInteractWithTarget,
   onRemoveInteractWithTarget,
   onInteractWithTargetChange,
+  onSetMinigameEnabled,
+  onMinigameSequenceLengthChange,
+  onMinigameSuccessChange,
+  onMinigameFailChange,
 }: {
   object: EditableObject;
   strings: Record<string, string>;
@@ -1010,9 +1153,14 @@ function ObjectFields({
   onAddInteractWithTarget: (targetObjectId: string) => void;
   onRemoveInteractWithTarget: (targetObjectId: string) => void;
   onInteractWithTargetChange: (targetObjectId: string, patch: Partial<ActionComposerValue>) => void;
+  onSetMinigameEnabled: (enabled: boolean) => void;
+  onMinigameSequenceLengthChange: (length: number) => void;
+  onMinigameSuccessChange: (patch: Partial<ActionComposerValue>) => void;
+  onMinigameFailChange: (patch: Partial<ActionComposerValue>) => void;
 }): JSX.Element {
   const hasCustomStyle = object.labelStyle !== undefined;
   const isPolygon = object.shape === 'polygon';
+  const minigameAction = object.onInteract[0]?.type === 'openMinigame' ? object.onInteract[0] : undefined;
 
   return (
     <div className="mb-2 border-b border-graphite-800 pb-2">
@@ -1141,6 +1289,10 @@ function ObjectFields({
           onExamine={object.onExamine}
           onInteract={object.onInteract}
           interactWithTargets={object.interactWithTargets}
+          minigameEnabled={minigameAction !== undefined}
+          minigameSequenceLength={minigameAction?.sequenceLength ?? 4}
+          minigameOnSuccess={minigameAction?.onSuccess ?? []}
+          minigameOnFail={minigameAction?.onFail ?? []}
           dialogueNodes={dialogueNodes}
           strings={strings}
           sceneOptions={sceneOptions}
@@ -1153,6 +1305,10 @@ function ObjectFields({
           onAddInteractWithTarget={onAddInteractWithTarget}
           onRemoveInteractWithTarget={onRemoveInteractWithTarget}
           onInteractWithTargetChange={onInteractWithTargetChange}
+          onSetMinigameEnabled={onSetMinigameEnabled}
+          onMinigameSequenceLengthChange={onMinigameSequenceLengthChange}
+          onMinigameSuccessChange={onMinigameSuccessChange}
+          onMinigameFailChange={onMinigameFailChange}
         />
       )}
     </div>
@@ -1279,6 +1435,10 @@ export function SceneEditorPanel({
   onAddInteractWithTarget,
   onRemoveInteractWithTarget,
   onInteractWithTargetChange,
+  onSetMinigameEnabled,
+  onMinigameSequenceLengthChange,
+  onMinigameSuccessChange,
+  onMinigameFailChange,
 }: {
   gameId: string;
   scene: Scene | null;
@@ -1322,6 +1482,10 @@ export function SceneEditorPanel({
   onAddInteractWithTarget: (objectId: string, targetObjectId: string) => void;
   onRemoveInteractWithTarget: (objectId: string, targetObjectId: string) => void;
   onInteractWithTargetChange: (objectId: string, targetObjectId: string, patch: Partial<ActionComposerValue>) => void;
+  onSetMinigameEnabled: (objectId: string, enabled: boolean) => void;
+  onMinigameSequenceLengthChange: (objectId: string, sequenceLength: number) => void;
+  onMinigameSuccessChange: (objectId: string, patch: Partial<ActionComposerValue>) => void;
+  onMinigameFailChange: (objectId: string, patch: Partial<ActionComposerValue>) => void;
 }): JSX.Element {
   return (
     <div className="text-xs text-graphite-200">
@@ -1432,6 +1596,10 @@ export function SceneEditorPanel({
                     onInteractWithTargetChange={(targetObjectId, patch) =>
                       onInteractWithTargetChange(object.id, targetObjectId, patch)
                     }
+                    onSetMinigameEnabled={(enabled) => onSetMinigameEnabled(object.id, enabled)}
+                    onMinigameSequenceLengthChange={(length) => onMinigameSequenceLengthChange(object.id, length)}
+                    onMinigameSuccessChange={(patch) => onMinigameSuccessChange(object.id, patch)}
+                    onMinigameFailChange={(patch) => onMinigameFailChange(object.id, patch)}
                   />
                 ));
               })()}

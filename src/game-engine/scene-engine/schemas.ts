@@ -23,7 +23,12 @@ export const SceneLayerSchema = z.object({
 
 export const InterfaceIdSchema = z.enum(['mirror-investigation', 'agent-market', 'equipment-shop']);
 
-export const SceneActionSchema = z.discriminatedUnion('type', [
+// Compartidas entre SceneActionSchema (todas) y MinigameOutcomeActionSchema
+// (el subconjunto permitido como onSuccess/onFail de un minijuego) — así
+// onSuccess/onFail no necesitan referenciarse a sí mismos (Zod no soporta
+// bien discriminatedUnion recursivo) y de paso no tiene sentido encadenar
+// un minijuego adentro de otro, ni "Continuar"/"Salir" como resultado.
+const OUTCOME_ACTION_VARIANTS = [
   z.object({ type: z.literal('dialogue'), nodeId: z.string() }),
   z.object({
     type: z.literal('setState'),
@@ -43,6 +48,31 @@ export const SceneActionSchema = z.discriminatedUnion('type', [
    * defecto = backgrounds[0]), el primer click pasa al que no sea el
    * default. */
   z.object({ type: z.literal('toggleBackground'), backgroundIdA: z.string(), backgroundIdB: z.string() }),
+] as const;
+
+export const MinigameOutcomeActionSchema = z.discriminatedUnion('type', OUTCOME_ACTION_VARIANTS);
+
+/** Plantillas de minijuego ya construidas en el motor — la IA/el editor
+ * elige cuál encaja con el punto del guion y completa sus parámetros, en
+ * vez de generar lógica de juego nueva cada vez (ver
+ * docs/plataforma/00-vision-ia.md, "Problema abierto: minijuegos"). */
+export const MinigameTemplateSchema = z.enum(['sequence']);
+
+export const SceneActionSchema = z.discriminatedUnion('type', [
+  ...OUTCOME_ACTION_VARIANTS,
+  /** Abre un minijuego — el motor corre `onSuccess` o `onFail` según el
+   * resultado y cierra el overlay. Solo dispara la interacción "Interactuar"
+   * de un objeto (no Examinar/Interactuar con), ver editor. */
+  z.object({
+    type: z.literal('openMinigame'),
+    template: MinigameTemplateSchema,
+    /** Solo `template: "sequence"` por ahora — cuántos pasos hay que
+     * repetir. Si se suman más templates, esto pasa a ser una unión
+     * discriminada por `template` en vez de un campo plano. */
+    sequenceLength: z.number().default(4),
+    onSuccess: z.array(MinigameOutcomeActionSchema),
+    onFail: z.array(MinigameOutcomeActionSchema),
+  }),
   /** Botón de menú "Continuar": retoma la partida guardada en la escena
    * donde estaba, o no hace nada si todavía no hay ninguna registrada. */
   z.object({ type: z.literal('continueGame') }),
@@ -379,6 +409,8 @@ export const AdventureCaseBundleSchema = z.object({
 export type SceneLayer = z.infer<typeof SceneLayerSchema>;
 export type InterfaceId = z.infer<typeof InterfaceIdSchema>;
 export type SceneAction = z.infer<typeof SceneActionSchema>;
+export type MinigameOutcomeAction = z.infer<typeof MinigameOutcomeActionSchema>;
+export type MinigameTemplate = z.infer<typeof MinigameTemplateSchema>;
 export type Hotspot = z.infer<typeof HotspotSchema>;
 export type InteractWithTarget = z.infer<typeof InteractWithTargetSchema>;
 export type HotspotShape = z.infer<typeof HotspotShapeSchema>;
