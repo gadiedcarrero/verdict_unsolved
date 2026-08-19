@@ -53,11 +53,15 @@ un agregador: tiene su propia pantalla **"Ajustes → API Keys"** donde se carga
 por separado `OPENAI_API_KEY` (guion, imágenes, voz OpenAI) y opcionalmente
 `ELEVENLABS_API_KEY` (voz premium).
 
-**Camino elegido:** el mismo patrón. Una sección **"Integraciones IA"** en
-Ajustes de esta plataforma, con un slot de API key por proveedor (OpenAI,
-Claude, ElevenLabs, imagen — OpenAI o Nano Banana, Seedance) — mismo mecanismo
-ya usado para cursor/menú de acción (subida a `assets/games/<gameId>/`,
-guardado en `site-settings.json` vía IPC). Todavía no implementada.
+**Camino elegido:** el mismo patrón. ✅ **Implementado** — panel "Integraciones
+IA" (`src/app/AiIntegrationsPanel.tsx`), abierto desde el selector de
+proyectos porque es global a la plataforma, no por juego. Un slot de API key
+por proveedor: OpenAI, ElevenLabs, imagen (OpenAI o Nano Banana), Seedance
+(sin slot para Claude — no es una API que el juego corriendo llame en
+runtime, es asistencia de programación durante el desarrollo). Las keys se
+guardan vía IPC en `userData` (`electron/main/ipc/aiIntegrationsHandlers.ts`),
+**fuera del repositorio** — no en `site-settings.json` ni ningún JSON que se
+commitea a git, a propósito, para que una key real nunca llegue al historial.
 
 ## Qué ya existe hoy (cimiento para el pipeline)
 
