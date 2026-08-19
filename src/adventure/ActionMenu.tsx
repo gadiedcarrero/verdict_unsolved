@@ -58,14 +58,17 @@ export function ActionMenu({
 
   const hoveredZone = ZONES.find((z) => z.kind === hovered);
   const imagePath = (hoveredZone && actionMenu[hoveredZone.imageField]) || actionMenu.normalImagePath;
-  const defaultCursor = cursorCssValue(gameId, cursor.defaultCursorPath, 'default');
-  const zoneCursor = cursorCssValue(gameId, cursor.hoverCursorPath, 'pointer');
+  // Con el menú abierto el cursor queda fijo en el "default" siempre — ni
+  // siquiera cambia al de "zona interactuable" al pasar por los botones,
+  // porque ir y venir entre ambos al mover el mouse dentro del menú
+  // titilaba.
+  const menuCursor = cursorCssValue(gameId, cursor.defaultCursorPath, 'default');
 
   return (
     <>
       <div
         className="fixed inset-0"
-        style={{ zIndex: 300, cursor: defaultCursor }}
+        style={{ zIndex: 300, cursor: menuCursor }}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -95,7 +98,7 @@ export function ActionMenu({
                 points={points.map((p) => `${p.x},${p.y}`).join(' ')}
                 fill="transparent"
                 pointerEvents="all"
-                style={{ cursor: zoneCursor }}
+                style={{ cursor: menuCursor }}
                 onMouseEnter={() => setHovered(zone.kind)}
                 onMouseLeave={() => setHovered((h) => (h === zone.kind ? null : h))}
                 onClick={() => onSelectAction(zone.kind)}
