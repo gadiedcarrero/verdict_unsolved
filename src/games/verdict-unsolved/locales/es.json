@@ -1,4 +1,8 @@
 {
+  "actionMenu.close": "Cerrar",
+  "actionMenu.examine": "Examinar",
+  "actionMenu.interact": "Interactuar",
+  "actionMenu.interactWith": "Interactuar con",
   "character.director.name": "DIRECTOR",
   "character.lena.name": "LENA HART",
   "character.mirror.name": "MIRROR",

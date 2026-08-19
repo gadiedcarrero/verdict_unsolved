@@ -230,6 +230,7 @@ export function SceneViewer({
                   y: activeHotspot.area.y + activeHotspot.area.height / 2,
                 }}
                 actionMenu={siteSettings.actionMenu}
+                strings={strings}
                 onSelectAction={onSelectAction}
                 onClose={onCloseActionMenu}
               />

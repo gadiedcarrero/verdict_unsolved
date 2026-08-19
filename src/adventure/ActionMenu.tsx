@@ -1,15 +1,26 @@
 import { useState, type JSX } from 'react';
 import type { ActionMenuActionKind } from './adventureRuntime.store';
 import { gameAssetUrl } from './gameAssetUrl';
+import { translate } from '../i18n/translate';
 import type { ActionMenuSettings, PolygonPoint } from '../game-engine/scene-engine/schemas';
 
 const MENU_WIDTH_PX = 220;
 
-const ZONES: { kind: ActionMenuActionKind; zoneField: keyof ActionMenuSettings; imageField: keyof ActionMenuSettings }[] = [
-  { kind: 'examine', zoneField: 'examineZone', imageField: 'examineImagePath' },
-  { kind: 'interact', zoneField: 'interactZone', imageField: 'interactImagePath' },
-  { kind: 'interactWith', zoneField: 'interactWithZone', imageField: 'interactWithImagePath' },
-  { kind: 'close', zoneField: 'closeZone', imageField: 'closeImagePath' },
+const ZONES: {
+  kind: ActionMenuActionKind;
+  zoneField: keyof ActionMenuSettings;
+  imageField: keyof ActionMenuSettings;
+  labelKey: string;
+}[] = [
+  { kind: 'examine', zoneField: 'examineZone', imageField: 'examineImagePath', labelKey: 'actionMenu.examine' },
+  { kind: 'interact', zoneField: 'interactZone', imageField: 'interactImagePath', labelKey: 'actionMenu.interact' },
+  {
+    kind: 'interactWith',
+    zoneField: 'interactWithZone',
+    imageField: 'interactWithImagePath',
+    labelKey: 'actionMenu.interactWith',
+  },
+  { kind: 'close', zoneField: 'closeZone', imageField: 'closeImagePath', labelKey: 'actionMenu.close' },
 ];
 
 /**
@@ -23,6 +34,7 @@ export function ActionMenu({
   gameId,
   anchor,
   actionMenu,
+  strings,
   onSelectAction,
   onClose,
 }: {
@@ -30,6 +42,7 @@ export function ActionMenu({
   /** Centro del objeto, en % del stage. */
   anchor: { x: number; y: number };
   actionMenu: ActionMenuSettings;
+  strings: Record<string, string>;
   onSelectAction: (kind: ActionMenuActionKind) => void;
   onClose: () => void;
 }): JSX.Element | null {
@@ -47,6 +60,12 @@ export function ActionMenu({
         className="absolute -translate-x-1/2 -translate-y-1/2"
         style={{ left: `${anchor.x}%`, top: `${anchor.y}%`, width: MENU_WIDTH_PX, zIndex: 301 }}
       >
+        <span
+          className={`pointer-events-none absolute left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded bg-graphite-950/90 px-2 py-1 text-[13px] text-graphite-100 transition-opacity ${hoveredZone ? 'opacity-100' : 'opacity-0'}`}
+          style={{ top: -6 }}
+        >
+          {hoveredZone ? translate(strings, hoveredZone.labelKey) : ''}
+        </span>
         <img
           src={gameAssetUrl(gameId, imagePath as string)}
           alt=""
