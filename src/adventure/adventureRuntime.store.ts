@@ -42,6 +42,11 @@ type AdventureRuntimeState = {
   /** True brevemente cuando se intentó una combinación sin `onInteract`
    * programado — ver `interactWith.noMatch` en locales. */
   interactWithFallbackVisible: boolean;
+  /** Id del fondo activo de la escena actual, o null = usar el default
+   * (`scene.backgrounds[0]`) — ver acción `toggleBackground`. Se resetea a
+   * null en cada cambio de escena, así el fondo alternado de una escena no
+   * se arrastra a la próxima vez que se entra ahí. */
+  activeBackgroundId: string | null;
 
   init: (bundle: AdventureCaseBundle, persisted: AdventureCaseState | null) => void;
   getActiveScene: () => Scene | null;
@@ -59,6 +64,9 @@ type AdventureRuntimeState = {
    * `onInteract`, si no muestra el mensaje genérico. Sale del modo
    * combinar de cualquier manera. */
   selectCombineTarget: (targetHotspotId: string) => void;
+  /** Alterna `activeBackgroundId` entre dos ids — si ninguno está activo
+   * todavía (fondo por defecto), pasa al que no sea `scene.backgrounds[0]`. */
+  toggleBackground: (backgroundIdA: string, backgroundIdB: string) => void;
   openDialogue: (nodeId: string) => void;
   advance: () => void;
   selectChoice: (next: string, setState?: Record<string, unknown>, addFlag?: string) => void;
@@ -104,6 +112,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   activeActionMenuHotspotId: null,
   combiningHotspotId: null,
   interactWithFallbackVisible: false,
+  activeBackgroundId: null,
 
   init: (bundle, persisted) => {
     const startingSceneId = bundle.case.startingSceneId;
@@ -121,6 +130,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       activeActionMenuHotspotId: null,
       combiningHotspotId: null,
       interactWithFallbackVisible: false,
+      activeBackgroundId: null,
     });
   },
 
@@ -207,6 +217,12 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
     window.setTimeout(() => set({ interactWithFallbackVisible: false }), 1800);
   },
 
+  toggleBackground: (backgroundIdA, backgroundIdB) => {
+    const scene = get().getActiveScene();
+    const effective = get().activeBackgroundId ?? scene?.backgrounds[0]?.id ?? null;
+    set({ activeBackgroundId: effective === backgroundIdA ? backgroundIdB : backgroundIdA });
+  },
+
   openDialogue: (nodeId) => {
     const node = get().bundle?.dialogues[nodeId];
     if (!node) return;
@@ -280,6 +296,9 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
         case 'addMoney':
           useSaveStore.getState().addMoney(action.amount);
           break;
+        case 'toggleBackground':
+          get().toggleBackground(action.backgroundIdA, action.backgroundIdB);
+          break;
         case 'continueGame': {
           const { caseState } = get();
           if (caseState.registered) {
@@ -325,6 +344,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
         officeInteractions: [],
         ringState: 'silent',
         ringAttempts: 0,
+        activeBackgroundId: null,
         caseState: { ...state.caseState, currentSceneId: sceneId },
       }));
       persistIfRegistered(get().caseState);
@@ -345,6 +365,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       activeActionMenuHotspotId: null,
       combiningHotspotId: null,
       interactWithFallbackVisible: false,
+      activeBackgroundId: null,
       officeInteractions: [],
       ringState: 'silent',
       ringAttempts: 0,
@@ -362,6 +383,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       activeActionMenuHotspotId: null,
       combiningHotspotId: null,
       interactWithFallbackVisible: false,
+      activeBackgroundId: null,
       caseState: createEmptyAdventureCaseState(''),
       officeInteractions: [],
       ringState: 'silent',

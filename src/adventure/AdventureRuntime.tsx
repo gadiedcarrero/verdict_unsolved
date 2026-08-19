@@ -96,6 +96,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const closeActionMenu = useAdventureRuntimeStore((s) => s.closeActionMenu);
   const combiningHotspotId = useAdventureRuntimeStore((s) => s.combiningHotspotId);
   const interactWithFallbackVisible = useAdventureRuntimeStore((s) => s.interactWithFallbackVisible);
+  const activeBackgroundId = useAdventureRuntimeStore((s) => s.activeBackgroundId);
   const advance = useAdventureRuntimeStore((s) => s.advance);
   const selectChoice = useAdventureRuntimeStore((s) => s.selectChoice);
   const getActiveScene = useAdventureRuntimeStore((s) => s.getActiveScene);
@@ -394,23 +395,26 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
 
   function actionComposerValue(base: Scene, objectId: string, slot: ActionSlot): ActionComposerValue {
     const actions = base.hotspots.find((h) => h.id === objectId)?.[slot] ?? [];
+    const backgroundAction = actions.find((a) => a.type === 'toggleBackground');
     const sceneAction = actions.find((a) => a.type === 'transitionTo');
     const dialogueAction = actions.find((a) => a.type === 'dialogue');
     const node = dialogueAction?.type === 'dialogue' ? base.dialogueNodes[dialogueAction.nodeId] : undefined;
     return {
+      backgroundIdA: backgroundAction?.type === 'toggleBackground' ? backgroundAction.backgroundIdA : '',
+      backgroundIdB: backgroundAction?.type === 'toggleBackground' ? backgroundAction.backgroundIdB : '',
       sceneId: sceneAction?.type === 'transitionTo' ? sceneAction.sceneId : '',
       characterId: node?.speaker ?? '',
       dialogueText: node ? (strings[node.line] ?? '') : '',
     };
   }
 
-  // Compone hasta dos cosas por acción de objeto (Examinar/Interactuar/
-  // Interactuar con): a qué escena pasa, y qué dice qué personaje — en ese
-  // orden (ver runActions/transitionToScene en el store, que difieren el
-  // diálogo hasta después del fundido). El diálogo es una línea suelta,
-  // autogenerada acá y guardada en Scene.dialogueNodes, no un nodo del
-  // guion armado a mano con choices — para eso se sigue editando el JSON
-  // de dialogues/ directamente.
+  // Compone hasta tres cosas por acción de objeto (Examinar/Interactuar/
+  // Interactuar con): qué dos fondos alterna, a qué escena pasa, y qué dice
+  // qué personaje — en ese orden (ver runActions/transitionToScene en el
+  // store, que difieren el diálogo hasta después del fundido). El diálogo
+  // es una línea suelta, autogenerada acá y guardada en Scene.dialogueNodes,
+  // no un nodo del guion armado a mano con choices — para eso se sigue
+  // editando el JSON de dialogues/ directamente.
   function updateActionComposer(objectId: string, slot: ActionSlot, patch: Partial<ActionComposerValue>): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
@@ -418,6 +422,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     const nodeId = dialogueNodeIdFor(base.id, objectId, slot);
 
     const actions: SceneAction[] = [];
+    if (next.backgroundIdA && next.backgroundIdB) {
+      actions.push({ type: 'toggleBackground', backgroundIdA: next.backgroundIdA, backgroundIdB: next.backgroundIdB });
+    }
     if (next.sceneId) actions.push({ type: 'transitionTo', sceneId: next.sceneId, fade: 'fade' });
     if (next.characterId) actions.push({ type: 'dialogue', nodeId });
 
@@ -445,10 +452,13 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       .find((h) => h.id === objectId)
       ?.interactWithTargets.find((t) => t.targetObjectId === targetObjectId);
     const actions = entry?.onInteract ?? [];
+    const backgroundAction = actions.find((a) => a.type === 'toggleBackground');
     const sceneAction = actions.find((a) => a.type === 'transitionTo');
     const dialogueAction = actions.find((a) => a.type === 'dialogue');
     const node = dialogueAction?.type === 'dialogue' ? base.dialogueNodes[dialogueAction.nodeId] : undefined;
     return {
+      backgroundIdA: backgroundAction?.type === 'toggleBackground' ? backgroundAction.backgroundIdA : '',
+      backgroundIdB: backgroundAction?.type === 'toggleBackground' ? backgroundAction.backgroundIdB : '',
       sceneId: sceneAction?.type === 'transitionTo' ? sceneAction.sceneId : '',
       characterId: node?.speaker ?? '',
       dialogueText: node ? (strings[node.line] ?? '') : '',
@@ -470,6 +480,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     const nodeId = interactWithNodeId(base.id, objectId, targetObjectId);
 
     const actions: SceneAction[] = [];
+    if (next.backgroundIdA && next.backgroundIdB) {
+      actions.push({ type: 'toggleBackground', backgroundIdA: next.backgroundIdA, backgroundIdB: next.backgroundIdB });
+    }
     if (next.sceneId) actions.push({ type: 'transitionTo', sceneId: next.sceneId, fade: 'fade' });
     if (next.characterId) actions.push({ type: 'dialogue', nodeId });
 
@@ -1272,6 +1285,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           onCloseActionMenu={closeActionMenu}
           combiningHotspotId={combiningHotspotId}
           interactWithFallbackVisible={interactWithFallbackVisible}
+          activeBackgroundId={activeBackgroundId}
         >
           {activeInterfaceId ? (
             <InterfaceHost interfaceId={activeInterfaceId} />

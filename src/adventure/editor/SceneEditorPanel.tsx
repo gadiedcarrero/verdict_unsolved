@@ -653,7 +653,13 @@ function MenuSettings({
   );
 }
 
-export type ActionComposerValue = { sceneId: string; characterId: string; dialogueText: string };
+export type ActionComposerValue = {
+  backgroundIdA: string;
+  backgroundIdB: string;
+  sceneId: string;
+  characterId: string;
+  dialogueText: string;
+};
 
 function findAction<T extends SceneAction['type']>(
   actions: SceneAction[],
@@ -667,19 +673,22 @@ function resolveActionComposerValue(
   dialogueNodes: Record<string, DialogueNode>,
   strings: Record<string, string>,
 ): ActionComposerValue {
+  const backgroundAction = findAction(actions, 'toggleBackground');
   const sceneAction = findAction(actions, 'transitionTo');
   const dialogueAction = findAction(actions, 'dialogue');
   const node = dialogueAction ? dialogueNodes[dialogueAction.nodeId] : undefined;
   return {
+    backgroundIdA: backgroundAction?.backgroundIdA ?? '',
+    backgroundIdB: backgroundAction?.backgroundIdB ?? '',
     sceneId: sceneAction?.sceneId ?? '',
     characterId: node?.speaker ?? '',
     dialogueText: node ? (strings[node.line] ?? '') : '',
   };
 }
 
-/** Compone hasta dos cosas por acción: a qué escena pasa, y qué dice qué
- * personaje — en ese orden (primero el cambio de escena, después el
- * diálogo). Vacío = no pasa nada al elegir esta acción. El diálogo es una
+/** Compone hasta tres cosas por acción: qué dos fondos alterna (p. ej. luz
+ * prendida/apagada), a qué escena pasa, y qué dice qué personaje — en ese
+ * orden. Vacío = no pasa nada al elegir esta acción. El diálogo es una
  * línea suelta generada por el editor (Scene.dialogueNodes), no un nodo del
  * guion armado a mano con choices/ramificaciones. */
 function ActionComposer({
@@ -689,6 +698,7 @@ function ActionComposer({
   strings,
   sceneOptions,
   characters,
+  backgroundOptions,
   onChange,
 }: {
   label: string;
@@ -697,6 +707,7 @@ function ActionComposer({
   strings: Record<string, string>;
   sceneOptions: { id: string; act: number }[];
   characters: Character[];
+  backgroundOptions: { id: string }[];
   onChange: (patch: Partial<ActionComposerValue>) => void;
 }): JSX.Element {
   const value = resolveActionComposerValue(actions, dialogueNodes, strings);
@@ -704,6 +715,40 @@ function ActionComposer({
   return (
     <div className="mb-2 border-b border-graphite-800 pb-2 last:border-b-0 last:pb-0 last:mb-0">
       <p className="mb-1 text-[9px] font-semibold tracking-widest text-graphite-400 uppercase">{label}</p>
+      {backgroundOptions.length > 1 && (
+        <div className="mb-1 grid grid-cols-2 gap-1">
+          <label className="flex flex-col">
+            <span className="text-[9px] text-graphite-500 uppercase">Alternar fondo A</span>
+            <select
+              value={value.backgroundIdA}
+              onChange={(event) => onChange({ backgroundIdA: event.target.value })}
+              className={inputClassName}
+            >
+              <option value="">(ninguno)</option>
+              {backgroundOptions.map((bg) => (
+                <option key={bg.id} value={bg.id}>
+                  {bg.id}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col">
+            <span className="text-[9px] text-graphite-500 uppercase">con B</span>
+            <select
+              value={value.backgroundIdB}
+              onChange={(event) => onChange({ backgroundIdB: event.target.value })}
+              className={inputClassName}
+            >
+              <option value="">(ninguno)</option>
+              {backgroundOptions.map((bg) => (
+                <option key={bg.id} value={bg.id}>
+                  {bg.id}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
       <label className="mb-1 flex flex-col">
         <span className="text-[9px] text-graphite-500 uppercase">Escena que activa</span>
         <select
@@ -762,6 +807,7 @@ function InteractWithTargetsSection({
   strings,
   sceneOptions,
   characters,
+  backgroundOptions,
   otherObjects,
   onAddTarget,
   onRemoveTarget,
@@ -772,6 +818,7 @@ function InteractWithTargetsSection({
   strings: Record<string, string>;
   sceneOptions: { id: string; act: number }[];
   characters: Character[];
+  backgroundOptions: { id: string }[];
   otherObjects: { id: string; label: string }[];
   onAddTarget: (targetObjectId: string) => void;
   onRemoveTarget: (targetObjectId: string) => void;
@@ -804,6 +851,7 @@ function InteractWithTargetsSection({
               strings={strings}
               sceneOptions={sceneOptions}
               characters={characters}
+              backgroundOptions={backgroundOptions}
               onChange={(patch) => onTargetChange(target.targetObjectId, patch)}
             />
           </div>
@@ -846,6 +894,7 @@ function ActionMenuFields({
   strings,
   sceneOptions,
   characters,
+  backgroundOptions,
   otherObjects,
   onSetEnabled,
   onExamineChange,
@@ -862,6 +911,7 @@ function ActionMenuFields({
   strings: Record<string, string>;
   sceneOptions: { id: string; act: number }[];
   characters: Character[];
+  backgroundOptions: { id: string }[];
   otherObjects: { id: string; label: string }[];
   onSetEnabled: (enabled: boolean) => void;
   onExamineChange: (patch: Partial<ActionComposerValue>) => void;
@@ -889,6 +939,7 @@ function ActionMenuFields({
             strings={strings}
             sceneOptions={sceneOptions}
             characters={characters}
+            backgroundOptions={backgroundOptions}
             onChange={onExamineChange}
           />
           <ActionComposer
@@ -898,6 +949,7 @@ function ActionMenuFields({
             strings={strings}
             sceneOptions={sceneOptions}
             characters={characters}
+            backgroundOptions={backgroundOptions}
             onChange={onInteractChange}
           />
           <InteractWithTargetsSection
@@ -906,6 +958,7 @@ function ActionMenuFields({
             strings={strings}
             sceneOptions={sceneOptions}
             characters={characters}
+            backgroundOptions={backgroundOptions}
             otherObjects={otherObjects}
             onAddTarget={onAddInteractWithTarget}
             onRemoveTarget={onRemoveInteractWithTarget}
@@ -923,6 +976,7 @@ function ObjectFields({
   sceneOptions,
   dialogueNodes,
   characters,
+  backgroundOptions,
   otherObjects,
   onRectChange,
   onInteractableChange,
@@ -942,6 +996,7 @@ function ObjectFields({
   sceneOptions: { id: string; act: number }[];
   dialogueNodes: Record<string, DialogueNode>;
   characters: Character[];
+  backgroundOptions: { id: string }[];
   otherObjects: { id: string; label: string }[];
   onRectChange: (rect: EditableRect) => void;
   onInteractableChange: (interactable: boolean) => void;
@@ -1090,6 +1145,7 @@ function ObjectFields({
           strings={strings}
           sceneOptions={sceneOptions}
           characters={characters}
+          backgroundOptions={backgroundOptions}
           otherObjects={otherObjects.filter((o) => o.id !== object.id)}
           onSetEnabled={onSetActionMenuEnabled}
           onExamineChange={onExamineActionChange}
@@ -1347,6 +1403,7 @@ export function SceneEditorPanel({
                 const otherObjects = editableObjects
                   .filter((o) => o.labelKey)
                   .map((o) => ({ id: o.id, label: o.labelKey ? translate(strings, o.labelKey) : o.id }));
+                const backgroundOptions = scene.backgrounds.map((bg) => ({ id: bg.id }));
                 return editableObjects.map((object) => (
                   <ObjectFields
                     key={object.id}
@@ -1355,6 +1412,7 @@ export function SceneEditorPanel({
                     sceneOptions={sceneOptions}
                     dialogueNodes={scene.dialogueNodes}
                     characters={characters}
+                    backgroundOptions={backgroundOptions}
                     otherObjects={otherObjects}
                     onRectChange={(rect) => onObjectRectChange(object.id, rect)}
                     onInteractableChange={(interactable) => onToggleInteractable(object.id, interactable)}

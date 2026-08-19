@@ -344,7 +344,13 @@
           "y": 63.3853180239899
         }
       ],
-      "onInteract": [],
+      "onInteract": [
+        {
+          "type": "toggleBackground",
+          "backgroundIdA": "bg-1",
+          "backgroundIdB": "bg-2"
+        }
+      ],
       "repeatable": true,
       "interactable": true,
       "labelOffset": {

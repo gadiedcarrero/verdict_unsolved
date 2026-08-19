@@ -41,6 +41,7 @@ export function SceneViewer({
   onCloseActionMenu,
   combiningHotspotId,
   interactWithFallbackVisible,
+  activeBackgroundId,
 }: {
   gameId: string;
   scene: Scene;
@@ -73,6 +74,9 @@ export function SceneViewer({
   combiningHotspotId?: string | null;
   /** True brevemente tras intentar una combinación sin acción programada. */
   interactWithFallbackVisible?: boolean;
+  /** Id del fondo activo (ver acción `toggleBackground`) — null/no
+   * encontrado = usar `scene.backgrounds[0]` como siempre. */
+  activeBackgroundId?: string | null;
 }): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -83,7 +87,8 @@ export function SceneViewer({
   // vez de dibujar un rectángulo alrededor del hotspot.
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  const activeBackground = scene.backgrounds[0];
+  const activeBackground =
+    (activeBackgroundId && scene.backgrounds.find((bg) => bg.id === activeBackgroundId)) || scene.backgrounds[0];
 
   return (
     <div ref={containerRef} className="flex h-full w-full items-center justify-center bg-graphite-950">

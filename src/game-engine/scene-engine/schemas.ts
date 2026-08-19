@@ -37,6 +37,12 @@ export const SceneActionSchema = z.discriminatedUnion('type', [
   }),
   z.object({ type: z.literal('openInterface'), interfaceId: InterfaceIdSchema }),
   z.object({ type: z.literal('addMoney'), amount: z.number() }),
+  /** Alterna el fondo activo de la escena actual entre dos backgrounds
+   * (por id) — p. ej. una lámpara que muestra "luz encendida"/"luz
+   * apagada". Si ninguno de los dos está activo todavía (fondo por
+   * defecto = backgrounds[0]), el primer click pasa al que no sea el
+   * default. */
+  z.object({ type: z.literal('toggleBackground'), backgroundIdA: z.string(), backgroundIdB: z.string() }),
   /** Botón de menú "Continuar": retoma la partida guardada en la escena
    * donde estaba, o no hace nada si todavía no hay ninguna registrada. */
   z.object({ type: z.literal('continueGame') }),
