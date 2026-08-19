@@ -1,10 +1,11 @@
-# Visión — plataforma de juegos asistida por IA
+# Visión — NarraDos, plataforma de juegos asistida por IA
 
-> Este documento es sobre la **plataforma** (el motor que sirve para cualquier
-> juego, no solo VERDICT: UNSOLVED). Los docs de guion/escenas/assets de un
-> caso puntual van en `docs/<juego>/`, como `docs/verdict-unsolved/`.
-> Para cuándo/cómo vender esto (no cómo se construye), ver
-> `docs/plataforma/01-estrategia-comercial.md`.
+> **NarraDos** es el nombre de la **plataforma** (el motor que sirve para
+> cualquier juego, no solo VERDICT: UNSOLVED — ese es el primer caso hecho
+> con la herramienta, no la herramienta en sí). Los docs de guion/escenas/
+> assets de un caso puntual van en `docs/<juego>/`, como
+> `docs/verdict-unsolved/`. Para cuándo/cómo vender esto (no cómo se
+> construye), ver `docs/plataforma/01-estrategia-comercial.md`.
 
 ## La idea, en una frase
 

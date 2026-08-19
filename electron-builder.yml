@@ -1,5 +1,5 @@
-appId: com.verdictunsolved.app
-productName: Verdict Unsolved
+appId: com.narrados.app
+productName: NarraDos
 directories:
   output: release
 files:

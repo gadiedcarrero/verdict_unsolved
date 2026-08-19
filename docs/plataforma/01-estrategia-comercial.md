@@ -1,7 +1,8 @@
-# Estrategia comercial — plataforma vs. juegos
+# Estrategia comercial — NarraDos vs. los juegos hechos con ella
 
-> Complementa `docs/plataforma/00-vision-ia.md` (pipeline técnico). Este doc
-> es sobre **cuándo y cómo vender**, no sobre cómo se construye el motor.
+> Complementa `docs/plataforma/00-vision-ia.md` (pipeline técnico, nombre de
+> la plataforma: **NarraDos**). Este doc es sobre **cuándo y cómo vender**,
+> no sobre cómo se construye el motor.
 
 ## La estrategia
 

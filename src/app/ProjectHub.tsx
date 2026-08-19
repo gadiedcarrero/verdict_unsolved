@@ -25,7 +25,7 @@ export function ProjectHub({ onOpenGame }: { onOpenGame: (gameId: string) => voi
 
       <div className="text-center">
         <h1 className="text-2xl font-black tracking-tight text-graphite-100 sm:text-3xl">
-          VERDICT UNSOLVED <span className="text-graphite-500">ENGINE</span>
+          NARRA<span className="text-graphite-500">DOS</span>
         </h1>
         <p className="mt-2 text-[11px] tracking-widest text-graphite-500 uppercase">Elegí un proyecto para abrir</p>
       </div>
