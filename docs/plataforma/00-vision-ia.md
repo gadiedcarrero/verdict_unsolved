@@ -3,6 +3,8 @@
 > Este documento es sobre la **plataforma** (el motor que sirve para cualquier
 > juego, no solo VERDICT: UNSOLVED). Los docs de guion/escenas/assets de un
 > caso puntual van en `docs/<juego>/`, como `docs/verdict-unsolved/`.
+> Para cuándo/cómo vender esto (no cómo se construye), ver
+> `docs/plataforma/01-estrategia-comercial.md`.
 
 ## La idea, en una frase
 
