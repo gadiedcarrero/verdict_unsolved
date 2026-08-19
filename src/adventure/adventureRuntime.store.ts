@@ -12,11 +12,6 @@ import type {
 
 export type ActionMenuActionKind = 'examine' | 'interact' | 'interactWith' | 'close';
 
-/** El guion pide 12s de espera al dejar sonar el teléfono; se acorta para
- * que la escena sea jugable durante el desarrollo. Ajustar aquí cuando el
- * ritmo final esté definido. */
-const RING_REPEAT_DELAY_MS = 2500;
-const RING_START_DELAY_MS = 900;
 // 750 = un poco más que la transición CSS de 700ms (ver duration-700 en
 // SceneViewer) para que la escena ya haya cambiado cuando el fundido a
 // negro termina de taparla del todo — antes eran 550/500, muy rápido para
@@ -36,9 +31,6 @@ type AdventureRuntimeState = {
   activeDialogueNodeId: string | null;
   activeInterfaceId: InterfaceId | null;
   caseState: AdventureCaseState;
-  officeInteractions: string[];
-  ringState: 'silent' | 'ringing';
-  ringAttempts: number;
   transitioning: boolean;
   /** No null mientras está abierto el menú de acción (Examinar/Interactuar/
    * Interactuar con/Cerrar) de este hotspot — ver Hotspot.actionMenuEnabled. */
@@ -114,9 +106,6 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   activeDialogueNodeId: null,
   activeInterfaceId: null,
   caseState: createEmptyAdventureCaseState(''),
-  officeInteractions: [],
-  ringState: 'silent',
-  ringAttempts: 0,
   transitioning: false,
   activeActionMenuHotspotId: null,
   combiningHotspotId: null,
@@ -132,9 +121,6 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       caseState,
       activeDialogueNodeId: null,
       activeInterfaceId: null,
-      officeInteractions: [],
-      ringState: 'silent',
-      ringAttempts: 0,
       transitioning: false,
       activeActionMenuHotspotId: null,
       combiningHotspotId: null,
@@ -159,28 +145,6 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
 
     if (state.combiningHotspotId) {
       get().selectCombineTarget(hotspot.id);
-      return;
-    }
-
-    const isOfficeExploration =
-      state.currentSceneId === 'oficina-acto1' &&
-      hotspot.id !== 'telefono' &&
-      !state.caseState.registered;
-
-    if (isOfficeExploration && !state.officeInteractions.includes(hotspot.id)) {
-      const updated = [...state.officeInteractions, hotspot.id];
-      set({ officeInteractions: updated });
-      if (updated.length >= 2 && state.ringState === 'silent') {
-        set({ ringState: 'ringing' });
-        window.setTimeout(() => get().openDialogue('telefono-ring-choice'), RING_START_DELAY_MS);
-      }
-    }
-
-    // El caso ya quedó registrado (decisión irreversible tomada): no debe
-    // volver a ofrecer "Aceptar/Rechazar" al re-tocar el teléfono. Acá
-    // termina el contenido construido hasta ahora (solo Acto I).
-    if (hotspot.id === 'telefono-llamada' && state.caseState.registered) {
-      get().openDialogue('caso-ya-registrado');
       return;
     }
 
@@ -242,15 +206,6 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   advance: () => {
     const node = get().getActiveNode();
     if (!node) return;
-
-    if (node.id === 'telefono-sigue-sonando') {
-      const attempts = get().ringAttempts + 1;
-      set({ ringAttempts: attempts, activeDialogueNodeId: null });
-      window.setTimeout(() => {
-        get().openDialogue(attempts >= 3 ? 'telefono-mirror-intervencion' : 'telefono-ring-choice');
-      }, RING_REPEAT_DELAY_MS);
-      return;
-    }
 
     if (node.next) {
       get().openDialogue(node.next);
@@ -350,9 +305,6 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       const scene = get().bundle?.scenes.find((s) => s.id === sceneId) ?? null;
       set((state) => ({
         currentSceneId: sceneId,
-        officeInteractions: [],
-        ringState: 'silent',
-        ringAttempts: 0,
         activeBackgroundId: null,
         caseState: { ...state.caseState, currentSceneId: sceneId },
       }));
@@ -378,9 +330,6 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       combiningHotspotId: null,
       interactWithFallbackVisible: false,
       activeBackgroundId: null,
-      officeInteractions: [],
-      ringState: 'silent',
-      ringAttempts: 0,
       transitioning: false,
     });
     if (scene?.onEnter) get().runActions(scene.onEnter);
@@ -397,9 +346,6 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       interactWithFallbackVisible: false,
       activeBackgroundId: null,
       caseState: createEmptyAdventureCaseState(''),
-      officeInteractions: [],
-      ringState: 'silent',
-      ringAttempts: 0,
       transitioning: false,
     });
   },

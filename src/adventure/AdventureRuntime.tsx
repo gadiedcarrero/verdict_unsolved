@@ -89,7 +89,6 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   useAdventureRuntimeStore((s) => s.activeDialogueNodeId);
   const activeInterfaceId = useAdventureRuntimeStore((s) => s.activeInterfaceId);
   const transitioning = useAdventureRuntimeStore((s) => s.transitioning);
-  const ringState = useAdventureRuntimeStore((s) => s.ringState);
   const interactHotspot = useAdventureRuntimeStore((s) => s.interactHotspot);
   const activeActionMenuHotspotId = useAdventureRuntimeStore((s) => s.activeActionMenuHotspotId);
   const selectAction = useAdventureRuntimeStore((s) => s.selectAction);
@@ -242,12 +241,6 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const displayCharacters = editedCharacters ?? baseCharacters;
   const baseSiteSettings = bundle.siteSettings;
   const displaySiteSettings = editedSiteSettings ?? baseSiteSettings;
-  // El teléfono muestra la pantalla de llamada entrante mientras suena, en
-  // vez de una capa fija — ver docs/verdict-unsolved/01-mapeo-escenas.md.
-  const layerOverrides =
-    ringState === 'ringing' && currentSceneId === 'oficina-acto1'
-      ? { telefono: 'layers/telefono-llamada-entrante.png' }
-      : undefined;
 
   // Un "objeto" del editor es una capa y su hotspot (si existe) con el mismo
   // id — se mueven juntos porque representan la misma cosa en pantalla. Ver
@@ -1241,7 +1234,6 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 scene={displayScene}
                 strings={strings}
                 siteSettings={displaySiteSettings}
-                layerOverrides={layerOverrides}
                 onInteract={interactHotspot}
                 editMode={editorTab === 'scene'}
                 onObjectRectChange={updateObjectRect}
@@ -1276,7 +1268,6 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           scene={displayScene}
           strings={strings}
           siteSettings={displaySiteSettings}
-          layerOverrides={layerOverrides}
           onInteract={interactHotspot}
           activeActionMenuHotspotId={activeActionMenuHotspotId}
           onSelectAction={selectAction}
