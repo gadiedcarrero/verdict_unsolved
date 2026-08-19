@@ -7,5 +7,16 @@
   "cursor": {
     "defaultCursorPath": "cursors/cursor-default.png",
     "hoverCursorPath": "cursors/cursor-hover.png"
+  },
+  "actionMenu": {
+    "normalImagePath": "action-menu/normal.png",
+    "examineImagePath": "action-menu/examine.png",
+    "interactImagePath": "action-menu/interact.png",
+    "interactWithImagePath": "action-menu/interact-with.png",
+    "closeImagePath": "action-menu/close.png",
+    "examineZone": [],
+    "interactZone": [],
+    "interactWithZone": [],
+    "closeZone": []
   }
 }
