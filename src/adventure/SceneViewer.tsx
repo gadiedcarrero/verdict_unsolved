@@ -25,7 +25,6 @@ export function SceneViewer({
   scene,
   strings,
   siteSettings,
-  transitioning,
   layerOverrides,
   onInteract,
   children,
@@ -48,7 +47,6 @@ export function SceneViewer({
   /** Diccionario clave → texto (locales/es.json del caso). */
   strings: Record<string, string>;
   siteSettings: SiteSettings;
-  transitioning: boolean;
   /** assetPath alternativo por layer id (p. ej. el teléfono cambia de imagen mientras suena). */
   layerOverrides?: Record<string, string> | undefined;
   onInteract: (hotspot: HotspotData) => void;
@@ -269,12 +267,6 @@ export function SceneViewer({
             {translate(strings, 'interactWith.noMatch')}
           </div>
         )}
-
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-graphite-950 transition-opacity duration-500"
-          style={{ opacity: transitioning ? 1 : 0 }}
-        />
 
         {children}
       </div>

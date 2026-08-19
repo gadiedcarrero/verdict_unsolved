@@ -17,7 +17,16 @@ export type ActionMenuActionKind = 'examine' | 'interact' | 'interactWith' | 'cl
  * ritmo final esté definido. */
 const RING_REPEAT_DELAY_MS = 2500;
 const RING_START_DELAY_MS = 900;
-const SCENE_FADE_MS = 550;
+// 750 = un poco más que la transición CSS de 700ms (ver duration-700 en
+// SceneViewer) para que la escena ya haya cambiado cuando el fundido a
+// negro termina de taparla del todo — antes eran 550/500, muy rápido para
+// el tono del juego, se sentía "cortante" en vez de un fundido real.
+const SCENE_FADE_MS = 750;
+// Solo para "fadeToBlack": una pausa extra sobre la pantalla negra antes de
+// empezar a revelar la escena nueva — el respiro dramático que el nombre
+// promete y que antes no existía (fadeToBlack y fade se comportaban
+// idéntico). "fade" sigue con el pequeño margen de siempre.
+const FADE_TO_BLACK_HOLD_MS = 400;
 
 type FadeKind = 'cut' | 'fade' | 'fadeToBlack';
 
@@ -349,10 +358,13 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       }));
       persistIfRegistered(get().caseState);
       if (scene?.onEnter) get().runActions(scene.onEnter);
-      window.setTimeout(() => {
-        set({ transitioning: false });
-        onComplete?.();
-      }, 50);
+      window.setTimeout(
+        () => {
+          set({ transitioning: false });
+          onComplete?.();
+        },
+        fade === 'fadeToBlack' ? FADE_TO_BLACK_HOLD_MS : 50,
+      );
     }, delay);
   },
 

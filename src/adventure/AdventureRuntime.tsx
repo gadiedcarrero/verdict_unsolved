@@ -1241,7 +1241,6 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 scene={displayScene}
                 strings={strings}
                 siteSettings={displaySiteSettings}
-                transitioning={transitioning}
                 layerOverrides={layerOverrides}
                 onInteract={interactHotspot}
                 editMode={editorTab === 'scene'}
@@ -1277,7 +1276,6 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           scene={displayScene}
           strings={strings}
           siteSettings={displaySiteSettings}
-          transitioning={transitioning}
           layerOverrides={layerOverrides}
           onInteract={interactHotspot}
           activeActionMenuHotspotId={activeActionMenuHotspotId}
@@ -1306,6 +1304,19 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         <div className="flex h-screen w-screen items-center justify-center bg-graphite-950 text-graphite-200">
           Escena &quot;{currentSceneId}&quot; no encontrada.
         </div>
+      )}
+
+      {/* Fundido a negro entre escenas — vive acá arriba (no adentro de
+          SceneViewer) porque intro/menú/escena estándar son componentes
+          top-level distintos: si el overlay estuviera adentro de uno solo,
+          cambiar de tipo de escena (intro→menú, menú→primera escena) hacía
+          un corte seco sin fundido, por más que la acción pidiera "fade". */}
+      {!editMode && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 bg-graphite-950 transition-opacity duration-700 ease-in-out"
+          style={{ opacity: transitioning ? 1 : 0, zIndex: 500 }}
+        />
       )}
     </div>
   );
