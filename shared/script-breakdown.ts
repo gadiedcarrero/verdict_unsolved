@@ -112,3 +112,41 @@ export function isScriptBreakdown(value: unknown): value is ScriptBreakdown {
     v['scenes'].every(isScriptBreakdownScene)
   );
 }
+
+function normalizeSceneTitle(title: string): string {
+  return title
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+/**
+ * Regenerar el desglose vuelve a correr la IA sobre el guion entero — el
+ * corte en escenas puede cambiar (más o menos granular) y los ids se
+ * regeneran, así que no sirve matchear por id. Se matchea por título
+ * normalizado: si una escena nueva tiene el mismo título (sin mayúsculas ni
+ * acentos) que una escena vieja, se asume la misma escena narrativa y se le
+ * copia el `reviewStatus` ya decidido — a propósito solo el estado de
+ * revisión, no el resumen/objetos (esos siempre quedan con el texto fresco
+ * de la IA). Si no matchea ninguna, queda 'pending' (nunca se inventa un
+ * "aprobada" para algo que no se pudo confirmar que es lo mismo).
+ */
+export function mergeScriptBreakdownReview(
+  previous: ScriptBreakdown | null,
+  next: ScriptBreakdown,
+): { breakdown: ScriptBreakdown; carriedOverCount: number } {
+  if (!previous || previous.scenes.length === 0) {
+    return { breakdown: next, carriedOverCount: 0 };
+  }
+  const previousByTitle = new Map(previous.scenes.map((scene) => [normalizeSceneTitle(scene.title), scene]));
+  let carriedOverCount = 0;
+  const scenes = next.scenes.map((scene) => {
+    const match = previousByTitle.get(normalizeSceneTitle(scene.title));
+    if (!match || match.reviewStatus === 'pending') return scene;
+    carriedOverCount += 1;
+    return { ...scene, reviewStatus: match.reviewStatus };
+  });
+  return { breakdown: { ...next, scenes }, carriedOverCount };
+}

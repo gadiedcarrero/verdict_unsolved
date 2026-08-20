@@ -33,7 +33,7 @@ import { MinigameHost } from './minigames/MinigameHost';
 import { resizeCursorImage } from './resizeCursorImage';
 import { SceneViewer } from './SceneViewer';
 import { ScriptBreakdownPanel } from './editor/ScriptBreakdownPanel';
-import type { ScriptBreakdown, ScriptBreakdownReviewStatus } from '../../shared/script-breakdown';
+import { mergeScriptBreakdownReview, type ScriptBreakdown, type ScriptBreakdownReviewStatus } from '../../shared/script-breakdown';
 
 type EditorTab = 'scene' | 'characters' | 'settings' | 'script-ai';
 
@@ -174,6 +174,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const [scriptBreakdown, setScriptBreakdown] = useState<ScriptBreakdown | null>(null);
   const [scriptBreakdownGenerating, setScriptBreakdownGenerating] = useState(false);
   const [scriptBreakdownError, setScriptBreakdownError] = useState<string | null>(null);
+  const [scriptBreakdownMergeNote, setScriptBreakdownMergeNote] = useState<string | null>(null);
 
   // Zona de forma libre en proceso de trazado (ver "Crear zona" o "Reiniciar
   // forma") — no null mientras se están juntando puntos a click.
@@ -1002,10 +1003,23 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   async function generateScriptBreakdown(scriptText: string): Promise<void> {
     setScriptBreakdownGenerating(true);
     setScriptBreakdownError(null);
+    setScriptBreakdownMergeNote(null);
     try {
       const result = await window.api.generateScriptBreakdown(scriptText);
       if (result.ok) {
-        persistScriptBreakdown(result.breakdown);
+        // Regenerar corre la IA de nuevo sobre el guion entero — el corte en
+        // escenas puede cambiar, así que no alcanza con pisar el desglose
+        // viejo: se matchea por título para no perder el trabajo de revisión
+        // ya hecho (ver mergeScriptBreakdownReview).
+        const { breakdown, carriedOverCount } = mergeScriptBreakdownReview(scriptBreakdown, result.breakdown);
+        persistScriptBreakdown(breakdown);
+        if (scriptBreakdown) {
+          setScriptBreakdownMergeNote(
+            carriedOverCount > 0
+              ? `Se conservó la revisión de ${carriedOverCount} escena${carriedOverCount === 1 ? '' : 's'} que ya tenían el mismo título. El resto quedó en Pendiente para revisar de nuevo.`
+              : 'Ninguna escena nueva coincidió en título con las que ya tenías revisadas — todo quedó en Pendiente.',
+          );
+        }
       } else {
         setScriptBreakdownError(result.error);
       }
@@ -1339,6 +1353,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   breakdown={scriptBreakdown}
                   generating={scriptBreakdownGenerating}
                   error={scriptBreakdownError}
+                  mergeNote={scriptBreakdownMergeNote}
                   onGenerate={(scriptText) => void generateScriptBreakdown(scriptText)}
                   onSceneSummaryChange={updateScriptBreakdownSceneSummary}
                   onSceneStatusChange={updateScriptBreakdownSceneStatus}

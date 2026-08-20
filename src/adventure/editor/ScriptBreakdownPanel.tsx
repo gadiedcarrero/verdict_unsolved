@@ -121,6 +121,7 @@ export function ScriptBreakdownPanel({
   breakdown,
   generating,
   error,
+  mergeNote,
   onGenerate,
   onSceneSummaryChange,
   onSceneStatusChange,
@@ -128,6 +129,7 @@ export function ScriptBreakdownPanel({
   breakdown: ScriptBreakdown | null;
   generating: boolean;
   error: string | null;
+  mergeNote: string | null;
   onGenerate: (scriptText: string) => void;
   onSceneSummaryChange: (sceneId: string, summary: string) => void;
   onSceneStatusChange: (sceneId: string, status: ScriptBreakdownReviewStatus) => void;
@@ -195,13 +197,29 @@ export function ScriptBreakdownPanel({
       />
       <button
         type="button"
-        onClick={() => onGenerate(scriptText)}
+        onClick={() => {
+          const hasReviewedScenes = breakdown?.scenes.some((s) => s.reviewStatus !== 'pending') ?? false;
+          if (
+            hasReviewedScenes &&
+            !window.confirm(
+              'Ya hay escenas revisadas (aprobadas o cortadas). Volver a generar va a intentar conservar esa revisión matcheando por título, pero las escenas que cambien de título vuelven a Pendiente. ¿Generar de nuevo?',
+            )
+          ) {
+            return;
+          }
+          onGenerate(scriptText);
+        }}
         disabled={generating || scriptText.trim().length < 20}
         className="mb-3 w-full rounded border border-amber-accent px-2 py-1.5 text-[10px] font-semibold tracking-widest text-amber-accent uppercase transition-colors hover:bg-amber-accent hover:text-graphite-950 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-amber-accent"
       >
-        {generating ? 'Generando (puede tardar un minuto)...' : 'Generar desglose con IA'}
+        {generating ? 'Generando (puede tardar un minuto)...' : breakdown ? 'Generar de nuevo' : 'Generar desglose con IA'}
       </button>
 
+      {mergeNote && (
+        <p className="mb-3 rounded border border-sky-400/40 bg-graphite-900/60 p-2 text-[9px] text-sky-300">
+          {mergeNote}
+        </p>
+      )}
       {error && <p className="mb-3 rounded border border-red-500/40 bg-red-950/30 p-2 text-[9px] text-red-300">{error}</p>}
 
       {breakdown && (
