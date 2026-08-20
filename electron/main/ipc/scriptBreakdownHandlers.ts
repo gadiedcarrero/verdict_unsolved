@@ -1,7 +1,13 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { app, ipcMain } from 'electron';
-import type { ScriptBreakdown, ScriptBreakdownCharacter, ScriptBreakdownObject, ScriptBreakdownScene } from '../../../shared/script-breakdown';
+import type {
+  ScriptBreakdown,
+  ScriptBreakdownAlternateLook,
+  ScriptBreakdownCharacter,
+  ScriptBreakdownObject,
+  ScriptBreakdownScene,
+} from '../../../shared/script-breakdown';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
 
 const ID_PATTERN = /^[a-z0-9-]+$/;
@@ -28,12 +34,12 @@ function slugify(text: string): string {
 
 const SYSTEM_PROMPT = `Sos parte del pipeline de producción de NarraDos, un motor de juegos de investigación tipo point-and-click. Tu tarea es el paso "guion → desglose legible por escena": leer un guion narrativo completo y devolver dos cosas en un único objeto JSON.
 
-1. "characters": el roster de personajes que aparecen. Por cada uno: id (slug corto en minúsculas, sin espacios ni acentos), name (nombre tal como aparece en el guion), description (2-3 frases con lo esencial para dirigirlo visualmente: edad aproximada, rol, un rasgo físico o de vestuario si el texto lo da), suggestedColor (un color hex distintivo para usar en su nombre/diálogo, no repetir colores entre personajes).
+1. "characters": el roster de personajes que aparecen. Por cada uno: id (slug corto en minúsculas, sin espacios ni acentos), name (nombre tal como aparece en el guion), description (2-3 frases con lo esencial para dirigirlo visualmente: edad aproximada, rol, un rasgo físico o de vestuario si el texto lo da), suggestedColor (un color hex distintivo para usar en su nombre/diálogo, no repetir colores entre personajes), alternateLooks (array, vacío en la gran mayoría de los casos). **Importante:** si un personaje tiene una identidad secreta, disfraz o alias con apariencia CLARAMENTE distinta a la suya (ej: el mismo personaje aparece en el guion también como otra persona enmascarada, en otro cuerpo, con otro nombre operativo — como Adrian Cross que también es "Director Gray" en silla de ruedas y el agente enmascarado "Wraith"), NO mezcles esas apariencias en una sola descripción — eso arruina la generación de imagen después. En vez de eso: "description" queda con SOLO la apariencia base/neutral del personaje (nunca mencionar el disfraz ahí), y cada identidad alternativa va como una entrada aparte en "alternateLooks": [{key: slug corto, label: nombre de esa identidad tal como aparece en el guion, description: apariencia de ESA identidad nada más, autocontenida — no digas "como antes pero con máscara", describí el look completo de cero}].
 
 2. "scenes": el guion partido en escenas jugables. Una escena no es necesariamente un capítulo — separá por cambios de locación o de situación dramática (ej: "la oficina de Gray" y "el edificio Halcyon" son escenas distintas aunque el capítulo sea uno solo). Si un capítulo mezcla varios saltos de tiempo o beats narrativos distintos en la misma locación (ej: "se contrata a dos agentes, se investiga una grabación, se descubre una pista" todo en la oficina), separalos en escenas propias igual — cada escena debe ser un único momento continuo, no un resumen de varias cosas. Por cada escena: id (slug), title (corto, descriptivo), summary (un párrafo legible en español describiendo qué pasa, para que un humano decida si la escena queda o se corta), bridgeFromPrevious (una línea corta, en tono de aviso de sistema/MIRROR, que conecta el final de la escena narrativa anterior con el arranque de esta — un salto de tiempo, quién llegó, qué cambió desde la última vez que se vio esa locación; null si esta escena continúa directo de la anterior sin salto, mismo momento y lugar, y no hace falta puente), characterIds (ids de los personajes presentes), objects (objetos o zonas con las que un jugador podría interactuar en esa escena: name, examineText con lo que se vería/diría al examinarlo, interactText con lo que pasa al interactuar — null si no aplica), minigame (null en la mayoría de los casos; solo si el momento narrativo describe una acción de habilidad/puzzle real -como sortear una cámara, decodificar un mensaje, abrir una cerradura, encontrar algo oculto- proponé {template, reason}: template es un nombre corto en inglés tipo "sequence" (memoria de secuencia, ya existe en el motor), "wiring", "lockpicking", "hidden-object", u otro nombre que describa el tipo de desafío si ninguno de esos encaja; reason es una frase explicando por qué esa escena lo pide).
 
 Devolvé ÚNICAMENTE un objeto JSON válido con esta forma exacta, sin texto antes ni después, sin markdown:
-{"characters": [{"id": "...", "name": "...", "description": "...", "suggestedColor": "#rrggbb"}], "scenes": [{"id": "...", "title": "...", "summary": "...", "bridgeFromPrevious": "..." , "characterIds": ["..."], "objects": [{"name": "...", "examineText": "..." , "interactText": "..."}], "minigame": {"template": "...", "reason": "..."} }]}`;
+{"characters": [{"id": "...", "name": "...", "description": "...", "suggestedColor": "#rrggbb", "alternateLooks": [{"key": "...", "label": "...", "description": "..."}]}], "scenes": [{"id": "...", "title": "...", "summary": "...", "bridgeFromPrevious": "..." , "characterIds": ["..."], "objects": [{"name": "...", "examineText": "..." , "interactText": "..."}], "minigame": {"template": "...", "reason": "..."} }]}`;
 
 function coerceObjects(value: unknown): ScriptBreakdownObject[] {
   if (!Array.isArray(value)) return [];
@@ -43,6 +49,23 @@ function coerceObjects(value: unknown): ScriptBreakdownObject[] {
       name: typeof o['name'] === 'string' ? o['name'] : 'objeto',
       examineText: typeof o['examineText'] === 'string' ? o['examineText'] : null,
       interactText: typeof o['interactText'] === 'string' ? o['interactText'] : null,
+    };
+  });
+}
+
+function coerceAlternateLooks(value: unknown): ScriptBreakdownAlternateLook[] {
+  if (!Array.isArray(value)) return [];
+  const usedKeys = new Set<string>();
+  return value.map((entry, index) => {
+    const l = entry && typeof entry === 'object' ? (entry as Record<string, unknown>) : {};
+    const label = typeof l['label'] === 'string' && l['label'] ? l['label'] : `Look ${index + 1}`;
+    let key = typeof l['key'] === 'string' && l['key'] ? slugify(l['key']) : slugify(label);
+    while (usedKeys.has(key)) key = `${key}-2`;
+    usedKeys.add(key);
+    return {
+      key,
+      label,
+      description: typeof l['description'] === 'string' ? l['description'] : '',
     };
   });
 }
@@ -60,6 +83,7 @@ function coerceCharacters(value: unknown, usedIds: Set<string>): ScriptBreakdown
       name,
       description: typeof c['description'] === 'string' ? c['description'] : '',
       suggestedColor: typeof c['suggestedColor'] === 'string' ? c['suggestedColor'] : '#8fa3c9',
+      alternateLooks: coerceAlternateLooks(c['alternateLooks']),
     };
   });
 }

@@ -1,6 +1,7 @@
 import { useRef, useState, type ChangeEvent, type JSX } from 'react';
 import type {
   ScriptBreakdown,
+  ScriptBreakdownAlternateLook,
   ScriptBreakdownCharacter,
   ScriptBreakdownReviewStatus,
   ScriptBreakdownScene,
@@ -17,41 +18,64 @@ const STATUS_LABEL: Record<ScriptBreakdownReviewStatus, string> = {
   cut: 'Cortada',
 };
 
-function CharacterCard({
+/** `key={portrait}` en el llamador fuerza un <img> nuevo cada vez que cambia
+ * la ruta (regenerar guarda en el mismo nombre de archivo) — si no, el
+ * navegador a veces se queda mostrando el ícono roto de un intento previo
+ * en vez de reintentar cargar la imagen nueva. */
+function SmallPortrait({
   gameId,
-  character,
-  existingCharacter,
+  portrait,
+  color,
+}: {
+  gameId: string;
+  portrait: string;
+  color: string;
+}): JSX.Element {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed text-[7px] text-graphite-500"
+        style={{ borderColor: color }}
+      >
+        ?
+      </div>
+    );
+  }
+  return (
+    <img
+      src={gameAssetUrl(gameId, portrait)}
+      alt=""
+      onError={() => setFailed(true)}
+      className="h-10 w-10 shrink-0 rounded-full border object-cover"
+      style={{ borderColor: color }}
+    />
+  );
+}
+
+function AlternateLookRow({
+  gameId,
+  look,
+  portrait,
   generating,
   onGenerateArt,
 }: {
   gameId: string;
-  character: ScriptBreakdownCharacter;
-  existingCharacter: Character | undefined;
+  look: ScriptBreakdownAlternateLook;
+  portrait: string | null;
   generating: boolean;
   onGenerateArt: () => void;
 }): JSX.Element {
-  const portrait = existingCharacter?.portrait ?? null;
-
   return (
-    <div className="mb-1 flex items-start gap-2 rounded border border-graphite-800 bg-graphite-900/60 p-2">
+    <div className="mt-1 flex items-start gap-2 rounded border border-graphite-800 bg-graphite-950/60 p-1.5">
       {portrait ? (
-        <img
-          src={gameAssetUrl(gameId, portrait)}
-          alt=""
-          className="h-10 w-10 shrink-0 rounded-full border border-graphite-700 object-cover"
-          style={{ borderColor: character.suggestedColor }}
-        />
+        <SmallPortrait key={portrait} gameId={gameId} portrait={portrait} color="#6b7280" />
       ) : (
-        <div
-          className="mt-0.5 h-3 w-3 shrink-0 rounded-full border border-graphite-700"
-          style={{ backgroundColor: character.suggestedColor }}
-        />
+        <div className="mt-0.5 h-3 w-3 shrink-0 rounded-full border border-dashed border-graphite-600" />
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-graphite-100">
-          {character.name} <span className="text-graphite-500">· {character.id}</span>
-        </p>
-        <p className="text-[9px] text-graphite-400">{character.description}</p>
+        <p className="text-[10px] text-graphite-200">{look.label}</p>
+        <p className="text-[9px] text-graphite-500">{look.description}</p>
       </div>
       <button
         type="button"
@@ -59,8 +83,72 @@ function CharacterCard({
         disabled={generating}
         className="shrink-0 self-center rounded border border-graphite-700 px-2 py-1 text-[8px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {generating ? 'Generando...' : portrait ? 'Regenerar retrato' : 'Generar retrato'}
+        {generating ? 'Generando...' : portrait ? 'Regenerar' : 'Generar'}
       </button>
+    </div>
+  );
+}
+
+function CharacterCard({
+  gameId,
+  character,
+  existingCharacter,
+  generatingArtId,
+  onGenerateArt,
+}: {
+  gameId: string;
+  character: ScriptBreakdownCharacter;
+  existingCharacter: Character | undefined;
+  /** "<characterId>" (retrato por defecto) o "<characterId>:<look.key>"
+   * (identidad alternativa) del que está generando ahora, o null. */
+  generatingArtId: string | null;
+  onGenerateArt: (look?: ScriptBreakdownAlternateLook) => void;
+}): JSX.Element {
+  const portrait = existingCharacter?.portrait ?? null;
+
+  return (
+    <div className="mb-1 rounded border border-graphite-800 bg-graphite-900/60 p-2">
+      <div className="flex items-start gap-2">
+        {portrait ? (
+          <SmallPortrait key={portrait} gameId={gameId} portrait={portrait} color={character.suggestedColor} />
+        ) : (
+          <div
+            className="mt-0.5 h-3 w-3 shrink-0 rounded-full border border-graphite-700"
+            style={{ backgroundColor: character.suggestedColor }}
+          />
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="text-graphite-100">
+            {character.name} <span className="text-graphite-500">· {character.id}</span>
+          </p>
+          <p className="text-[9px] text-graphite-400">{character.description}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onGenerateArt()}
+          disabled={generatingArtId === character.id}
+          className="shrink-0 self-center rounded border border-graphite-700 px-2 py-1 text-[8px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {generatingArtId === character.id ? 'Generando...' : portrait ? 'Regenerar retrato' : 'Generar retrato'}
+        </button>
+      </div>
+      {character.alternateLooks.length > 0 && (
+        <div className="mt-1 border-t border-graphite-800 pt-1">
+          <p className="mb-1 text-[8px] tracking-widest text-graphite-500 uppercase">
+            Identidades alternativas — se generan por separado para no mezclar apariencias
+          </p>
+          {character.alternateLooks.map((look) => (
+            <AlternateLookRow
+              key={look.key}
+              gameId={gameId}
+              look={look}
+              portrait={existingCharacter?.expressions[look.key] ?? null}
+              generating={generatingArtId === `${character.id}:${look.key}`}
+              onGenerateArt={() => onGenerateArt(look)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -174,7 +262,7 @@ export function ScriptBreakdownPanel({
   existingCharacters: Character[];
   generatingCharacterArtId: string | null;
   onGenerate: (scriptText: string) => void;
-  onGenerateCharacterArt: (character: ScriptBreakdownCharacter) => void;
+  onGenerateCharacterArt: (character: ScriptBreakdownCharacter, look?: ScriptBreakdownAlternateLook) => void;
   onSceneSummaryChange: (sceneId: string, summary: string) => void;
   onSceneStatusChange: (sceneId: string, status: ScriptBreakdownReviewStatus) => void;
 }): JSX.Element {
@@ -281,8 +369,8 @@ export function ScriptBreakdownPanel({
               gameId={gameId}
               character={character}
               existingCharacter={existingCharacters.find((c) => c.id === character.id)}
-              generating={generatingCharacterArtId === character.id}
-              onGenerateArt={() => onGenerateCharacterArt(character)}
+              generatingArtId={generatingCharacterArtId}
+              onGenerateArt={(look) => onGenerateCharacterArt(character, look)}
             />
           ))}
 

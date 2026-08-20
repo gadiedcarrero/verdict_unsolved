@@ -11,11 +11,33 @@
  * reales del motor (Scene, Character, hotspots) — todavía no es esa
  * traducción.
  */
+export type ScriptBreakdownAlternateLook = {
+  /** Slug — se usa como clave en Character.expressions al generar el arte. */
+  key: string;
+  /** Nombre visible de la identidad/disfraz (ej: "Director Gray", "Wraith"). */
+  label: string;
+  /** Descripción de apariencia AUTOCONTENIDA de esta identidad — no depende
+   * de leer `description` primero, para no repetir el error de mezclar dos
+   * apariencias en un solo prompt de imagen. */
+  description: string;
+};
+
 export type ScriptBreakdownCharacter = {
   id: string;
   name: string;
+  /** Apariencia base/neutral del personaje — NUNCA debe mencionar disfraces
+   * o identidades alternativas (esas van en `alternateLooks`), justamente
+   * para que cada retrato generado por IA describa una sola apariencia
+   * coherente en vez de mezclar dos looks distintos en una imagen. */
   description: string;
   suggestedColor: string;
+  /** Identidades/disfraces con apariencia claramente distinta del mismo
+   * personaje (ej: Adrian Cross también aparece como "Director Gray" en
+   * silla de ruedas y como el agente enmascarado "Wraith") — cada uno se
+   * genera como su propia imagen y se guarda como una expresión nombrada
+   * del mismo Character (Character.expressions), no como personaje aparte:
+   * siguen siendo la misma persona a efectos de diálogo/color/nombre. */
+  alternateLooks: ScriptBreakdownAlternateLook[];
 };
 
 export type ScriptBreakdownObject = {
@@ -57,6 +79,12 @@ export type ScriptBreakdown = {
   scenes: ScriptBreakdownScene[];
 };
 
+function isScriptBreakdownAlternateLook(value: unknown): value is ScriptBreakdownAlternateLook {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return typeof v['key'] === 'string' && typeof v['label'] === 'string' && typeof v['description'] === 'string';
+}
+
 function isScriptBreakdownCharacter(value: unknown): value is ScriptBreakdownCharacter {
   if (typeof value !== 'object' || value === null) return false;
   const v = value as Record<string, unknown>;
@@ -64,7 +92,9 @@ function isScriptBreakdownCharacter(value: unknown): value is ScriptBreakdownCha
     typeof v['id'] === 'string' &&
     typeof v['name'] === 'string' &&
     typeof v['description'] === 'string' &&
-    typeof v['suggestedColor'] === 'string'
+    typeof v['suggestedColor'] === 'string' &&
+    Array.isArray(v['alternateLooks']) &&
+    v['alternateLooks'].every(isScriptBreakdownAlternateLook)
   );
 }
 

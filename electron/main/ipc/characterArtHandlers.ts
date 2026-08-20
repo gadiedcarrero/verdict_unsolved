@@ -22,7 +22,13 @@ const PORTRAIT_STYLE_PROMPT =
 export function registerCharacterArtHandlers(): void {
   ipcMain.handle(
     'ai:generate-character-portrait',
-    async (_event, gameId: unknown, characterId: unknown, description: unknown) => {
+    async (
+      _event,
+      gameId: unknown,
+      characterId: unknown,
+      description: unknown,
+      expressionKey: unknown,
+    ) => {
       if (app.isPackaged) {
         return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
       }
@@ -34,6 +40,12 @@ export function registerCharacterArtHandlers(): void {
       }
       if (typeof description !== 'string' || !description.trim()) {
         return { ok: false, error: 'Falta la descripción del personaje.' };
+      }
+      // null = retrato por defecto (Character.portrait); una clave válida =
+      // variante/identidad alternativa (Character.expressions[clave]) — ver
+      // ScriptBreakdownAlternateLook.
+      if (expressionKey !== null && !isValidId(expressionKey)) {
+        return { ok: false, error: `Id de expresión inválido: ${JSON.stringify(expressionKey)}` };
       }
       const config = await getStoredAiIntegrationsConfig();
       if (!config.openaiApiKey) {
@@ -66,7 +78,8 @@ export function registerCharacterArtHandlers(): void {
         }
         const dir = join(app.getAppPath(), portraitsDir(gameId));
         await mkdir(dir, { recursive: true });
-        const relativePath = `portraits/${characterId}.png`;
+        const fileName = expressionKey ? `${characterId}-${expressionKey}` : characterId;
+        const relativePath = `portraits/${fileName}.png`;
         const filePath = join(app.getAppPath(), `assets/games/${gameId}`, relativePath);
         await writeFile(filePath, Buffer.from(b64, 'base64'));
         return { ok: true, path: relativePath };
