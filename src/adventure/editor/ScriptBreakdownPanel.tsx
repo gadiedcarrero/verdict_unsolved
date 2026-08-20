@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react';
+import { useRef, useState, type ChangeEvent, type JSX } from 'react';
 import type {
   ScriptBreakdown,
   ScriptBreakdownCharacter,
@@ -126,20 +126,64 @@ export function ScriptBreakdownPanel({
   onSceneStatusChange: (sceneId: string, status: ScriptBreakdownReviewStatus) => void;
 }): JSX.Element {
   const [scriptText, setScriptText] = useState('');
+  const [loadedFileName, setLoadedFileName] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setFileError(null);
+    try {
+      const text = await file.text();
+      if (!text.trim()) {
+        setFileError('El archivo está vacío o no se pudo leer como texto.');
+        return;
+      }
+      setScriptText(text);
+      setLoadedFileName(file.name);
+    } catch (error) {
+      setFileError(`No se pudo leer el archivo: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
 
   return (
     <div className="text-xs text-graphite-200">
       <p className="mb-3 text-[10px] text-graphite-400">
-        Pegá acá el guion completo. La IA saca el roster de personajes y arma un desglose legible por escena
-        (personajes, objetos, y si corresponde, un minijuego sugerido). Después revisás escena por escena: aprobar,
-        cortar o ajustar el resumen — la traducción a escenas reales del motor es un paso aparte, todavía manual.
+        Pegá el guion completo o cargá un documento (.txt, .md). La IA saca el roster de personajes y arma un
+        desglose legible por escena (personajes, objetos, y si corresponde, un minijuego sugerido). Después revisás
+        escena por escena: aprobar, cortar o ajustar el resumen — la traducción a escenas reales del motor es un
+        paso aparte, todavía manual.
       </p>
+
+      <div className="mb-2 flex gap-1">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="shrink-0 rounded border border-graphite-700 px-2 py-1 text-[9px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
+        >
+          Cargar documento
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".txt,.md,text/plain,text/markdown"
+          onChange={(event) => void handleFileChange(event)}
+          className="hidden"
+        />
+        {loadedFileName && <p className="self-center truncate text-[9px] text-graphite-500">{loadedFileName}</p>}
+      </div>
+      {fileError && <p className="mb-2 text-[9px] text-red-300">{fileError}</p>}
 
       <textarea
         value={scriptText}
-        onChange={(event) => setScriptText(event.target.value)}
+        onChange={(event) => {
+          setScriptText(event.target.value);
+          setLoadedFileName(null);
+        }}
         rows={8}
-        placeholder="Pegá el guion completo acá..."
+        placeholder="Pegá el guion completo acá, o cargá un documento arriba..."
         className={`${inputClassName} mb-2`}
       />
       <button
