@@ -158,6 +158,10 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const [characterSaving, setCharacterSaving] = useState(false);
   const [characterSaveMessage, setCharacterSaveMessage] = useState<string | null>(null);
   const [uploadingPortraitId, setUploadingPortraitId] = useState<string | null>(null);
+  // "<characterId>:<expresión>" mientras se sube una variante adicional de
+  // retrato (ver Character.expressions) — separado de uploadingPortraitId
+  // porque ese es solo para el retrato por defecto.
+  const [uploadingExpressionKey, setUploadingExpressionKey] = useState<string | null>(null);
 
   const [editedSiteSettings, setEditedSiteSettings] = useState<SiteSettings | null>(null);
   const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
@@ -423,6 +427,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       sceneId: sceneAction?.type === 'transitionTo' ? sceneAction.sceneId : '',
       characterId: node?.speaker ?? '',
       dialogueText: node ? (strings[node.line] ?? '') : '',
+      portraitExpression: node?.portraitExpression ?? '',
     };
   }
 
@@ -448,7 +453,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
 
     const dialogueNodes: Record<string, DialogueNode> = { ...base.dialogueNodes };
     if (next.characterId) {
-      dialogueNodes[nodeId] = { id: nodeId, speaker: next.characterId, line: nodeId };
+      dialogueNodes[nodeId] = {
+        id: nodeId,
+        speaker: next.characterId,
+        line: nodeId,
+        portraitExpression: next.portraitExpression || undefined,
+      };
       setPendingStrings((prev) => ({ ...prev, [nodeId]: next.dialogueText }));
     } else {
       delete dialogueNodes[nodeId];
@@ -480,6 +490,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       sceneId: sceneAction?.type === 'transitionTo' ? sceneAction.sceneId : '',
       characterId: node?.speaker ?? '',
       dialogueText: node ? (strings[node.line] ?? '') : '',
+      portraitExpression: node?.portraitExpression ?? '',
     };
   }
 
@@ -506,7 +517,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
 
     const dialogueNodes: Record<string, DialogueNode> = { ...base.dialogueNodes };
     if (next.characterId) {
-      dialogueNodes[nodeId] = { id: nodeId, speaker: next.characterId, line: nodeId };
+      dialogueNodes[nodeId] = {
+        id: nodeId,
+        speaker: next.characterId,
+        line: nodeId,
+        portraitExpression: next.portraitExpression || undefined,
+      };
       setPendingStrings((prev) => ({ ...prev, [nodeId]: next.dialogueText }));
     } else {
       delete dialogueNodes[nodeId];
@@ -611,6 +627,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       sceneId: sceneAction?.type === 'transitionTo' ? sceneAction.sceneId : '',
       characterId: node?.speaker ?? '',
       dialogueText: node ? (strings[node.line] ?? '') : '',
+      portraitExpression: node?.portraitExpression ?? '',
     };
   }
 
@@ -633,7 +650,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
 
     const dialogueNodes: Record<string, DialogueNode> = { ...base.dialogueNodes };
     if (next.characterId) {
-      dialogueNodes[nodeId] = { id: nodeId, speaker: next.characterId, line: nodeId };
+      dialogueNodes[nodeId] = {
+        id: nodeId,
+        speaker: next.characterId,
+        line: nodeId,
+        portraitExpression: next.portraitExpression || undefined,
+      };
       setPendingStrings((prev) => ({ ...prev, [nodeId]: next.dialogueText }));
     } else {
       delete dialogueNodes[nodeId];
@@ -972,7 +994,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     const taken = new Set(base.map((c) => c.id));
     const id = uniqueId(slugify(name), taken);
     const nameKey = `character.${id}.name`;
-    setEditedCharacters([...base, { id, name: nameKey, portrait: null, color }]);
+    setEditedCharacters([...base, { id, name: nameKey, portrait: null, expressions: {}, color }]);
     setPendingCharacterStrings((prev) => ({ ...prev, [nameKey]: nameText }));
   }
 
@@ -982,7 +1004,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     try {
       const buffer = new Uint8Array(await file.arrayBuffer());
       const ext = file.name.split('.').pop() || 'png';
-      const result = await window.api.saveCharacterPortrait(gameId, characterId, ext, buffer);
+      const result = await window.api.saveCharacterPortrait(gameId, characterId, ext, buffer, null);
       if (result.ok) {
         updateCharacter(characterId, { portrait: result.path });
       } else {
@@ -993,6 +1015,38 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     } finally {
       setUploadingPortraitId(null);
     }
+  }
+
+  async function uploadExpressionPortrait(characterId: string, expressionKey: string, file: File): Promise<void> {
+    setUploadingExpressionKey(`${characterId}:${expressionKey}`);
+    setCharacterSaveMessage(null);
+    try {
+      const buffer = new Uint8Array(await file.arrayBuffer());
+      const ext = file.name.split('.').pop() || 'png';
+      const result = await window.api.saveCharacterPortrait(gameId, characterId, ext, buffer, expressionKey);
+      if (result.ok) {
+        const base = editedCharacters ?? baseCharacters;
+        const character = base.find((c) => c.id === characterId);
+        if (character) {
+          updateCharacter(characterId, { expressions: { ...character.expressions, [expressionKey]: result.path } });
+        }
+      } else {
+        setCharacterSaveMessage(`Error subiendo expresión: ${result.error}`);
+      }
+    } catch (error) {
+      setCharacterSaveMessage(`Error subiendo expresión: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setUploadingExpressionKey(null);
+    }
+  }
+
+  function removeExpression(characterId: string, expressionKey: string): void {
+    const base = editedCharacters ?? baseCharacters;
+    const character = base.find((c) => c.id === characterId);
+    if (!character) return;
+    const expressions = { ...character.expressions };
+    delete expressions[expressionKey];
+    updateCharacter(characterId, { expressions });
   }
 
   function persistScriptBreakdown(next: ScriptBreakdown): void {
@@ -1330,9 +1384,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   characters={displayCharacters}
                   strings={strings}
                   uploadingId={uploadingPortraitId}
+                  uploadingExpressionKey={uploadingExpressionKey}
                   onNameTextChange={setCharacterNameText}
                   onColorChange={(id, color) => updateCharacter(id, { color })}
                   onUploadPortrait={(id, file) => void uploadPortrait(id, file)}
+                  onUploadExpression={(id, expressionKey, file) => void uploadExpressionPortrait(id, expressionKey, file)}
+                  onRemoveExpression={removeExpression}
                   onCreateCharacter={createCharacter}
                 />
               ) : editorTab === 'settings' ? (

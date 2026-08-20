@@ -3,6 +3,13 @@ import type { Character, DialogueNode } from '../game-engine/scene-engine/schema
 import { gameAssetUrl } from './gameAssetUrl';
 import { translate } from '../i18n/translate';
 
+/** El busto se dibuja sin recorte (pensado para arte 3/4 con fondo
+ * transparente — ver memoria "busto 3/4") apoyado sobre un aro decorativo:
+ * la cabeza/hombros sobresalen libremente por arriba del aro en vez de
+ * quedar encerrados en un círculo chico, como en el diálogo de referencia
+ * que pidió el usuario. Con fotos viejas sin fondo transparente se ve
+ * simplemente como una imagen más grande — el efecto "profesional" depende
+ * del arte, no solo del layout. */
 function CharacterPortrait({
   gameId,
   portrait,
@@ -17,7 +24,7 @@ function CharacterPortrait({
   if (failed) {
     return (
       <div
-        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-dashed bg-graphite-800/70 px-1 text-center text-[7px] break-all text-graphite-400"
+        className="flex h-16 w-16 shrink-0 items-center justify-center self-end rounded-full border-2 border-dashed bg-graphite-800/70 px-1 text-center text-[7px] break-all text-graphite-400"
         style={{ borderColor: color }}
       >
         {portrait}
@@ -26,13 +33,18 @@ function CharacterPortrait({
   }
 
   return (
-    <img
-      src={gameAssetUrl(gameId, portrait)}
-      alt=""
-      onError={() => setFailed(true)}
-      className="h-14 w-14 shrink-0 rounded-full border-2 object-cover"
-      style={{ borderColor: color }}
-    />
+    <div className="relative h-28 w-20 shrink-0 self-end">
+      <div
+        className="absolute inset-x-0 bottom-0 mx-auto h-16 w-16 rounded-full border-2"
+        style={{ borderColor: color, backgroundColor: 'rgba(12,13,16,0.55)' }}
+      />
+      <img
+        src={gameAssetUrl(gameId, portrait)}
+        alt=""
+        onError={() => setFailed(true)}
+        className="absolute inset-x-0 bottom-0 mx-auto h-28 w-auto object-contain object-bottom drop-shadow-[0_4px_10px_rgba(0,0,0,0.55)]"
+      />
+    </div>
   );
 }
 
@@ -56,15 +68,19 @@ export function DialogueOverlay({
   const speakerColor = character?.color;
   const choices = node.choices ?? [];
   const hasChoices = choices.length > 0;
+  // Si el nodo pide una expresión y el personaje la tiene cargada, se usa
+  // esa variante de retrato; si no, el retrato por defecto (ver
+  // Character.expressions / ActionComposer "Expresión del retrato").
+  const portrait = node.portraitExpression
+    ? (character?.expressions[node.portraitExpression] ?? character?.portrait)
+    : character?.portrait;
 
   return (
     // z-[100]: por encima de los hotspots (zIndex 50) y de cualquier capa de
     // escena (zIndex 1-4), para que nunca quede tapado ni robado el clic.
     <div className="absolute inset-x-0 bottom-0 z-100 flex justify-center p-6">
       <div className="flex w-full max-w-2xl gap-3 rounded border border-graphite-700 bg-graphite-900/95 p-5 shadow-2xl backdrop-blur">
-        {character?.portrait && (
-          <CharacterPortrait gameId={gameId} portrait={character.portrait} color={character.color} />
-        )}
+        {character && portrait && <CharacterPortrait gameId={gameId} portrait={portrait} color={character.color} />}
 
         <div className="min-w-0 flex-1">
           {node.terminalBlock && (

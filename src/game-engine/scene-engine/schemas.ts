@@ -159,9 +159,15 @@ export const CharacterSchema = z.object({
   id: z.string(),
   /** Clave de traducción del nombre mostrado (ver locales/es.json). */
   name: z.string(),
-  /** Ruta a la miniatura del rostro dentro de assets/portraits, o null si no
-   * tiene retrato (p. ej. "sistema" para texto de narrador/interfaz). */
+  /** Ruta al retrato "por defecto" dentro de assets/portraits, o null si no
+   * tiene retrato (p. ej. "sistema" para texto de narrador/interfaz). Se usa
+   * cuando un DialogueNode no pide una expresión particular, o pide una que
+   * no existe en `expressions`. */
   portrait: z.string().nullable(),
+  /** Expresión (clave libre, p. ej. "enojado", "sonriendo") → ruta a un
+   * retrato adicional del mismo personaje, mismo formato que `portrait`.
+   * Referenciada por `DialogueNode.portraitExpression`. */
+  expressions: z.record(z.string(), z.string()).default({}),
   /** Color del nombre y del texto de diálogo, en hex (p. ej. "#e0a636"). */
   color: z.string(),
 });

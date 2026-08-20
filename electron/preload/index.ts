@@ -9,8 +9,8 @@ const api: DesktopApi = {
   saveCharacters: (gameId, characters, stringsPatch) =>
     ipcRenderer.invoke('scene-editor:save-characters', gameId, characters, stringsPatch),
   saveSiteSettings: (gameId, settings) => ipcRenderer.invoke('scene-editor:save-site-settings', gameId, settings),
-  saveCharacterPortrait: (gameId, characterId, ext, data) =>
-    ipcRenderer.invoke('scene-editor:save-portrait', gameId, characterId, ext, data),
+  saveCharacterPortrait: (gameId, characterId, ext, data, expressionKey) =>
+    ipcRenderer.invoke('scene-editor:save-portrait', gameId, characterId, ext, data, expressionKey),
   saveSceneBackground: (gameId, fileId, ext, data) =>
     ipcRenderer.invoke('scene-editor:save-background', gameId, fileId, ext, data),
   saveCursorImage: (gameId, fileId, ext, data) =>

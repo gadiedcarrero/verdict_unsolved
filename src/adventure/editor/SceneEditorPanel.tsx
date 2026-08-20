@@ -659,6 +659,9 @@ export type ActionComposerValue = {
   sceneId: string;
   characterId: string;
   dialogueText: string;
+  /** Clave de Character.expressions, o '' para el retrato por defecto. Solo
+   * tiene efecto si `characterId` tiene expresiones cargadas. */
+  portraitExpression: string;
 };
 
 function findAction<T extends SceneAction['type']>(
@@ -683,6 +686,7 @@ function resolveActionComposerValue(
     sceneId: sceneAction?.sceneId ?? '',
     characterId: node?.speaker ?? '',
     dialogueText: node ? (strings[node.line] ?? '') : '',
+    portraitExpression: node?.portraitExpression ?? '',
   };
 }
 
@@ -781,6 +785,27 @@ function ActionComposer({
           ))}
         </select>
       </label>
+      {value.characterId && (() => {
+        const selectedCharacter = characters.find((c) => c.id === value.characterId);
+        const expressionKeys = Object.keys(selectedCharacter?.expressions ?? {});
+        return expressionKeys.length > 0 ? (
+          <label className="mb-1 flex flex-col">
+            <span className="text-[9px] text-graphite-500 uppercase">Expresión del retrato</span>
+            <select
+              value={value.portraitExpression}
+              onChange={(event) => onChange({ portraitExpression: event.target.value })}
+              className={inputClassName}
+            >
+              <option value="">(por defecto)</option>
+              {expressionKeys.map((key) => (
+                <option key={key} value={key}>
+                  {key}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null;
+      })()}
       {value.characterId && (
         <label className="flex flex-col">
           <span className="text-[9px] text-graphite-500 uppercase">Diálogo</span>

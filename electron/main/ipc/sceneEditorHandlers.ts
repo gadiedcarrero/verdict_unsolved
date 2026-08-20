@@ -131,7 +131,7 @@ export function registerSceneEditorHandlers(): void {
 
   ipcMain.handle(
     'scene-editor:save-portrait',
-    async (_event, gameId: unknown, characterId: unknown, ext: unknown, data: unknown) => {
+    async (_event, gameId: unknown, characterId: unknown, ext: unknown, data: unknown, expressionKey: unknown) => {
       if (app.isPackaged) {
         return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
       }
@@ -147,10 +147,17 @@ export function registerSceneEditorHandlers(): void {
       if (!(data instanceof Uint8Array)) {
         return { ok: false, error: 'Datos de imagen inválidos.' };
       }
+      // null = retrato por defecto (portraits/<id>.<ext>, como siempre); una
+      // clave de expresión válida = variante adicional del mismo personaje
+      // (portraits/<id>-<expresión>.<ext>, ver Character.expressions).
+      if (expressionKey !== null && !isValidId(expressionKey)) {
+        return { ok: false, error: `Id de expresión inválido: ${JSON.stringify(expressionKey)}` };
+      }
       try {
         const dir = join(app.getAppPath(), portraitsDir(gameId));
         await mkdir(dir, { recursive: true });
-        const relativePath = `portraits/${characterId}.${ext.toLowerCase()}`;
+        const fileName = expressionKey ? `${characterId}-${expressionKey}` : characterId;
+        const relativePath = `portraits/${fileName}.${ext.toLowerCase()}`;
         const filePath = join(app.getAppPath(), assetsDir(gameId), relativePath);
         await writeFile(filePath, Buffer.from(data));
         return { ok: true, path: relativePath };

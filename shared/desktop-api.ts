@@ -34,12 +34,15 @@ export type DesktopApi = {
    * generales, hoy la tipografía por defecto del tooltip de hotspot). */
   saveSiteSettings: (gameId: string, settings: unknown) => Promise<SceneEditorSaveResult>;
   /** Solo funciona en `pnpm dev` — sube un retrato a assets/games/<gameId>/portraits/
-   * y devuelve la ruta relativa a guardar en el personaje. */
+   * y devuelve la ruta relativa a guardar en el personaje. `expressionKey`
+   * null = retrato por defecto (Character.portrait); una clave = variante
+   * adicional (Character.expressions[clave]). */
   saveCharacterPortrait: (
     gameId: string,
     characterId: string,
     ext: string,
     data: Uint8Array,
+    expressionKey: string | null,
   ) => Promise<PortraitSaveResult>;
   /** Solo funciona en `pnpm dev` — sube un fondo a assets/games/<gameId>/backgrounds/
    * y devuelve la ruta relativa a guardar en `scene.backgrounds`. */
