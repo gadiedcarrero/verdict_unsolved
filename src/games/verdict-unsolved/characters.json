@@ -10,7 +10,7 @@
   {
     "id": "mirror",
     "name": "character.mirror.name",
-    "portrait": null,
+    "portrait": "portraits/mirror.png",
     "description": "Interfaz digital sin forma física, representada por una pantalla o icono luminoso, voz sintetizada y presencia en terminales y monitores.",
     "expressions": {},
     "color": "#6ba8c9"

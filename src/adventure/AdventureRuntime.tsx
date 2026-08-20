@@ -40,6 +40,7 @@ import {
   type ScriptBreakdownCharacter,
   type ScriptBreakdownReviewStatus,
 } from '../../shared/script-breakdown';
+import type { ElevenLabsVoice } from '../../shared/elevenlabs';
 
 type EditorTab = 'scene' | 'characters' | 'settings' | 'script-ai';
 
@@ -229,6 +230,13 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const [scriptBreakdownGenerating, setScriptBreakdownGenerating] = useState(false);
   const [scriptBreakdownError, setScriptBreakdownError] = useState<string | null>(null);
   const [scriptBreakdownMergeNote, setScriptBreakdownMergeNote] = useState<string | null>(null);
+
+  // Voces de ElevenLabs disponibles en la cuenta — se piden a mano (botón
+  // "Cargar voces" en Personajes), no en cada apertura del editor, mismo
+  // criterio que el resto de los llamados a IA de esta pestaña.
+  const [elevenLabsVoices, setElevenLabsVoices] = useState<ElevenLabsVoice[] | null>(null);
+  const [elevenLabsVoicesLoading, setElevenLabsVoicesLoading] = useState(false);
+  const [elevenLabsVoicesError, setElevenLabsVoicesError] = useState<string | null>(null);
 
   // Zona de forma libre en proceso de trazado (ver "Crear zona" o "Reiniciar
   // forma") — no null mientras se están juntando puntos a click.
@@ -1056,7 +1064,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       const taken = new Set(base.map((c) => c.id));
       const id = uniqueId(slugify(name), taken);
       createdNameKey = `character.${id}.name`;
-      return [...base, { id, name: createdNameKey, portrait: null, description: '', expressions: {}, color }];
+      return [...base, { id, name: createdNameKey, portrait: null, description: '', expressions: {}, voices: {}, color }];
     });
     setPendingCharacterStrings((prev) => ({ ...prev, [createdNameKey]: nameText }));
   }
@@ -1150,6 +1158,42 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     );
   }
 
+  async function loadElevenLabsVoices(): Promise<void> {
+    setElevenLabsVoicesLoading(true);
+    setElevenLabsVoicesError(null);
+    try {
+      const result = await window.api.listElevenLabsVoices();
+      if (result.ok) {
+        setElevenLabsVoices(result.voices);
+      } else {
+        setElevenLabsVoicesError(result.error);
+      }
+    } catch (error) {
+      setElevenLabsVoicesError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setElevenLabsVoicesLoading(false);
+    }
+  }
+
+  function updateCharacterVoice(characterId: string, language: string, voiceId: string): void {
+    setEditedCharacters((prev) =>
+      (prev ?? baseCharacters).map((c) =>
+        c.id !== characterId ? c : { ...c, voices: { ...c.voices, [language]: voiceId } },
+      ),
+    );
+  }
+
+  function removeCharacterVoice(characterId: string, language: string): void {
+    setEditedCharacters((prev) =>
+      (prev ?? baseCharacters).map((c) => {
+        if (c.id !== characterId) return c;
+        const voices = { ...c.voices };
+        delete voices[language];
+        return { ...c, voices };
+      }),
+    );
+  }
+
   // Genera (o regenera) el retrato de un personaje YA existente en el
   // borrador — a diferencia de la versión anterior, ya no crea el Character:
   // eso ahora lo hace promoteBreakdownCharacters en cuanto se genera el
@@ -1211,6 +1255,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
             portrait: null,
             description: bc.description,
             expressions,
+            voices: {},
             color: bc.suggestedColor,
           });
           changed = true;
@@ -1593,6 +1638,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                     void generateCharacterPortraitArt(id, description, expressionKey)
                   }
                   onCreateCharacter={createCharacter}
+                  voices={elevenLabsVoices}
+                  voicesLoading={elevenLabsVoicesLoading}
+                  voicesError={elevenLabsVoicesError}
+                  onLoadVoices={() => void loadElevenLabsVoices()}
+                  onVoiceChange={updateCharacterVoice}
+                  onRemoveVoice={removeCharacterVoice}
                 />
               ) : editorTab === 'settings' ? (
                 <SiteSettingsPanel

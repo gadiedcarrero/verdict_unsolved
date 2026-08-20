@@ -1,4 +1,5 @@
 import type { AiIntegrationsConfig } from './ai-integrations';
+import type { ElevenLabsVoicesResult } from './elevenlabs';
 import type { SaveData } from './save-data';
 import type { ScriptBreakdown } from './script-breakdown';
 
@@ -85,4 +86,8 @@ export type DesktopApi = {
     description: string,
     expressionKey: string | null,
   ) => Promise<PortraitSaveResult>;
+  /** Lista las voces disponibles en la cuenta de ElevenLabs (premade +
+   * propias) — usa la key ya guardada en Integraciones IA. No es por juego:
+   * la cuenta de ElevenLabs es una sola para toda la plataforma. */
+  listElevenLabsVoices: () => Promise<ElevenLabsVoicesResult>;
 };

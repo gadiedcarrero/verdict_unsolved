@@ -183,6 +183,12 @@ export const CharacterSchema = z.object({
    * alternativa completa como "wraith") → retrato adicional del mismo
    * personaje. Referenciada por `DialogueNode.portraitExpression`. */
   expressions: z.record(z.string(), CharacterExpressionSchema).default({}),
+  /** Código de idioma corto (p. ej. "en", "es") → voice_id de ElevenLabs
+   * asignado a este personaje en ese idioma. El juego arranca solo con
+   * texto — esto queda guardado para cuando se genere el audio de diálogo
+   * (ver memoria project_dialogue_audio_elevenlabs). Un mismo personaje
+   * puede tener una voz distinta por idioma, no una sola voz "traducida". */
+  voices: z.record(z.string(), z.string()).default({}),
   /** Color del nombre y del texto de diálogo, en hex (p. ej. "#e0a636"). */
   color: z.string(),
 });

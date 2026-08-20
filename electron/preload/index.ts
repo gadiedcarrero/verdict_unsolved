@@ -24,6 +24,7 @@ const api: DesktopApi = {
   readScriptBreakdown: (gameId) => ipcRenderer.invoke('script-breakdown:read', gameId),
   generateCharacterPortrait: (gameId, characterId, description, expressionKey) =>
     ipcRenderer.invoke('ai:generate-character-portrait', gameId, characterId, description, expressionKey),
+  listElevenLabsVoices: () => ipcRenderer.invoke('ai:list-elevenlabs-voices'),
 };
 
 contextBridge.exposeInMainWorld('api', api);

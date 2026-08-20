@@ -1,11 +1,110 @@
 import { useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { translate } from '../../i18n/translate';
 import type { Character } from '../../game-engine/scene-engine/schemas';
+import type { ElevenLabsVoice } from '../../../shared/elevenlabs';
 import { gameAssetUrl } from '../gameAssetUrl';
 import { slugify } from './slug';
 
 const inputClassName =
   'w-full rounded border border-graphite-700 bg-graphite-900 px-1.5 py-1 text-[10px] text-graphite-100';
+
+/** Solo estos dos por ahora — ver memoria project_dialogue_audio_elevenlabs:
+ * el guion está en español, pero el juego puede salir primero en inglés. Si
+ * hace falta un tercer idioma más adelante, el dato ya soporta cualquier
+ * clave (Character.voices es un mapa libre), solo hay que sumar la fila. */
+const VOICE_LANGUAGES: { code: string; label: string }[] = [
+  { code: 'en', label: 'Inglés' },
+  { code: 'es', label: 'Español' },
+];
+
+function voiceOptionLabel(voice: ElevenLabsVoice): string {
+  const bits = [voice.gender, voice.accent, voice.descriptive].filter((v): v is string => Boolean(v));
+  return bits.length > 0 ? `${voice.name} (${bits.join(', ')})` : voice.name;
+}
+
+function VoiceRow({
+  language,
+  label,
+  voiceId,
+  voices,
+  onChange,
+  onRemove,
+}: {
+  language: string;
+  label: string;
+  voiceId: string | null;
+  voices: ElevenLabsVoice[] | null;
+  onChange: (voiceId: string) => void;
+  onRemove: () => void;
+}): JSX.Element {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const selectedVoice = voices?.find((v) => v.voiceId === voiceId) ?? null;
+  const previewUrl = selectedVoice ? (selectedVoice.previewUrlByLanguage[language] ?? selectedVoice.previewUrl) : null;
+
+  function playPreview(): void {
+    if (!previewUrl || !audioRef.current) return;
+    audioRef.current.src = previewUrl;
+    void audioRef.current.play();
+  }
+
+  return (
+    <div className="mb-1 flex items-center gap-1">
+      <span className="w-12 shrink-0 text-[9px] text-graphite-500 uppercase">{label}</span>
+      <select
+        value={voiceId ?? ''}
+        onChange={(event) => (event.target.value ? onChange(event.target.value) : onRemove())}
+        disabled={!voices}
+        className={`${inputClassName} flex-1`}
+      >
+        <option value="">{voices ? '(sin voz)' : 'Cargá las voces arriba primero...'}</option>
+        {voices?.map((voice) => (
+          <option key={voice.voiceId} value={voice.voiceId}>
+            {voiceOptionLabel(voice)}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        onClick={playPreview}
+        disabled={!previewUrl}
+        title="Escuchar muestra"
+        className="shrink-0 rounded border border-graphite-700 px-2 py-1 text-[9px] text-graphite-300 transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        ▶
+      </button>
+      <audio ref={audioRef} className="hidden" />
+    </div>
+  );
+}
+
+function VoicesFields({
+  character,
+  voices,
+  onVoiceChange,
+  onRemoveVoice,
+}: {
+  character: Character;
+  voices: ElevenLabsVoice[] | null;
+  onVoiceChange: (language: string, voiceId: string) => void;
+  onRemoveVoice: (language: string) => void;
+}): JSX.Element {
+  return (
+    <div className="mt-2 border-t border-graphite-800 pt-1">
+      <p className="mb-1 text-[9px] text-graphite-500 uppercase">Voz (ElevenLabs) — para el audio de diálogo</p>
+      {VOICE_LANGUAGES.map(({ code, label }) => (
+        <VoiceRow
+          key={code}
+          language={code}
+          label={label}
+          voiceId={character.voices[code] ?? null}
+          voices={voices}
+          onChange={(voiceId) => onVoiceChange(code, voiceId)}
+          onRemove={() => onRemoveVoice(code)}
+        />
+      ))}
+    </div>
+  );
+}
 
 function PortraitPreview({
   gameId,
@@ -192,6 +291,9 @@ function CharacterFields({
   onAddExpression,
   onExpressionDescriptionChange,
   onGenerateExpression,
+  voices,
+  onVoiceChange,
+  onRemoveVoice,
 }: {
   gameId: string;
   character: Character;
@@ -210,6 +312,9 @@ function CharacterFields({
   onAddExpression: (key: string, description: string) => void;
   onExpressionDescriptionChange: (expressionKey: string, description: string) => void;
   onGenerateExpression: (expressionKey: string, description: string) => void;
+  voices: ElevenLabsVoice[] | null;
+  onVoiceChange: (language: string, voiceId: string) => void;
+  onRemoveVoice: (language: string) => void;
 }): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const generatingPortrait = generatingArtIds.includes(character.id);
@@ -285,6 +390,7 @@ function CharacterFields({
           onExpressionDescriptionChange={onExpressionDescriptionChange}
           onGenerateExpression={onGenerateExpression}
         />
+        <VoicesFields character={character} voices={voices} onVoiceChange={onVoiceChange} onRemoveVoice={onRemoveVoice} />
       </div>
     </div>
   );
@@ -364,6 +470,12 @@ export function CharacterEditorPanel({
   onGeneratePortrait,
   onGenerateExpression,
   onCreateCharacter,
+  voices,
+  voicesLoading,
+  voicesError,
+  onLoadVoices,
+  onVoiceChange,
+  onRemoveVoice,
 }: {
   gameId: string;
   characters: Character[];
@@ -388,6 +500,14 @@ export function CharacterEditorPanel({
   onGeneratePortrait: (characterId: string, description: string) => void;
   onGenerateExpression: (characterId: string, expressionKey: string, description: string) => void;
   onCreateCharacter: (name: string, nameText: string, color: string) => void;
+  /** null = todavía no se pidieron a la cuenta de ElevenLabs (ver botón
+   * "Cargar voces" abajo). */
+  voices: ElevenLabsVoice[] | null;
+  voicesLoading: boolean;
+  voicesError: string | null;
+  onLoadVoices: () => void;
+  onVoiceChange: (characterId: string, language: string, voiceId: string) => void;
+  onRemoveVoice: (characterId: string, language: string) => void;
 }): JSX.Element {
   return (
     <div className="text-xs text-graphite-200">
@@ -396,6 +516,21 @@ export function CharacterEditorPanel({
         novela. Los personajes que encuentra el desglose de guion (pestaña &quot;Guion IA&quot;) aparecen acá solos,
         con su descripción ya cargada — nada cambia hasta que aprietes Guardar.
       </p>
+
+      <div className="mb-3 rounded border border-graphite-800 bg-graphite-900/60 p-2">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onLoadVoices}
+            disabled={voicesLoading}
+            className="shrink-0 rounded border border-graphite-700 px-2 py-1 text-[9px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {voicesLoading ? 'Cargando...' : voices ? 'Recargar voces' : 'Cargar voces de ElevenLabs'}
+          </button>
+          {voices && <p className="text-[9px] text-graphite-500">{voices.length} voces disponibles</p>}
+        </div>
+        {voicesError && <p className="mt-1 text-[9px] text-red-300">{voicesError}</p>}
+      </div>
 
       <CreateCharacterForm onCreate={onCreateCharacter} />
 
@@ -427,6 +562,9 @@ export function CharacterEditorPanel({
           onGenerateExpression={(expressionKey, description) =>
             onGenerateExpression(character.id, expressionKey, description)
           }
+          voices={voices}
+          onVoiceChange={(language, voiceId) => onVoiceChange(character.id, language, voiceId)}
+          onRemoveVoice={(language) => onRemoveVoice(character.id, language)}
         />
       ))}
     </div>

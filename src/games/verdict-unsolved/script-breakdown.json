@@ -1,128 +1,128 @@
 {
-  "generatedAt": "2026-08-20T19:42:31.307Z",
+  "generatedAt": "2026-08-20T21:30:07.161Z",
   "characters": [
     {
       "id": "adrian-cross",
       "name": "Adrian Cross",
-      "description": "Hombre de unos 40 años, complexión atlética, cabello oscuro corto, rostro marcado por cicatrices leves. Viste ropa funcional, generalmente traje oscuro o ropa táctica cuando opera como agente. Postura segura y mirada intensa.",
-      "suggestedColor": "#1a4d8f",
+      "description": "Hombre de unos 40 años, rostro anguloso, cabello oscuro corto, mirada intensa. Suele vestir de manera sobria y profesional, con camisas y chaquetas oscuras. Postura erguida, presencia marcada. En su identidad pública, utiliza una silla de ruedas negra de diseño moderno.",
+      "suggestedColor": "#2c3e50",
       "alternateLooks": [
         {
           "key": "director-gray",
           "label": "Director Gray",
-          "description": "Hombre de unos 40 años, cabello oscuro corto, rostro serio y cansado. Siempre sentado en una silla de ruedas, viste traje gris oscuro y camisa blanca, con corbata sobria. Suele estar detrás de un escritorio de madera oscura en una oficina poco iluminada."
+          "description": "Hombre de unos 40 años, mismo rostro que Adrian Cross, pero con expresión más dura y cansada. Siempre sentado en una silla de ruedas negra, viste traje oscuro y camisa blanca, corbata discreta. Suele estar tras un escritorio de madera oscura, con una lámpara y una fotografía boca abajo cerca."
         },
         {
           "key": "wraith",
           "label": "Wraith",
-          "description": "Figura alta y atlética, completamente cubierta por un traje táctico negro ajustado, guantes negros y botas militares. Lleva una máscara negra sin rasgos, sólo con una delgada ranura para los ojos, y ningún rasgo identificable. Movimientos precisos y silenciosos."
+          "description": "Figura alta y atlética, completamente cubierta por ropa táctica negra, incluyendo guantes, botas y un abrigo largo. Lleva una máscara opaca y sin rasgos, que cubre todo el rostro. No se distinguen rasgos personales; la postura es precisa y controlada."
         }
       ]
     },
     {
       "id": "evelyn-marlowe",
       "name": "Evelyn Marlowe",
-      "description": "Mujer de unos 30-35 años, cabello oscuro (más corto y con una cicatriz junto a la sien en su versión posterior a la explosión), complexión ágil. Viste ropa táctica o de infiltración, rostro expresivo y mirada decidida.",
-      "suggestedColor": "#ad1457",
+      "description": "Mujer de unos 30 y tantos, cabello castaño oscuro (más corto y con una cicatriz junto a la sien en escenas posteriores), ojos claros, complexión atlética. Viste ropa funcional, a menudo con chaquetas o prendas de infiltración. Su expresión es decidida y alerta.",
+      "suggestedColor": "#8e44ad",
       "alternateLooks": []
     },
     {
       "id": "theo-kade",
       "name": "Theo Kade",
-      "description": "Hombre de unos 30 años, complexión media, cabello claro y corto, rostro serio y reservado. Suele vestir ropa táctica clara o de seguridad, postura rígida y vigilante.",
-      "suggestedColor": "#009688",
+      "description": "Hombre de unos 30 años, rostro serio, cabello rubio claro y corto, complexión media. Suele vestir de manera práctica, con camisas o chaquetas sencillas. Su postura es rígida, como alguien acostumbrado a estar alerta.",
+      "suggestedColor": "#2980b9",
       "alternateLooks": []
     },
     {
       "id": "marcus-wynn",
       "name": "Marcus Wynn",
-      "description": "Hombre de unos 40 años, robusto, piel oscura, cabello rapado. Viste chaleco táctico y uniforme de campo. Expresión protectora y postura firme.",
-      "suggestedColor": "#795548",
+      "description": "Hombre de unos 40 años, robusto, piel oscura, barba corta. Viste ropa táctica o de protección, a menudo con chaleco antibalas. Tiene una presencia protectora y fuerte.",
+      "suggestedColor": "#27ae60",
       "alternateLooks": []
     },
     {
       "id": "june-sato",
       "name": "June Sato",
-      "description": "Mujer asiática de unos 30 años, cabello oscuro largo (en el epílogo, envejecida, con cicatriz en el lado izquierdo del rostro y un brazo en abrazadera médica). Suele vestir ropa cómoda y funcional, a menudo sentada frente a terminales.",
-      "suggestedColor": "#1976d2",
+      "description": "Mujer de unos 30 años, cabello oscuro, liso y largo, rostro ovalado con rasgos asiáticos. En el epílogo, tiene una cicatriz en el lado izquierdo del rostro y un brazo sujeto con una abrazadera médica. Suele vestir ropa cómoda, a menudo prendas de laboratorio o informáticas.",
+      "suggestedColor": "#e67e22",
       "alternateLooks": []
     },
     {
       "id": "elias-voss",
       "name": "Elias Voss",
-      "description": "Hombre mayor, alrededor de 60 años, cabello canoso y corto, rostro de rasgos finos y mirada paciente. Suele vestir traje oscuro o ropa de profesor, postura erguida y tranquila.",
-      "suggestedColor": "#616161",
+      "description": "Hombre de unos 60 años, cabello canoso, rostro alargado y expresión paciente. Viste trajes formales, a menudo con corbata y chaleco. Su postura es la de un instructor o académico, siempre observador.",
+      "suggestedColor": "#c0392b",
       "alternateLooks": []
     },
     {
       "id": "lena-hart",
       "name": "Lena Hart",
-      "description": "Mujer joven, alrededor de 25-30 años, cabello castaño recogido, rostro preocupado. Viste ropa sencilla, probablemente chaqueta y jeans, aspecto de civil común.",
-      "suggestedColor": "#c2185b",
+      "description": "Mujer joven, alrededor de 25 años, cabello castaño claro recogido, rostro delgado y ojeroso. Viste ropa sencilla, como una chaqueta impermeable y bufanda. Su expresión suele ser ansiosa o preocupada.",
+      "suggestedColor": "#16a085",
       "alternateLooks": []
     },
     {
       "id": "daniel-hart",
       "name": "Daniel Hart",
-      "description": "Hombre joven, cerca de 30 años, cabello oscuro, aspecto cansado y herido (herida abdominal profunda). Viste ropa de oficina o ingeniero, a veces ensangrentada o desordenada.",
-      "suggestedColor": "#388e3c",
+      "description": "Hombre de unos 30 años, cabello castaño, algo desordenado, rostro pálido y cansado. Viste ropa informal, a menudo con camisas arrugadas y chaquetas gastadas. Suele tener una expresión de preocupación.",
+      "suggestedColor": "#f39c12",
       "alternateLooks": []
     },
     {
       "id": "mara-vega",
       "name": "Mara Vega (Ghost)",
-      "description": "Mujer de unos 30 años, piel morena, cabello oscuro recogido, complexión atlética y ágil. Viste ropa de infiltración oscura y ligera, rostro serio y mirada desconfiada.",
-      "suggestedColor": "#d84315",
+      "description": "Mujer de 30 años, piel morena, cabello negro corto, complexión ágil. Viste ropa de infiltración oscura, con detalles funcionales y botas ligeras. Suele llevar una mochila pequeña y guantes.",
+      "suggestedColor": "#34495e",
       "alternateLooks": []
     },
     {
       "id": "noah-mercer",
       "name": "Noah Mercer (Patch)",
-      "description": "Hombre joven, 25-30 años, piel clara, cabello rubio desordenado, gafas. Viste sudadera o ropa cómoda de técnico, aspecto nervioso y ojeroso.",
-      "suggestedColor": "#0288d1",
+      "description": "Hombre de unos 28 años, piel clara, cabello rubio oscuro y desordenado, gafas de montura fina. Viste ropa cómoda, sudaderas y pantalones cargo, con dispositivos electrónicos a mano. Suele lucir ojeras y una expresión concentrada.",
+      "suggestedColor": "#e74c3c",
       "alternateLooks": []
     },
     {
       "id": "isaac-hale",
       "name": "Isaac Hale (Rook)",
-      "description": "Hombre corpulento, cerca de 40 años, piel clara, barba corta, cabello oscuro. Viste chaleco táctico y uniforme pesado, postura firme y protectora.",
-      "suggestedColor": "#8bc34a",
-      "alternateLooks": []
-    },
-    {
-      "id": "iris",
-      "name": "Iris",
-      "description": "Mujer de unos 30 años, piel clara, cabello oscuro corto, lleva un anillo colgado al cuello. Viste ropa táctica o de civil, mirada intensa y postura alerta.",
-      "suggestedColor": "#512da8",
-      "alternateLooks": []
-    },
-    {
-      "id": "celia-ward",
-      "name": "Celia Ward",
-      "description": "Mujer de unos 40 años, piel clara, cabello rubio atado, viste bata de laboratorio o ropa formal de oficina. Lleva gafas y expresión preocupada.",
-      "suggestedColor": "#fbc02d",
+      "description": "Hombre de unos 35 años, corpulento, piel clara, cabello castaño corto, mandíbula cuadrada. Viste ropa táctica reforzada, botas pesadas y guantes. Tiene una postura protectora y mirada firme.",
+      "suggestedColor": "#7f8c8d",
       "alternateLooks": []
     },
     {
       "id": "nora-mercer",
       "name": "Nora Mercer",
-      "description": "Niña o adolescente, 12-16 años, piel clara, cabello rubio largo. Viste ropa de hospital o pijama, aspecto frágil pero alerta.",
-      "suggestedColor": "#e57373",
+      "description": "Niña de unos 10 años, cabello rubio claro, rostro redondeado, expresión tímida. Suele vestir pijamas o ropa de hospital, a veces con una manta sobre los hombros.",
+      "suggestedColor": "#f1c40f",
+      "alternateLooks": []
+    },
+    {
+      "id": "celia-ward",
+      "name": "Celia Ward",
+      "description": "Mujer de unos 40 años, cabello castaño claro, recogido en moño, gafas gruesas. Viste ropa de oficina o laboratorio, con bata blanca en ocasiones. Su expresión es nerviosa y atenta.",
+      "suggestedColor": "#9b59b6",
+      "alternateLooks": []
+    },
+    {
+      "id": "iris",
+      "name": "Iris",
+      "description": "Mujer de unos 30 años, piel clara, cabello negro largo y liso, suele llevarlo suelto. Viste ropa de combate negra, con detalles tácticos y botas. Lleva un anillo colgado al cuello. Su expresión es intensa y decidida.",
+      "suggestedColor": "#1abc9c",
       "alternateLooks": []
     },
     {
       "id": "mirror",
       "name": "MIRROR",
-      "description": "Interfaz digital sin forma física, representada por una pantalla o icono luminoso, voz sintetizada y presencia en terminales y monitores.",
-      "suggestedColor": "#00bcd4",
+      "description": "Interfaz digital sin forma física, representada por una línea blanca o una pantalla con texto minimalista. No tiene cuerpo ni rostro, solo presencia visual en monitores.",
+      "suggestedColor": "#bdc3c7",
       "alternateLooks": []
     }
   ],
   "scenes": [
     {
       "id": "prologo-acheron",
-      "title": "Prólogo: La sala de Acheron",
-      "summary": "Unidad Cero descubre el archivo JANUS y es atacada en la torre de Acheron. La explosión separa al equipo y da inicio al misterio sobre su destino.",
+      "title": "Explosión en Acheron",
+      "summary": "Cinco miembros de Unidad Cero intentan copiar el archivo JANUS mientras descubren que han sido estudiados como sujetos de un experimento. Una serie de explosiones destruye el piso donde trabajan, separando al equipo y dejando la copia incompleta. La escena termina con la aparente muerte de todos salvo Elias Voss, quien no estaba presente.",
       "bridgeFromPrevious": null,
       "characterIds": [
         "adrian-cross",
@@ -133,32 +133,32 @@
       ],
       "objects": [
         {
-          "name": "Monitor",
-          "examineText": "El monitor muestra la lista de seis nombres y operaciones de Unidad Cero.",
-          "interactText": "Al interactuar, se revela el encabezado JANUS y los datos de cada miembro."
+          "name": "Monitor con archivo JANUS",
+          "examineText": "En la pantalla aparecen operaciones de Unidad Cero y un encabezado con la palabra JANUS.",
+          "interactText": "Intentás copiar el archivo; la transferencia se fragmenta y oculta en registros inútiles."
         },
         {
           "name": "Unidad de almacenamiento negra",
-          "examineText": "Una pequeña unidad de almacenamiento, sostenida por Evelyn.",
-          "interactText": "June la conecta para copiar y fragmentar el archivo JANUS."
+          "examineText": "Un pequeño dispositivo de datos, robusto y sin marcas externas salvo una etiqueta negra.",
+          "interactText": "Conectás la unidad para intentar guardar una copia de JANUS."
         },
         {
-          "name": "Terminales",
-          "examineText": "Tres terminales alineados, con June trabajando en ellos.",
-          "interactText": "Permiten observar el progreso de la copia fragmentada."
+          "name": "Panel de control de puertas",
+          "examineText": "Un panel digital que muestra el estado de las puertas y las luces de emergencia.",
+          "interactText": "Intentás abrir las puertas, pero el sistema no responde y las luces cambian a rojo."
         }
       ],
       "minigame": {
         "template": "sequence",
-        "reason": "Fragmentar y ocultar el archivo JANUS antes de que la copia sea detectada."
+        "reason": "June fragmenta y oculta la copia de JANUS en registros; requiere memoria y rapidez."
       },
       "reviewStatus": "approved"
     },
     {
       "id": "oficina-gray",
-      "title": "La oficina de Gray",
-      "summary": "El Director Gray, en silla de ruedas, recibe la llamada de Lena Hart sobre la desaparición de su hermano Daniel. Acepta el caso y reactiva Zero Network.",
-      "bridgeFromPrevious": "Al día siguiente, tras la explosión, la historia salta tres años hacia el presente.",
+      "title": "La oficina despierta",
+      "summary": "El Director Gray, en silla de ruedas, observa la ciudad desde una oficina secreta. Recibe una llamada de Lena Hart, quien le pide ayuda para rescatar a su hermano Daniel, desaparecido tras esconder información en el edificio Halcyon. Gray acepta el caso, reactivando Zero Network.",
+      "bridgeFromPrevious": "Han pasado tres años desde la explosión de Acheron.",
       "characterIds": [
         "adrian-cross",
         "mirror",
@@ -167,45 +167,40 @@
       "objects": [
         {
           "name": "Fotografía boca abajo",
-          "examineText": "Una foto de Unidad Cero en el patio de The Annex.",
-          "interactText": "Al darla vuelta, se lee la inscripción 'Que nadie quede atrás'."
+          "examineText": "Cinco jóvenes y un hombre mayor posan en un patio. En el reverso: 'UNIDAD CERO — QUE NADIE QUEDE ATRÁS.'",
+          "interactText": "Das vuelta la fotografía y recordás el pasado del equipo."
         },
         {
           "name": "Teléfono antiguo",
-          "examineText": "Un teléfono de escritorio, sencillo pero robusto.",
-          "interactText": "Permite recibir y contestar la llamada de Lena Hart."
-        },
-        {
-          "name": "Computadora apagada",
-          "examineText": "Computadora central de la oficina, aún apagada.",
-          "interactText": "Al encenderla, se activa MIRROR y se inicia el caso."
+          "examineText": "Un teléfono negro de línea fija, con el auricular descansando sobre la base.",
+          "interactText": "El teléfono suena; contestás y recibís la llamada de Lena."
         }
       ],
       "minigame": null,
       "reviewStatus": "approved"
     },
     {
-      "id": "halcyon-exterior",
-      "title": "Exterior del Halcyon",
-      "summary": "Gray investiga a Lena y Daniel, descubre la verdad y selecciona a Ghost como agente para la misión de infiltración en el edificio Halcyon.",
+      "id": "seleccion-agente",
+      "title": "Selección de agente",
+      "summary": "Gray investiga la verdad sobre Daniel Hart y Lena, y selecciona un agente para infiltrarse en el Halcyon. Entrevista a tres candidatos y elige a Ghost, equipándola para la misión.",
       "bridgeFromPrevious": null,
       "characterIds": [
         "adrian-cross",
-        "mirror",
         "mara-vega",
         "noah-mercer",
-        "isaac-hale"
+        "isaac-hale",
+        "mirror"
       ],
       "objects": [
         {
-          "name": "Imágenes de candidatos",
-          "examineText": "Tres perfiles de agentes disponibles.",
-          "interactText": "Permite seleccionar a Ghost para la misión."
+          "name": "Terminal de candidatos",
+          "examineText": "En la pantalla aparecen perfiles de tres agentes disponibles: Ghost, Patch y Rook.",
+          "interactText": "Leés sus expedientes y seleccionás a Ghost para la misión."
         },
         {
-          "name": "Equipo de infiltración",
-          "examineText": "Kit médico, inyector de red, cámara corporal y teléfono cifrado.",
-          "interactText": "Preparar y equipar a Ghost para la operación."
+          "name": "Kit de equipo",
+          "examineText": "Un conjunto de dispositivos: cámara corporal, teléfono cifrado, inyector de red y kit médico.",
+          "interactText": "Asignás el equipo a Ghost según el plan de infiltración."
         }
       ],
       "minigame": null,
@@ -213,33 +208,33 @@
     },
     {
       "id": "halcyon-camaras",
-      "title": "Entrada al Halcyon: cámaras",
-      "summary": "Ghost espera instrucciones para sortear las cámaras. Gray recuerda su entrenamiento con Voss y crea un bucle para permitir la entrada.",
-      "bridgeFromPrevious": "Ghost llega al Halcyon y espera en el callejón.",
+      "title": "La lección de las cámaras",
+      "summary": "Ghost espera instrucciones fuera del Halcyon. Gray recuerda su entrenamiento con Voss sobre manipulación de cámaras. Crea un bucle de vigilancia para que Ghost entre sin ser detectada.",
+      "bridgeFromPrevious": null,
       "characterIds": [
         "adrian-cross",
         "mara-vega",
-        "mirror",
-        "elias-voss"
+        "elias-voss",
+        "mirror"
       ],
       "objects": [
         {
           "name": "Cámaras de seguridad",
-          "examineText": "Dos cámaras vigilan la entrada principal.",
-          "interactText": "Permite intervenir la señal y crear un bucle temporal."
+          "examineText": "Dos cámaras cubren la entrada del Halcyon, con luces rojas parpadeando.",
+          "interactText": "Desviás la señal y creás un bucle para abrir una ventana de entrada."
         }
       ],
       "minigame": {
         "template": "wiring",
-        "reason": "Desactivar o manipular el circuito de cámaras para crear un bucle de vigilancia."
+        "reason": "Manipular el sistema de cámaras para crear un bucle de vigilancia."
       },
       "reviewStatus": "approved"
     },
     {
-      "id": "halcyon-despacho-2b",
-      "title": "Despacho 2B y rescate",
-      "summary": "Ghost encuentra a Daniel herido y la unidad JANUS. Un equipo de Acheron cierra el edificio. Gray activa a Wraith para asistir en la extracción.",
-      "bridgeFromPrevious": "Ghost ha entrado al edificio y llega al despacho 2B.",
+      "id": "halcyon-despacho",
+      "title": "Rescate en el Halcyon",
+      "summary": "Ghost encuentra a Daniel herido y la unidad JANUS en el despacho 2B. Un equipo de Acheron cierra el edificio. Gray activa a Wraith, quien entra por una ruta secreta y ayuda a evacuar a Daniel y a Ghost, aunque deben abandonar parte del equipo.",
+      "bridgeFromPrevious": null,
       "characterIds": [
         "adrian-cross",
         "mara-vega",
@@ -248,131 +243,103 @@
       ],
       "objects": [
         {
-          "name": "Fotografía impresa",
-          "examineText": "Una foto reciente de Unidad Cero, impresa tras la explosión.",
-          "interactText": "Revela que alguien sigue investigando el caso."
-        },
-        {
           "name": "Unidad JANUS",
-          "examineText": "Dispositivo negro marcado con JANUS.",
-          "interactText": "Permite tomar la unidad o priorizar el rescate de Daniel."
+          "examineText": "Dispositivo negro marcado con la palabra JANUS, con señales de daño.",
+          "interactText": "Ghost toma el dispositivo y decide qué más puede llevar."
         },
         {
-          "name": "Pared falsa",
-          "examineText": "Panel desplazado que oculta a Daniel.",
-          "interactText": "Revela a Daniel herido tras la pared."
+          "name": "Compuerta de mantenimiento",
+          "examineText": "Una trampilla metálica oculta bajo el edificio.",
+          "interactText": "Wraith la abre y prepara la ruta de escape."
         }
       ],
       "minigame": {
         "template": "lockpicking",
-        "reason": "Desbloquear la pared falsa y elegir qué rescatar bajo presión de tiempo."
+        "reason": "Wraith debe abrir una compuerta secreta bajo presión."
       },
       "reviewStatus": "approved"
     },
     {
       "id": "oficina-informe",
-      "title": "Oficina: informe de la operación",
-      "summary": "El equipo regresa. Daniel está inconsciente, JANUS dañado. MIRROR analiza la información y se revela que alguien sobrevivió tras la explosión.",
+      "title": "Informe y anomalía",
+      "summary": "De regreso en la oficina, Gray revisa los resultados: Daniel sobrevive, pero JANUS está dañado. MIRROR detecta que la copia fue creada tras la supuesta destrucción de Unidad Cero, sugiriendo que alguien sobrevivió. Iris observa la operación desde una azotea.",
       "bridgeFromPrevious": "Tras la extracción del Halcyon.",
       "characterIds": [
         "adrian-cross",
         "mirror",
-        "daniel-hart"
-      ],
-      "objects": [
-        {
-          "name": "Informe de MIRROR",
-          "examineText": "Pantalla con datos de la operación.",
-          "interactText": "Permite revisar los fragmentos de JANUS recuperados."
-        }
-      ],
-      "minigame": null,
-      "reviewStatus": "approved"
-    },
-    {
-      "id": "azotea-iris",
-      "title": "Azotea: Iris observa",
-      "summary": "Iris revisa la grabación de la extracción, analiza la silueta de Wraith y muestra interés en su identidad.",
-      "bridgeFromPrevious": "En paralelo al informe de la oficina.",
-      "characterIds": [
+        "daniel-hart",
         "iris"
       ],
       "objects": [
         {
-          "name": "Grabación de extracción",
-          "examineText": "Video de la operación en Halcyon.",
-          "interactText": "Permite ampliar la imagen de Wraith y observar su movimiento."
-        },
-        {
-          "name": "Anillo",
-          "examineText": "Anillo colgado al cuello de Iris.",
-          "interactText": "Iris lo sostiene al ver a Wraith."
+          "name": "Pantalla de informe",
+          "examineText": "El monitor muestra el estado de Daniel y los fragmentos de JANUS recuperados.",
+          "interactText": "Analizás los datos y detectás la anomalía temporal."
         }
       ],
       "minigame": null,
       "reviewStatus": "approved"
     },
     {
-      "id": "oficina-nuevos-agentes",
-      "title": "Oficina: nuevos agentes",
-      "summary": "Gray contrata a Patch y Rook, y la oficina se llena de nuevos casos y dinámicas personales. El equipo investiga grabaciones antiguas y descubre que Evelyn podría estar viva.",
-      "bridgeFromPrevious": "Días después de la operación en Halcyon.",
+      "id": "nuevos-agentes",
+      "title": "Los reemplazos",
+      "summary": "Gray contrata a Patch y Rook, y el equipo crece con nuevos casos. Una grabación en una estación de metro muestra a Evelyn viva meses después de la explosión, sugiriendo que hay una segunda salida.",
+      "bridgeFromPrevious": "Acheron reacciona a la extracción.",
       "characterIds": [
         "adrian-cross",
-        "mirror",
         "mara-vega",
         "noah-mercer",
-        "isaac-hale"
+        "isaac-hale",
+        "mirror",
+        "evelyn-marlowe"
       ],
       "objects": [
         {
-          "name": "Grabaciones de la estación",
-          "examineText": "Videos de operaciones antiguas de Unidad Cero.",
-          "interactText": "Permite descubrir la presencia reciente de Evelyn."
+          "name": "Grabación de la estación de metro",
+          "examineText": "Un video muestra a Evelyn con el cabello más corto y una cicatriz, levantando dos dedos.",
+          "interactText": "Reproducís la grabación y reconocés el gesto de Unidad Cero."
         }
       ],
-      "minigame": {
-        "template": "hidden-object",
-        "reason": "Buscar detalles en las grabaciones que revelen la identidad de Evelyn."
-      },
+      "minigame": null,
       "reviewStatus": "approved"
     },
     {
-      "id": "laboratorio-celia",
-      "title": "Laboratorio: búsqueda de Celia Ward",
-      "summary": "El equipo intenta rescatar a Celia Ward, analista de JANUS, mientras Iris también la busca. Wraith e Iris se enfrentan y se revela información clave sobre JANUS.",
-      "bridgeFromPrevious": "Tras descubrir la pista de Evelyn.",
+      "id": "laboratorio-iris",
+      "title": "La mujer detrás del cristal",
+      "summary": "El equipo intenta rescatar a Celia Ward, analista de JANUS, mientras Iris también la busca. Wraith y Iris se enfrentan en un corredor dividido por vidrio. Celia revela que JANUS estudia decisiones humanas y que el Ensayo Final enfrentó a Adrian y Evelyn.",
+      "bridgeFromPrevious": null,
       "characterIds": [
         "adrian-cross",
         "mara-vega",
         "noah-mercer",
         "isaac-hale",
         "iris",
-        "celia-ward"
+        "celia-ward",
+        "mirror"
       ],
       "objects": [
         {
           "name": "Paneles de vidrio",
-          "examineText": "Corredor dividido por paneles transparentes.",
-          "interactText": "Permite observar el enfrentamiento entre Wraith e Iris."
+          "examineText": "Paneles transparentes dividen el corredor, reflejando las figuras de Iris y Wraith.",
+          "interactText": "Iris apoya dos dedos en el vidrio, señal de una segunda salida."
         },
         {
-          "name": "Dispositivo médico",
-          "examineText": "Dispositivo de monitoreo de Celia.",
-          "interactText": "Se revela que puede ser manipulado para causar daño."
+          "name": "Lista de sujetos JANUS",
+          "examineText": "Documento con nombres y perfiles, algunos dañados o repetidos.",
+          "interactText": "Celia observa un bloque de errores que oculta información."
         }
       ],
       "minigame": {
-        "template": "sequence",
-        "reason": "Coordinar el rescate de Celia y evitar que Iris escape con toda la información."
+        "template": "hidden-object",
+        "reason": "Detectar patrones y mensajes ocultos en los bloques dañados de la lista."
       },
-      "reviewStatus": "approved"
+      "reviewStatus": "pending"
     },
     {
-      "id": "casa-segura-ataque",
-      "title": "Casa segura: ataque de Acheron",
-      "summary": "Acheron ataca la casa segura donde está Celia. Rook se sacrifica para permitir la evacuación del resto del equipo. Gray asume la responsabilidad.",
-      "bridgeFromPrevious": "Después del rescate de Celia.",
+      "id": "casa-segura",
+      "title": "El costo",
+      "summary": "Acheron ataca la casa segura donde se esconde el equipo. Rook sostiene la entrada para permitir la evacuación, sacrificándose para salvar a los demás. Gray debe cerrar la compuerta y luego informar a la familia de Rook.",
+      "bridgeFromPrevious": null,
       "characterIds": [
         "adrian-cross",
         "mara-vega",
@@ -384,183 +351,216 @@
       "objects": [
         {
           "name": "Compuerta de seguridad",
-          "examineText": "Puerta blindada que separa el equipo.",
-          "interactText": "Permite cerrar la compuerta y sacrificar a Rook para salvar a los demás."
+          "examineText": "Una puerta blindada que separa dos secciones de la casa.",
+          "interactText": "Decidís cuándo cerrarla, sabiendo que dejarás a Rook del lado equivocado."
         }
       ],
       "minigame": {
         "template": "sequence",
-        "reason": "Tomar la decisión crítica de cerrar la compuerta bajo presión."
+        "reason": "Gestionar rutas y tiempos para maximizar la evacuación antes de cerrar la compuerta."
       },
-      "reviewStatus": "approved"
+      "reviewStatus": "pending"
     },
     {
-      "id": "oficina-traicion",
-      "title": "Oficina: la traición de Ghost",
-      "summary": "Después de la muerte de Rook, Gray investiga una filtración que apunta a Ghost. Se revela que Ghost tenía contacto con Iris pero no era la traidora principal.",
-      "bridgeFromPrevious": "Tras el ataque a la casa segura.",
+      "id": "confrontacion-ghost",
+      "title": "Una hora cada jueves",
+      "summary": "Gray confronta a Ghost por filtraciones internas. Ella admite haber trabajado para Iris, pero no es la responsable de las emboscadas. Patch desaparece tras confesar que Acheron controla el tratamiento de su hermana y que filtró datos bajo coacción.",
+      "bridgeFromPrevious": "Tras la muerte de Rook y la exposición de la filtración.",
       "characterIds": [
         "adrian-cross",
         "mara-vega",
+        "noah-mercer",
         "mirror"
       ],
       "objects": [
         {
           "name": "Canal seguro",
-          "examineText": "Terminal de comunicación cifrada.",
-          "interactText": "Permite revisar los mensajes entre Ghost e Iris."
+          "examineText": "Una interfaz cifrada para conversaciones privadas.",
+          "interactText": "Interrogás a Ghost y recibís su confesión."
         }
       ],
       "minigame": null,
-      "reviewStatus": "approved"
+      "reviewStatus": "pending"
     },
     {
       "id": "clinica-acheron",
-      "title": "Clínica de Acheron: rescate de Patch y Nora",
-      "summary": "Ghost, Iris y Wraith se infiltran en la clínica para rescatar a Patch y Nora. Se recuperan expedientes y se revela la verdad sobre Wraith y Gray.",
-      "bridgeFromPrevious": "Tras la confesión de Patch y la desaparición de Nora.",
+      "title": "El rostro de Wraith",
+      "summary": "Ghost e Iris colaboran para rescatar a Patch y Nora de una clínica de Acheron. Iris descubre el expediente de June Sato y presencia la revelación: Wraith se quita la máscara y es Adrian Cross, quien también es el Director Gray.",
+      "bridgeFromPrevious": null,
       "characterIds": [
         "adrian-cross",
         "mara-vega",
         "noah-mercer",
+        "nora-mercer",
         "iris",
-        "nora-mercer"
+        "evelyn-marlowe",
+        "mirror"
       ],
       "objects": [
         {
-          "name": "Consola de retención",
-          "examineText": "Consola donde Patch está atado.",
-          "interactText": "Permite liberarlo y acceder a los sistemas médicos."
+          "name": "Expedientes médicos",
+          "examineText": "Carpetas con historiales de Iris, Adrian y June Sato; el de June está transferido y se elimina al intentar abrirlo.",
+          "interactText": "Intentás acceder al expediente de June, pero desaparece ante tus ojos."
         },
         {
-          "name": "Expedientes médicos",
-          "examineText": "Archivos de pacientes, incluyendo el de June Sato.",
-          "interactText": "Revela la transferencia del expediente y borra información al intentar acceder."
+          "name": "Grabación de seguridad",
+          "examineText": "Video donde Wraith entra en un refugio y se quita la máscara.",
+          "interactText": "Ves el rostro de Adrian Cross bajo la máscara de Wraith."
         }
       ],
-      "minigame": {
-        "template": "lockpicking",
-        "reason": "Liberar a Patch y acceder a los expedientes bajo presión de tiempo."
-      },
-      "reviewStatus": "approved"
+      "minigame": null,
+      "reviewStatus": "pending"
     },
     {
-      "id": "oficina-revelacion",
-      "title": "Oficina: la revelación de Gray",
-      "summary": "Adrian revela su doble identidad como Gray y Wraith ante Ghost y Patch. El equipo asimila la verdad y redefine su relación con el Director.",
-      "bridgeFromPrevious": "Después del rescate en la clínica.",
+      "id": "oficina-confesion",
+      "title": "Director Gray",
+      "summary": "Adrian revela su doble identidad a Ghost y Patch, explicando cómo sobrevivió y por qué mantuvo el secreto. El equipo decide seguir adelante bajo nuevas reglas de honestidad.",
+      "bridgeFromPrevious": "Tras la revelación de la identidad de Wraith.",
       "characterIds": [
         "adrian-cross",
         "mara-vega",
         "noah-mercer",
-        "evelyn-marlowe"
+        "evelyn-marlowe",
+        "mirror"
       ],
       "objects": [
         {
           "name": "Silla de ruedas vacía",
-          "examineText": "La silla de Gray queda vacía mientras Adrian se pone de pie.",
-          "interactText": "El gesto revela la verdad a todos."
+          "examineText": "La silla de ruedas negra permanece junto al escritorio, sin ocupante.",
+          "interactText": "Adrian se levanta, mostrando que puede caminar."
         }
       ],
       "minigame": null,
-      "reviewStatus": "approved"
+      "reviewStatus": "pending"
     },
     {
-      "id": "the-annex-entrada",
-      "title": "The Annex: llegada al Ensayo Final",
-      "summary": "El equipo se infiltra en The Annex siguiendo la amenaza de Voss. El edificio los separa y presenta crisis simultáneas que deben resolver en conjunto.",
-      "bridgeFromPrevious": "Tras la amenaza de Voss y la preparación del equipo.",
+      "id": "archivos-janus",
+      "title": "El sexto nombre",
+      "summary": "El equipo descubre que The Annex era un laboratorio y que Unidad Cero fue diseñada para enfrentar a Adrian y Evelyn. Theo Kade fue el traidor, pero también el salvador de ambos. El expediente de June Sato aparece como transferido a 'Continuidad'. Voss contacta y convoca al Ensayo Final.",
+      "bridgeFromPrevious": null,
       "characterIds": [
         "adrian-cross",
         "evelyn-marlowe",
-        "mara-vega",
-        "noah-mercer",
-        "patch",
-        "iris",
+        "theo-kade",
         "elias-voss",
         "mirror",
-        "nora-mercer"
+        "noah-mercer"
       ],
       "objects": [
         {
-          "name": "Corredores ilusorios",
-          "examineText": "Pasillos que reproducen escenas del pasado de cada agente.",
-          "interactText": "Permite interactuar con recuerdos y pistas del Ensayo Final."
-        },
-        {
-          "name": "Panel de control JANUS",
-          "examineText": "Panel central que muestra las cuatro crisis.",
-          "interactText": "Permite elegir entre salvar a Ghost, proteger a Nora, recuperar pruebas o capturar a Voss."
+          "name": "Expediente transferido",
+          "examineText": "Un archivo digital con el nombre 'SATO, JUNE — EXPEDIENTE TRANSFERIDO'.",
+          "interactText": "Intentás acceder al expediente, pero solo ves la palabra 'Continuidad'."
         }
       ],
-      "minigame": {
-        "template": "sequence",
-        "reason": "Coordinar al equipo para resolver las crisis simultáneas y buscar una solución colaborativa."
-      },
-      "reviewStatus": "approved"
+      "minigame": null,
+      "reviewStatus": "pending"
     },
     {
-      "id": "the-annex-final",
-      "title": "The Annex: enfrentamiento con Voss",
-      "summary": "Evelyn destruye el núcleo de JANUS, Patch migra los servicios esenciales, y Adrian enfrenta a Voss en el anfiteatro. Elige no matarlo y transmite su confesión.",
-      "bridgeFromPrevious": "Después de resolver las crisis del Ensayo Final.",
+      "id": "annex-ensayo-final",
+      "title": "Las habitaciones imposibles",
+      "summary": "El equipo entra a The Annex, enfrentando simulaciones de sus peores momentos. JANUS obliga a elegir entre salvar a Ghost, proteger a Nora, recuperar pruebas o capturar a Voss. Adrian decide compartir toda la información y delegar la decisión al equipo.",
+      "bridgeFromPrevious": "Voss convoca al Ensayo Final en The Annex.",
       "characterIds": [
         "adrian-cross",
         "evelyn-marlowe",
         "mara-vega",
         "noah-mercer",
+        "nora-mercer",
         "elias-voss",
         "mirror"
       ],
       "objects": [
         {
-          "name": "Anfiteatro",
-          "examineText": "Sala circular donde Voss espera a Adrian.",
-          "interactText": "Permite confrontar a Voss y decidir su destino."
-        },
-        {
-          "name": "Servidor JANUS",
-          "examineText": "Servidor central conectado a sistemas críticos.",
-          "interactText": "Permite decidir entre destruirlo o migrar los servicios."
+          "name": "Panel de control JANUS",
+          "examineText": "Un terminal muestra cuatro opciones críticas, cada una con consecuencias graves.",
+          "interactText": "Intentás seleccionar una opción, pero Adrian decide mostrar todo al equipo."
         }
       ],
       "minigame": {
         "template": "sequence",
-        "reason": "Tomar la decisión final sobre el destino de Voss y el servidor JANUS."
+        "reason": "Coordinar acciones simultáneas bajo presión, con consecuencias para cada elección."
       },
-      "reviewStatus": "approved"
+      "reviewStatus": "pending"
+    },
+    {
+      "id": "anfiteatro-voss",
+      "title": "El veredicto",
+      "summary": "Evelyn, Patch, Ghost y Nora logran sabotear JANUS y liberar a los sujetos. Adrian alcanza a Voss en el anfiteatro, lo enfrenta y decide no matarlo, sino transmitir su confesión. Antes de apagar los servidores, Patch detecta miles de anomalías firmadas por J.S.",
+      "bridgeFromPrevious": "Tras la resolución de las crisis en The Annex.",
+      "characterIds": [
+        "adrian-cross",
+        "evelyn-marlowe",
+        "noah-mercer",
+        "elias-voss",
+        "mara-vega",
+        "nora-mercer",
+        "mirror"
+      ],
+      "objects": [
+        {
+          "name": "Servidores JANUS",
+          "examineText": "Racks de servidores con luces parpadeantes, conectados a sistemas críticos.",
+          "interactText": "Decidís si destruirlos o migrar los servicios según el plan del equipo."
+        }
+      ],
+      "minigame": {
+        "template": "wiring",
+        "reason": "Redirigir servicios esenciales antes de apagar los servidores para evitar el caos."
+      },
+      "reviewStatus": "pending"
     },
     {
       "id": "oficina-epilogo",
-      "title": "Oficina: epílogo y revelación de June",
-      "summary": "Tras la caída de Acheron, el equipo recibe un mensaje póstumo de Rook y descubre que June Sato está viva, enviando mensajes desde instalaciones de Continuidad.",
-      "bridgeFromPrevious": "Meses después de la caída de Acheron.",
+      "title": "Nadie es reemplazable",
+      "summary": "Tras la caída de Acheron, el equipo reconstruye sus vidas. Adrian y Evelyn visitan la tumba de Rook. Zero Network sigue operando, pero la memoria del equipo y la fotografía de Unidad Cero adquieren un nuevo significado.",
+      "bridgeFromPrevious": "Concluye la exposición de Acheron y la confesión de Voss.",
       "characterIds": [
         "adrian-cross",
         "evelyn-marlowe",
         "mara-vega",
         "noah-mercer",
-        "mirror",
         "nora-mercer",
-        "june-sato"
+        "celia-ward",
+        "mirror"
       ],
       "objects": [
         {
           "name": "Fotografía del equipo",
-          "examineText": "Nueva foto de Zero Network, con un espacio vacío para Rook.",
-          "interactText": "Refleja el cambio en la organización."
-        },
+          "examineText": "Una nueva foto muestra a Ghost, Patch, Evelyn y Adrian, con un espacio vacío para Rook.",
+          "interactText": "Leés la inscripción: 'NADIE ES REEMPLAZABLE.'"
+        }
+      ],
+      "minigame": null,
+      "reviewStatus": "pending"
+    },
+    {
+      "id": "epilogo-june",
+      "title": "La tercera superviviente",
+      "summary": "Una grabación de Rook activa una alerta sobre instalaciones de Continuidad. El equipo descubre que June Sato está viva, enviando mensajes ocultos desde distintas ubicaciones. Los objetos en su habitación forman símbolos que reconstruyen un mensaje: está viva y pide que entren, no que la rescaten.",
+      "bridgeFromPrevious": "Meses después, una nueva amenaza aparece.",
+      "characterIds": [
+        "adrian-cross",
+        "evelyn-marlowe",
+        "mara-vega",
+        "noah-mercer",
+        "nora-mercer",
+        "celia-ward",
+        "mirror",
+        "june-sato"
+      ],
+      "objects": [
         {
-          "name": "Pantalla de mensajes",
-          "examineText": "Secuencia de imágenes de June en habitaciones blancas.",
-          "interactText": "Permite descifrar el mensaje oculto de June."
+          "name": "Grabaciones de seguridad",
+          "examineText": "Videos de una habitación blanca donde June Sato mueve pequeños objetos en patrones.",
+          "interactText": "Analizás la secuencia de objetos y descifrás el mensaje oculto."
         }
       ],
       "minigame": {
-        "template": "hidden-object",
-        "reason": "Descifrar la secuencia de símbolos y objetos que June utiliza para enviar su mensaje."
+        "template": "pattern-recognition",
+        "reason": "Reconstruir el mensaje de June a partir de la posición de objetos en las grabaciones."
       },
-      "reviewStatus": "approved"
+      "reviewStatus": "pending"
     }
   ]
 }
