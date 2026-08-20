@@ -194,7 +194,7 @@
         "template": "choice",
         "reason": "El jugador debe elegir entre tres agentes, evaluando pros y contras para la misión."
       },
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     },
     {
       "id": "halcyon-camaras",
@@ -224,7 +224,7 @@
         "template": "wiring",
         "reason": "El jugador debe resolver un puzzle de manipulación de cámaras para crear un bucle y permitir la entrada de Ghost."
       },
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     },
     {
       "id": "halcyon-rescate",
@@ -259,7 +259,7 @@
         "template": "choice",
         "reason": "El jugador debe decidir a quién o qué salvar bajo presión: Daniel, JANUS, o el equipo."
       },
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     },
     {
       "id": "oficina-informes",
@@ -284,7 +284,7 @@
         }
       ],
       "minigame": null,
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     },
     {
       "id": "reemplazos-zero",
@@ -312,7 +312,7 @@
         }
       ],
       "minigame": null,
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     },
     {
       "id": "laboratorio-iris",
@@ -345,7 +345,7 @@
         "template": "hidden-object",
         "reason": "El jugador debe identificar patrones y errores en los archivos de JANUS para descubrir las iniciales ocultas."
       },
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     },
     {
       "id": "casa-segura-rook",
@@ -376,7 +376,7 @@
         "template": "choice",
         "reason": "El jugador debe decidir si cerrar la compuerta para salvar al equipo, sacrificando a Rook."
       },
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     },
     {
       "id": "sospecha-ghost",
@@ -403,7 +403,7 @@
         }
       ],
       "minigame": null,
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     },
     {
       "id": "clinica-rescate",
@@ -435,7 +435,7 @@
         "template": "sequence",
         "reason": "El jugador debe seguir una secuencia de pasos para acceder a los expedientes médicos antes de que se eliminen."
       },
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     },
     {
       "id": "confesion-gray",
@@ -462,7 +462,7 @@
         }
       ],
       "minigame": null,
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     },
     {
       "id": "anexo-voss",
@@ -492,7 +492,7 @@
         }
       ],
       "minigame": null,
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     },
     {
       "id": "anexo-ensayo-final",
@@ -524,7 +524,7 @@
         "template": "choice",
         "reason": "El jugador debe decidir cómo distribuir la información y qué crisis priorizar, simulando la toma de decisiones bajo presión."
       },
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     },
     {
       "id": "anexo-veredicto",
@@ -556,7 +556,7 @@
         "template": "sequence",
         "reason": "El jugador debe coordinar varias acciones en tiempo limitado para evitar un desastre y exponer a Voss."
       },
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     },
     {
       "id": "oficina-final",
@@ -584,7 +584,7 @@
         }
       ],
       "minigame": null,
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     },
     {
       "id": "epilogo-june",
@@ -616,7 +616,7 @@
         "template": "pattern-recognition",
         "reason": "El jugador debe identificar patrones en los movimientos de June y descifrar los mensajes ocultos en las grabaciones."
       },
-      "reviewStatus": "pending"
+      "reviewStatus": "approved"
     }
   ]
 }

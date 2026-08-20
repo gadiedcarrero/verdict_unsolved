@@ -1,0 +1,78 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { app, ipcMain } from 'electron';
+import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
+
+const ID_PATTERN = /^[a-z0-9-]+$/;
+
+function isValidId(value: unknown): value is string {
+  return typeof value === 'string' && ID_PATTERN.test(value);
+}
+
+function portraitsDir(gameId: string): string {
+  return `assets/games/${gameId}/portraits`;
+}
+
+// Ver memoria "busto 3/4, fondo transparente" — mismo criterio que
+// DialogueOverlay.tsx (el retrato se dibuja sin recorte, sobresaliendo de
+// un aro decorativo, así que necesita fondo transparente para verse bien).
+const PORTRAIT_STYLE_PROMPT =
+  'Bust portrait, 3/4 angle, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Fully transparent background — no scenery, no backdrop, no ground. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No text, no watermark, no border or frame.';
+
+export function registerCharacterArtHandlers(): void {
+  ipcMain.handle(
+    'ai:generate-character-portrait',
+    async (_event, gameId: unknown, characterId: unknown, description: unknown) => {
+      if (app.isPackaged) {
+        return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
+      }
+      if (!isValidId(gameId)) {
+        return { ok: false, error: `Id de juego inválido: ${String(gameId)}` };
+      }
+      if (!isValidId(characterId)) {
+        return { ok: false, error: `Id de personaje inválido: ${String(characterId)}` };
+      }
+      if (typeof description !== 'string' || !description.trim()) {
+        return { ok: false, error: 'Falta la descripción del personaje.' };
+      }
+      const config = await getStoredAiIntegrationsConfig();
+      if (!config.openaiApiKey) {
+        return { ok: false, error: 'Falta la API key de OpenAI en Ajustes → Integraciones IA.' };
+      }
+      try {
+        const response = await fetch('https://api.openai.com/v1/images/generations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${config.openaiApiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'gpt-image-1',
+            prompt: `${description.trim()}\n\n${PORTRAIT_STYLE_PROMPT}`,
+            size: '1024x1024',
+            quality: 'high',
+            background: 'transparent',
+            n: 1,
+          }),
+        });
+        if (!response.ok) {
+          const errorBody = await response.text();
+          return { ok: false, error: `OpenAI devolvió un error (${response.status}): ${errorBody.slice(0, 500)}` };
+        }
+        const data = (await response.json()) as { data?: { b64_json?: string }[] };
+        const b64 = data.data?.[0]?.b64_json;
+        if (!b64) {
+          return { ok: false, error: 'OpenAI no devolvió una imagen.' };
+        }
+        const dir = join(app.getAppPath(), portraitsDir(gameId));
+        await mkdir(dir, { recursive: true });
+        const relativePath = `portraits/${characterId}.png`;
+        const filePath = join(app.getAppPath(), `assets/games/${gameId}`, relativePath);
+        await writeFile(filePath, Buffer.from(b64, 'base64'));
+        return { ok: true, path: relativePath };
+      } catch (error) {
+        return { ok: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    },
+  );
+}

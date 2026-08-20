@@ -22,6 +22,8 @@ const api: DesktopApi = {
   generateScriptBreakdown: (scriptText) => ipcRenderer.invoke('script-breakdown:generate', scriptText),
   saveScriptBreakdown: (gameId, breakdown) => ipcRenderer.invoke('script-breakdown:save', gameId, breakdown),
   readScriptBreakdown: (gameId) => ipcRenderer.invoke('script-breakdown:read', gameId),
+  generateCharacterPortrait: (gameId, characterId, description) =>
+    ipcRenderer.invoke('ai:generate-character-portrait', gameId, characterId, description),
 };
 
 contextBridge.exposeInMainWorld('api', api);

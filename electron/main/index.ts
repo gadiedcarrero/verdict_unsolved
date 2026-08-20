@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from 'electron';
 import { createMainWindow } from './window';
 import { registerAiIntegrationsHandlers } from './ipc/aiIntegrationsHandlers';
+import { registerCharacterArtHandlers } from './ipc/characterArtHandlers';
 import { registerSaveHandlers } from './ipc/saveHandlers';
 import { registerSceneEditorHandlers } from './ipc/sceneEditorHandlers';
 import { registerScriptBreakdownHandlers } from './ipc/scriptBreakdownHandlers';
@@ -23,6 +24,7 @@ if (!gotSingleInstanceLock) {
     registerSceneEditorHandlers();
     registerAiIntegrationsHandlers();
     registerScriptBreakdownHandlers();
+    registerCharacterArtHandlers();
     createMainWindow();
 
     app.on('activate', () => {

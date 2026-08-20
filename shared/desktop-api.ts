@@ -73,4 +73,9 @@ export type DesktopApi = {
    * en src/games/<gameId>/script-breakdown.json. */
   saveScriptBreakdown: (gameId: string, breakdown: ScriptBreakdown) => Promise<SceneEditorSaveResult>;
   readScriptBreakdown: (gameId: string) => Promise<ScriptBreakdownReadResult>;
+  /** Genera un retrato (busto 3/4, fondo transparente) con OpenAI a partir de
+   * la descripción del roster propuesto por el desglose de guion, y lo
+   * guarda directo en portraits/<characterId>.png — usa la key ya guardada
+   * en Integraciones IA. Solo funciona en `pnpm dev`. */
+  generateCharacterPortrait: (gameId: string, characterId: string, description: string) => Promise<PortraitSaveResult>;
 };

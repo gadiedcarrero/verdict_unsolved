@@ -5,6 +5,8 @@ import type {
   ScriptBreakdownReviewStatus,
   ScriptBreakdownScene,
 } from '../../../shared/script-breakdown';
+import type { Character } from '../../game-engine/scene-engine/schemas';
+import { gameAssetUrl } from '../gameAssetUrl';
 
 const inputClassName =
   'w-full rounded border border-graphite-700 bg-graphite-900 px-1.5 py-1 text-[10px] text-graphite-100';
@@ -15,16 +17,50 @@ const STATUS_LABEL: Record<ScriptBreakdownReviewStatus, string> = {
   cut: 'Cortada',
 };
 
-function CharacterCard({ character }: { character: ScriptBreakdownCharacter }): JSX.Element {
+function CharacterCard({
+  gameId,
+  character,
+  existingCharacter,
+  generating,
+  onGenerateArt,
+}: {
+  gameId: string;
+  character: ScriptBreakdownCharacter;
+  existingCharacter: Character | undefined;
+  generating: boolean;
+  onGenerateArt: () => void;
+}): JSX.Element {
+  const portrait = existingCharacter?.portrait ?? null;
+
   return (
     <div className="mb-1 flex items-start gap-2 rounded border border-graphite-800 bg-graphite-900/60 p-2">
-      <div className="mt-0.5 h-3 w-3 shrink-0 rounded-full border border-graphite-700" style={{ backgroundColor: character.suggestedColor }} />
+      {portrait ? (
+        <img
+          src={gameAssetUrl(gameId, portrait)}
+          alt=""
+          className="h-10 w-10 shrink-0 rounded-full border border-graphite-700 object-cover"
+          style={{ borderColor: character.suggestedColor }}
+        />
+      ) : (
+        <div
+          className="mt-0.5 h-3 w-3 shrink-0 rounded-full border border-graphite-700"
+          style={{ backgroundColor: character.suggestedColor }}
+        />
+      )}
       <div className="min-w-0 flex-1">
         <p className="text-graphite-100">
           {character.name} <span className="text-graphite-500">· {character.id}</span>
         </p>
         <p className="text-[9px] text-graphite-400">{character.description}</p>
       </div>
+      <button
+        type="button"
+        onClick={onGenerateArt}
+        disabled={generating}
+        className="shrink-0 self-center rounded border border-graphite-700 px-2 py-1 text-[8px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {generating ? 'Generando...' : portrait ? 'Regenerar retrato' : 'Generar retrato'}
+      </button>
     </div>
   );
 }
@@ -118,19 +154,27 @@ function SceneCard({
 }
 
 export function ScriptBreakdownPanel({
+  gameId,
   breakdown,
   generating,
   error,
   mergeNote,
+  existingCharacters,
+  generatingCharacterArtId,
   onGenerate,
+  onGenerateCharacterArt,
   onSceneSummaryChange,
   onSceneStatusChange,
 }: {
+  gameId: string;
   breakdown: ScriptBreakdown | null;
   generating: boolean;
   error: string | null;
   mergeNote: string | null;
+  existingCharacters: Character[];
+  generatingCharacterArtId: string | null;
   onGenerate: (scriptText: string) => void;
+  onGenerateCharacterArt: (character: ScriptBreakdownCharacter) => void;
   onSceneSummaryChange: (sceneId: string, summary: string) => void;
   onSceneStatusChange: (sceneId: string, status: ScriptBreakdownReviewStatus) => void;
 }): JSX.Element {
@@ -227,8 +271,19 @@ export function ScriptBreakdownPanel({
           <p className="mb-1 text-[9px] tracking-widest text-graphite-500 uppercase">
             Personajes ({breakdown.characters.length})
           </p>
+          <p className="mb-2 text-[9px] text-graphite-500">
+            Generar un retrato crea (o actualiza) el personaje real del juego — pasá después a la pestaña
+            &quot;Personajes&quot; y apretá Guardar para que quede.
+          </p>
           {breakdown.characters.map((character) => (
-            <CharacterCard key={character.id} character={character} />
+            <CharacterCard
+              key={character.id}
+              gameId={gameId}
+              character={character}
+              existingCharacter={existingCharacters.find((c) => c.id === character.id)}
+              generating={generatingCharacterArtId === character.id}
+              onGenerateArt={() => onGenerateCharacterArt(character)}
+            />
           ))}
 
           <p className="mt-3 mb-1 text-[9px] tracking-widest text-graphite-500 uppercase">

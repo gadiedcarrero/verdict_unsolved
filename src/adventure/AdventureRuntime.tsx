@@ -33,7 +33,12 @@ import { MinigameHost } from './minigames/MinigameHost';
 import { resizeCursorImage } from './resizeCursorImage';
 import { SceneViewer } from './SceneViewer';
 import { ScriptBreakdownPanel } from './editor/ScriptBreakdownPanel';
-import { mergeScriptBreakdownReview, type ScriptBreakdown, type ScriptBreakdownReviewStatus } from '../../shared/script-breakdown';
+import {
+  mergeScriptBreakdownReview,
+  type ScriptBreakdown,
+  type ScriptBreakdownCharacter,
+  type ScriptBreakdownReviewStatus,
+} from '../../shared/script-breakdown';
 
 type EditorTab = 'scene' | 'characters' | 'settings' | 'script-ai';
 
@@ -162,6 +167,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   // retrato (ver Character.expressions) — separado de uploadingPortraitId
   // porque ese es solo para el retrato por defecto.
   const [uploadingExpressionKey, setUploadingExpressionKey] = useState<string | null>(null);
+  // Id de personaje del desglose (Guion IA) para el que se está generando un
+  // retrato con IA en este momento, o null.
+  const [generatingCharacterArtId, setGeneratingCharacterArtId] = useState<string | null>(null);
 
   const [editedSiteSettings, setEditedSiteSettings] = useState<SiteSettings | null>(null);
   const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
@@ -1049,6 +1057,52 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     updateCharacter(characterId, { expressions });
   }
 
+  // Convierte una entrada del roster propuesto por la IA (Guion IA) en un
+  // Character real: lo crea si no existe (matcheando por id, mismo slug que
+  // createCharacter) o le actualiza el retrato si ya existe. El retrato en sí
+  // se sube y persiste al toque vía IPC; el Character (portrait/color/nombre)
+  // queda en el borrador de la pestaña Personajes hasta "Guardar cambios" —
+  // mismo criterio que uploadPortrait.
+  async function generateCharacterArt(breakdownCharacter: ScriptBreakdownCharacter): Promise<void> {
+    setGeneratingCharacterArtId(breakdownCharacter.id);
+    setCharacterSaveMessage(null);
+    try {
+      const result = await window.api.generateCharacterPortrait(
+        gameId,
+        breakdownCharacter.id,
+        breakdownCharacter.description || breakdownCharacter.name,
+      );
+      if (!result.ok) {
+        setCharacterSaveMessage(`Error generando retrato de ${breakdownCharacter.name}: ${result.error}`);
+        return;
+      }
+      const base = editedCharacters ?? baseCharacters;
+      const existing = base.find((c) => c.id === breakdownCharacter.id);
+      if (existing) {
+        updateCharacter(existing.id, { portrait: result.path });
+      } else {
+        const nameKey = `character.${breakdownCharacter.id}.name`;
+        setEditedCharacters([
+          ...base,
+          {
+            id: breakdownCharacter.id,
+            name: nameKey,
+            portrait: result.path,
+            expressions: {},
+            color: breakdownCharacter.suggestedColor,
+          },
+        ]);
+        setPendingCharacterStrings((prev) => ({ ...prev, [nameKey]: breakdownCharacter.name }));
+      }
+    } catch (error) {
+      setCharacterSaveMessage(
+        `Error generando retrato de ${breakdownCharacter.name}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    } finally {
+      setGeneratingCharacterArtId(null);
+    }
+  }
+
   function persistScriptBreakdown(next: ScriptBreakdown): void {
     setScriptBreakdown(next);
     void window.api.saveScriptBreakdown(gameId, next);
@@ -1407,11 +1461,15 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 />
               ) : (
                 <ScriptBreakdownPanel
+                  gameId={gameId}
                   breakdown={scriptBreakdown}
                   generating={scriptBreakdownGenerating}
                   error={scriptBreakdownError}
                   mergeNote={scriptBreakdownMergeNote}
+                  existingCharacters={displayCharacters}
+                  generatingCharacterArtId={generatingCharacterArtId}
                   onGenerate={(scriptText) => void generateScriptBreakdown(scriptText)}
+                  onGenerateCharacterArt={(character) => void generateCharacterArt(character)}
                   onSceneSummaryChange={updateScriptBreakdownSceneSummary}
                   onSceneStatusChange={updateScriptBreakdownSceneStatus}
                 />
