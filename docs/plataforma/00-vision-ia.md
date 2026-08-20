@@ -26,11 +26,22 @@ Cada paso ya tiene (o va a tener) su lugar concreto en el motor actual
    descripción → **dos imágenes** (cabeza y cuello para el retrato de diálogo,
    cuerpo entero por si se necesita en escena). Encaja directo en
    `Character` (`characters.json`) y en el editor de personajes ya existente.
-3. **Guion → escenas.** Fondos, capas de objetos, layout inicial.
-4. **Escenas → zonas interactivas.** La IA propone las áreas (rect o polígono)
-   sobre cada objeto relevante del guion — el usuario **ajusta la posición**
-   a mano en el editor visual (esto ya funciona hoy: zonas libres, arrastrar,
-   redimensionar).
+3. **Guion → desglose legible por escena.** Antes de generar ningún dato del
+   motor, la IA parte el guion completo en un desglose por escena **en texto
+   legible** (no JSON todavía): qué pasa en la escena, qué personajes
+   participan, qué objetos/zonas hacen falta, qué dice cada uno en cada
+   acción (Examinar/Interactuar), y si la escena pide un minijuego, **cuál
+   de la biblioteca de plantillas encaja y por qué** (ver "Minijuegos" más
+   abajo — la propuesta de minijuego pasa a vivir acá, no como paso aparte al
+   final). El usuario revisa esto **escena por escena**, decide qué se queda
+   y qué se recorta o ajusta, antes de que nada se traduzca a datos reales
+   del motor. Este es el punto de control humano central del pipeline — todo
+   lo que viene después (pasos 4-5) es la traducción mecánica de un desglose
+   ya aprobado, no una decisión creativa nueva.
+4. **Desglose aprobado → escenas del motor.** Fondos, capas de objetos,
+   layout inicial, zonas interactivas (rect o polígono) sobre cada objeto que
+   el desglose marcó — el usuario **ajusta la posición** a mano en el editor
+   visual (esto ya funciona hoy: zonas libres, arrastrar, redimensionar).
 5. **Diálogo.** Ya resuelto esta sesión: cada acción de un objeto
    (Examinar/Interactuar/Interactuar con) puede componer escena-que-activa +
    personaje-que-habla + texto, sin necesitar un nodo de diálogo armado a
@@ -40,7 +51,9 @@ Cada paso ya tiene (o va a tener) su lugar concreto en el motor actual
 7. **Video.** Seedance (vía fal.ai, ver más abajo), para lo que necesite
    video generado en vez de capas estáticas — todavía sin diseñar cómo
    entra al motor.
-8. **Minijuegos.** Sin resolver todavía — ver más abajo.
+8. **Minijuegos.** La IA los propone durante el paso 3 (desglose por
+   escena), no aparte al final — ver más abajo para la biblioteca de
+   plantillas y qué tan lejos está eso hoy.
 
 ## Decisión: keys por proveedor, no un agregador único
 
@@ -128,19 +141,30 @@ la generación por IA** (cuando "rehacer" realmente empiece a producir
 versiones para comparar), para diseñar el flujo de subida versionada y el de
 regenerar por IA a la vez, en vez de migrar el storage dos veces.
 
-## Problema abierto: minijuegos
+## Minijuegos
 
 Generar la **lógica** de un minijuego libre con IA no es confiable (mucho
-código a mano por revisar, resultados dispares). Dirección propuesta —
-**no implementada, para discutir cuando se llegue a este paso**:
+código a mano por revisar, resultados dispares). Dirección elegida: una
+biblioteca chica de **plantillas de minijuego** ya construidas y
+parametrizables en el motor. El trabajo de la IA pasa a ser "elegir qué
+plantilla encaja con este punto del guion y completar sus parámetros"
+(dificultad, tema visual, condición de victoria, textos) — un problema mucho
+más chico y verificable que generar un motor de juego nuevo cada vez. Esta
+elección de plantilla + parámetros ocurre durante el paso 3 del pipeline
+(desglose legible por escena), no como paso aparte al final.
 
-Armar una biblioteca chica (4–5) de **plantillas de minijuego** ya
-construidas y parametrizables en el motor (memoria de secuencia, conectar
-cables, barra de timing tipo lockpicking, objeto oculto...). El trabajo de la
-IA pasa a ser "elegir qué plantilla encaja con este punto del guion y
-completar sus parámetros" (dificultad, tema visual, condición de victoria,
-textos) — un problema mucho más chico y verificable que generar un motor de
-juego nuevo cada vez.
+**Estado (2026-08-19):** el mecanismo ya está construido y probado — una
+`SceneAction` de tipo `openMinigame` (`schemas.ts`), corrible desde cualquier
+lista de acciones existente (Examinar/Interactuar/diálogo/menú), con
+`onSuccess`/`onFail` reusando el mismo composer de acciones que el resto del
+motor. Primera plantilla piloto: **memoria de secuencia** (tipo Simon,
+`src/adventure/minigames/SequenceMinigame.tsx`), con su sección en el editor
+visual (toggle + largo + resultados). Faltan las otras 3-4 plantillas de la
+lista original (conectar cables, barra de timing tipo lockpicking, objeto
+oculto) — se agregan una por una siguiendo el mismo patrón (nuevo componente
+en `minigames/`, un `case` en `MinigameHost.tsx`, sumar el valor al enum
+`MinigameTemplateSchema`) cuando haga falta una para una escena concreta del
+guion, no todas de una.
 
 ## Próximo paso propuesto
 

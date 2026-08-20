@@ -11,16 +11,20 @@ function getPath(): string {
   return join(app.getPath('userData'), 'ai-integrations.json');
 }
 
+/** Reusado por otros handlers (p. ej. scriptBreakdownHandlers.ts) que necesitan
+ * la key de un proveedor sin duplicar la lectura/parseo del archivo. */
+export async function getStoredAiIntegrationsConfig(): Promise<ReturnType<typeof createEmptyAiIntegrationsConfig>> {
+  try {
+    const raw = await readFile(getPath(), 'utf-8');
+    const parsed: unknown = JSON.parse(raw);
+    return isAiIntegrationsConfig(parsed) ? parsed : createEmptyAiIntegrationsConfig();
+  } catch {
+    return createEmptyAiIntegrationsConfig();
+  }
+}
+
 export function registerAiIntegrationsHandlers(): void {
-  ipcMain.handle('ai-integrations:read', async () => {
-    try {
-      const raw = await readFile(getPath(), 'utf-8');
-      const parsed: unknown = JSON.parse(raw);
-      return isAiIntegrationsConfig(parsed) ? parsed : createEmptyAiIntegrationsConfig();
-    } catch {
-      return createEmptyAiIntegrationsConfig();
-    }
-  });
+  ipcMain.handle('ai-integrations:read', getStoredAiIntegrationsConfig);
 
   ipcMain.handle('ai-integrations:write', async (_event, data: unknown) => {
     if (!isAiIntegrationsConfig(data)) {

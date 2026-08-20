@@ -1,9 +1,14 @@
 import type { AiIntegrationsConfig } from './ai-integrations';
 import type { SaveData } from './save-data';
+import type { ScriptBreakdown } from './script-breakdown';
 
 export type SceneEditorSaveResult = { ok: true } | { ok: false; error: string };
 export type PortraitSaveResult = { ok: true; path: string } | { ok: false; error: string };
 export type BackgroundSaveResult = { ok: true; path: string } | { ok: false; error: string };
+export type ScriptBreakdownGenerateResult =
+  | { ok: true; breakdown: ScriptBreakdown }
+  | { ok: false; error: string };
+export type ScriptBreakdownReadResult = { ok: true; breakdown: ScriptBreakdown | null } | { ok: false; error: string };
 
 export type DesktopApi = {
   /** Un archivo de guardado por juego (save-<gameId>.json en userData). */
@@ -55,4 +60,14 @@ export type DesktopApi = {
    * del repo, nunca en un JSON que se commitea). */
   readAiIntegrations: () => Promise<AiIntegrationsConfig>;
   writeAiIntegrations: (config: AiIntegrationsConfig) => Promise<void>;
+  /** Paso 3 del pipeline de IA (ver docs/plataforma/00-vision-ia.md): un solo
+   * llamado a OpenAI que lee el guion completo pegado por el usuario y
+   * devuelve roster de personajes + desglose legible por escena, con
+   * propuesta de minijuego donde corresponda. Usa la key ya guardada en
+   * Integraciones IA — no requiere pasarla acá. */
+  generateScriptBreakdown: (scriptText: string) => Promise<ScriptBreakdownGenerateResult>;
+  /** Solo funciona en `pnpm dev` — persiste el desglose (ya revisado o no)
+   * en src/games/<gameId>/script-breakdown.json. */
+  saveScriptBreakdown: (gameId: string, breakdown: ScriptBreakdown) => Promise<SceneEditorSaveResult>;
+  readScriptBreakdown: (gameId: string) => Promise<ScriptBreakdownReadResult>;
 };

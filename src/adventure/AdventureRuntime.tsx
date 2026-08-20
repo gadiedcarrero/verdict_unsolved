@@ -32,8 +32,10 @@ import { MenuScene } from './MenuScene';
 import { MinigameHost } from './minigames/MinigameHost';
 import { resizeCursorImage } from './resizeCursorImage';
 import { SceneViewer } from './SceneViewer';
+import { ScriptBreakdownPanel } from './editor/ScriptBreakdownPanel';
+import type { ScriptBreakdown, ScriptBreakdownReviewStatus } from '../../shared/script-breakdown';
 
-type EditorTab = 'scene' | 'characters' | 'settings';
+type EditorTab = 'scene' | 'characters' | 'settings' | 'script-ai';
 
 /** Zona de forma libre en proceso de trazado — todavía no es un hotspot
  * real hasta que se cierra (ver closePolygonDraft). También se usa para
@@ -118,7 +120,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const editorTabStorageKey = `verdictUnsolved.editorTab.${gameId}`;
   const [editorTab, setEditorTabState] = useState<EditorTab>(() => {
     const stored = localStorage.getItem(editorTabStorageKey);
-    return stored === 'scene' || stored === 'characters' || stored === 'settings' ? stored : 'scene';
+    return stored === 'scene' || stored === 'characters' || stored === 'settings' || stored === 'script-ai'
+      ? stored
+      : 'scene';
   });
   function setEditorTab(tab: EditorTab): void {
     localStorage.setItem(editorTabStorageKey, tab);
@@ -161,6 +165,16 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const [uploadingCursor, setUploadingCursor] = useState<'default' | 'hover' | null>(null);
   const [uploadingActionMenuImage, setUploadingActionMenuImage] = useState<ActionMenuImageKind | null>(null);
 
+  // Desglose de guion generado por IA (paso 3 del pipeline, ver
+  // docs/plataforma/00-vision-ia.md) — a diferencia de escena/personajes/
+  // ajustes, cada cambio se persiste solo (no hay "Guardar cambios"/
+  // "Descartar" acá): es un documento de revisión, no una estructura
+  // versionada a mano, y regenerarlo cuesta un llamado real a OpenAI que no
+  // conviene arriesgar a perder por cerrar la pestaña.
+  const [scriptBreakdown, setScriptBreakdown] = useState<ScriptBreakdown | null>(null);
+  const [scriptBreakdownGenerating, setScriptBreakdownGenerating] = useState(false);
+  const [scriptBreakdownError, setScriptBreakdownError] = useState<string | null>(null);
+
   // Zona de forma libre en proceso de trazado (ver "Crear zona" o "Reiniciar
   // forma") — no null mientras se están juntando puntos a click.
   const [polygonDraft, setPolygonDraft] = useState<PolygonDraft | null>(null);
@@ -184,6 +198,14 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   useEffect(() => {
     void load(gameId);
   }, [load, gameId]);
+
+  useEffect(() => {
+    setScriptBreakdown(null);
+    setScriptBreakdownError(null);
+    void window.api.readScriptBreakdown(gameId).then((result) => {
+      if (result.ok) setScriptBreakdown(result.breakdown);
+    });
+  }, [gameId]);
 
   useEffect(() => {
     if (isLoaded && project?.result.ok && !bundle) {
@@ -972,6 +994,44 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     }
   }
 
+  function persistScriptBreakdown(next: ScriptBreakdown): void {
+    setScriptBreakdown(next);
+    void window.api.saveScriptBreakdown(gameId, next);
+  }
+
+  async function generateScriptBreakdown(scriptText: string): Promise<void> {
+    setScriptBreakdownGenerating(true);
+    setScriptBreakdownError(null);
+    try {
+      const result = await window.api.generateScriptBreakdown(scriptText);
+      if (result.ok) {
+        persistScriptBreakdown(result.breakdown);
+      } else {
+        setScriptBreakdownError(result.error);
+      }
+    } catch (error) {
+      setScriptBreakdownError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setScriptBreakdownGenerating(false);
+    }
+  }
+
+  function updateScriptBreakdownSceneSummary(sceneId: string, summary: string): void {
+    if (!scriptBreakdown) return;
+    persistScriptBreakdown({
+      ...scriptBreakdown,
+      scenes: scriptBreakdown.scenes.map((s) => (s.id === sceneId ? { ...s, summary } : s)),
+    });
+  }
+
+  function updateScriptBreakdownSceneStatus(sceneId: string, reviewStatus: ScriptBreakdownReviewStatus): void {
+    if (!scriptBreakdown) return;
+    persistScriptBreakdown({
+      ...scriptBreakdown,
+      scenes: scriptBreakdown.scenes.map((s) => (s.id === sceneId ? { ...s, reviewStatus } : s)),
+    });
+  }
+
   async function handleSaveCharacters(): Promise<void> {
     if (!editedCharacters) return;
     setCharacterSaving(true);
@@ -1189,6 +1249,17 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
               >
                 Ajustes
               </button>
+              <button
+                type="button"
+                onClick={() => setEditorTab('script-ai')}
+                className={`flex-1 border-l border-graphite-700 px-3 py-2 text-[11px] tracking-widest uppercase transition-colors ${
+                  editorTab === 'script-ai'
+                    ? 'bg-amber-accent text-graphite-950'
+                    : 'text-graphite-400 hover:text-amber-accent'
+                }`}
+              >
+                Guion IA
+              </button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
               {editorTab === 'scene' ? (
@@ -1250,7 +1321,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onUploadPortrait={(id, file) => void uploadPortrait(id, file)}
                   onCreateCharacter={createCharacter}
                 />
-              ) : (
+              ) : editorTab === 'settings' ? (
                 <SiteSettingsPanel
                   gameId={gameId}
                   settings={displaySiteSettings}
@@ -1263,68 +1334,80 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onRemoveActionMenuImage={removeActionMenuImage}
                   onActionMenuZoneChange={updateActionMenuZone}
                 />
+              ) : (
+                <ScriptBreakdownPanel
+                  breakdown={scriptBreakdown}
+                  generating={scriptBreakdownGenerating}
+                  error={scriptBreakdownError}
+                  onGenerate={(scriptText) => void generateScriptBreakdown(scriptText)}
+                  onSceneSummaryChange={updateScriptBreakdownSceneSummary}
+                  onSceneStatusChange={updateScriptBreakdownSceneStatus}
+                />
               )}
             </div>
 
             {/* Pie fijo: no se va con el scroll aunque la lista de arriba
-                tenga cientos de escenas/personajes. */}
-            <div className="shrink-0 border-t border-graphite-700 p-3">
-              <button
-                type="button"
-                onClick={() =>
-                  void (editorTab === 'scene'
-                    ? handleSave()
-                    : editorTab === 'characters'
-                      ? handleSaveCharacters()
-                      : handleSaveSiteSettings())
-                }
-                disabled={
-                  editorTab === 'scene'
-                    ? editedScene === null || saving
-                    : editorTab === 'characters'
-                      ? editedCharacters === null || characterSaving
-                      : editedSiteSettings === null || siteSettingsSaving
-                }
-                className="w-full rounded border border-amber-accent px-3 py-2 text-[11px] font-semibold tracking-widest text-amber-accent uppercase transition-colors hover:bg-amber-accent hover:text-graphite-950 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-amber-accent"
-              >
-                {(editorTab === 'scene' ? saving : editorTab === 'characters' ? characterSaving : siteSettingsSaving)
-                  ? 'Guardando...'
-                  : 'Guardar cambios'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (editorTab === 'scene') {
-                    setEditedScene(null);
-                    setPendingStrings({});
-                    setSaveMessage(null);
-                    setPolygonDraft(null);
-                  } else if (editorTab === 'characters') {
-                    setEditedCharacters(null);
-                    setPendingCharacterStrings({});
-                    setCharacterSaveMessage(null);
-                  } else {
-                    setEditedSiteSettings(null);
-                    setSiteSettingsSaveMessage(null);
+                tenga cientos de escenas/personajes. La pestaña "Guion IA" no
+                usa este patrón — cada cambio ahí se persiste solo. */}
+            {editorTab !== 'script-ai' && (
+              <div className="shrink-0 border-t border-graphite-700 p-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    void (editorTab === 'scene'
+                      ? handleSave()
+                      : editorTab === 'characters'
+                        ? handleSaveCharacters()
+                        : handleSaveSiteSettings())
                   }
-                }}
-                disabled={
-                  editorTab === 'scene'
-                    ? editedScene === null
-                    : editorTab === 'characters'
-                      ? editedCharacters === null
-                      : editedSiteSettings === null
-                }
-                className="mt-2 w-full rounded border border-graphite-700 px-3 py-1.5 text-[10px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Descartar
-              </button>
-              {(editorTab === 'scene' ? saveMessage : editorTab === 'characters' ? characterSaveMessage : siteSettingsSaveMessage) && (
-                <p className="mt-2 text-[10px] text-graphite-300">
-                  {editorTab === 'scene' ? saveMessage : editorTab === 'characters' ? characterSaveMessage : siteSettingsSaveMessage}
-                </p>
-              )}
-            </div>
+                  disabled={
+                    editorTab === 'scene'
+                      ? editedScene === null || saving
+                      : editorTab === 'characters'
+                        ? editedCharacters === null || characterSaving
+                        : editedSiteSettings === null || siteSettingsSaving
+                  }
+                  className="w-full rounded border border-amber-accent px-3 py-2 text-[11px] font-semibold tracking-widest text-amber-accent uppercase transition-colors hover:bg-amber-accent hover:text-graphite-950 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-amber-accent"
+                >
+                  {(editorTab === 'scene' ? saving : editorTab === 'characters' ? characterSaving : siteSettingsSaving)
+                    ? 'Guardando...'
+                    : 'Guardar cambios'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (editorTab === 'scene') {
+                      setEditedScene(null);
+                      setPendingStrings({});
+                      setSaveMessage(null);
+                      setPolygonDraft(null);
+                    } else if (editorTab === 'characters') {
+                      setEditedCharacters(null);
+                      setPendingCharacterStrings({});
+                      setCharacterSaveMessage(null);
+                    } else {
+                      setEditedSiteSettings(null);
+                      setSiteSettingsSaveMessage(null);
+                    }
+                  }}
+                  disabled={
+                    editorTab === 'scene'
+                      ? editedScene === null
+                      : editorTab === 'characters'
+                        ? editedCharacters === null
+                        : editedSiteSettings === null
+                  }
+                  className="mt-2 w-full rounded border border-graphite-700 px-3 py-1.5 text-[10px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Descartar
+                </button>
+                {(editorTab === 'scene' ? saveMessage : editorTab === 'characters' ? characterSaveMessage : siteSettingsSaveMessage) && (
+                  <p className="mt-2 text-[10px] text-graphite-300">
+                    {editorTab === 'scene' ? saveMessage : editorTab === 'characters' ? characterSaveMessage : siteSettingsSaveMessage}
+                  </p>
+                )}
+              </div>
+            )}
           </aside>
           <div className="min-w-0 flex-1">
             {displayScene ? (

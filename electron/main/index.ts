@@ -3,6 +3,7 @@ import { createMainWindow } from './window';
 import { registerAiIntegrationsHandlers } from './ipc/aiIntegrationsHandlers';
 import { registerSaveHandlers } from './ipc/saveHandlers';
 import { registerSceneEditorHandlers } from './ipc/sceneEditorHandlers';
+import { registerScriptBreakdownHandlers } from './ipc/scriptBreakdownHandlers';
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 
@@ -21,6 +22,7 @@ if (!gotSingleInstanceLock) {
     registerSaveHandlers();
     registerSceneEditorHandlers();
     registerAiIntegrationsHandlers();
+    registerScriptBreakdownHandlers();
     createMainWindow();
 
     app.on('activate', () => {

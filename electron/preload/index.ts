@@ -19,6 +19,9 @@ const api: DesktopApi = {
     ipcRenderer.invoke('scene-editor:save-action-menu-image', gameId, fileId, ext, data),
   readAiIntegrations: () => ipcRenderer.invoke('ai-integrations:read'),
   writeAiIntegrations: (config) => ipcRenderer.invoke('ai-integrations:write', config),
+  generateScriptBreakdown: (scriptText) => ipcRenderer.invoke('script-breakdown:generate', scriptText),
+  saveScriptBreakdown: (gameId, breakdown) => ipcRenderer.invoke('script-breakdown:save', gameId, breakdown),
+  readScriptBreakdown: (gameId) => ipcRenderer.invoke('script-breakdown:read', gameId),
 };
 
 contextBridge.exposeInMainWorld('api', api);

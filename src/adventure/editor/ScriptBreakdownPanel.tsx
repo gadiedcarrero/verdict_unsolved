@@ -1,0 +1,181 @@
+import { useState, type JSX } from 'react';
+import type {
+  ScriptBreakdown,
+  ScriptBreakdownCharacter,
+  ScriptBreakdownReviewStatus,
+  ScriptBreakdownScene,
+} from '../../../shared/script-breakdown';
+
+const inputClassName =
+  'w-full rounded border border-graphite-700 bg-graphite-900 px-1.5 py-1 text-[10px] text-graphite-100';
+
+const STATUS_LABEL: Record<ScriptBreakdownReviewStatus, string> = {
+  pending: 'Pendiente',
+  approved: 'Aprobada',
+  cut: 'Cortada',
+};
+
+function CharacterCard({ character }: { character: ScriptBreakdownCharacter }): JSX.Element {
+  return (
+    <div className="mb-1 flex items-start gap-2 rounded border border-graphite-800 bg-graphite-900/60 p-2">
+      <div className="mt-0.5 h-3 w-3 shrink-0 rounded-full border border-graphite-700" style={{ backgroundColor: character.suggestedColor }} />
+      <div className="min-w-0 flex-1">
+        <p className="text-graphite-100">
+          {character.name} <span className="text-graphite-500">· {character.id}</span>
+        </p>
+        <p className="text-[9px] text-graphite-400">{character.description}</p>
+      </div>
+    </div>
+  );
+}
+
+function SceneCard({
+  scene,
+  characters,
+  onSummaryChange,
+  onStatusChange,
+}: {
+  scene: ScriptBreakdownScene;
+  characters: ScriptBreakdownCharacter[];
+  onSummaryChange: (summary: string) => void;
+  onStatusChange: (status: ScriptBreakdownReviewStatus) => void;
+}): JSX.Element {
+  const sceneCharacters = scene.characterIds
+    .map((id) => characters.find((c) => c.id === id)?.name ?? id)
+    .join(', ');
+
+  return (
+    <div
+      className={`mb-2 rounded border p-2 ${
+        scene.reviewStatus === 'cut'
+          ? 'border-graphite-800 bg-graphite-900/30 opacity-50'
+          : scene.reviewStatus === 'approved'
+            ? 'border-emerald-600/50 bg-graphite-900/60'
+            : 'border-graphite-700 bg-graphite-900/60'
+      }`}
+    >
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <p className="truncate text-graphite-100">
+          {scene.title} <span className="text-graphite-500">· {scene.id}</span>
+        </p>
+        <div className="flex shrink-0 gap-1">
+          {(['pending', 'approved', 'cut'] as const).map((status) => (
+            <button
+              key={status}
+              type="button"
+              onClick={() => onStatusChange(status)}
+              className={`rounded border px-1.5 py-0.5 text-[8px] tracking-widest uppercase transition-colors ${
+                scene.reviewStatus === status
+                  ? 'border-amber-accent text-amber-accent'
+                  : 'border-graphite-700 text-graphite-500 hover:border-graphite-500 hover:text-graphite-300'
+              }`}
+            >
+              {STATUS_LABEL[status]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {sceneCharacters && <p className="mb-1 text-[9px] text-graphite-500">Personajes: {sceneCharacters}</p>}
+
+      <textarea
+        value={scene.summary}
+        onChange={(event) => onSummaryChange(event.target.value)}
+        rows={3}
+        className={`${inputClassName} mb-1`}
+      />
+
+      {scene.objects.length > 0 && (
+        <div className="mb-1">
+          <p className="text-[8px] tracking-widest text-graphite-500 uppercase">Objetos</p>
+          {scene.objects.map((object, index) => (
+            <div key={index} className="mb-1 rounded border border-graphite-800 p-1">
+              <p className="text-[9px] text-graphite-300">{object.name}</p>
+              {object.examineText && <p className="text-[9px] text-graphite-500">Examinar: {object.examineText}</p>}
+              {object.interactText && (
+                <p className="text-[9px] text-graphite-500">Interactuar: {object.interactText}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {scene.minigame && (
+        <div className="rounded border border-sky-400/40 bg-graphite-950 p-1">
+          <p className="text-[9px] text-sky-300">Minijuego sugerido: {scene.minigame.template}</p>
+          <p className="text-[9px] text-graphite-500">{scene.minigame.reason}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function ScriptBreakdownPanel({
+  breakdown,
+  generating,
+  error,
+  onGenerate,
+  onSceneSummaryChange,
+  onSceneStatusChange,
+}: {
+  breakdown: ScriptBreakdown | null;
+  generating: boolean;
+  error: string | null;
+  onGenerate: (scriptText: string) => void;
+  onSceneSummaryChange: (sceneId: string, summary: string) => void;
+  onSceneStatusChange: (sceneId: string, status: ScriptBreakdownReviewStatus) => void;
+}): JSX.Element {
+  const [scriptText, setScriptText] = useState('');
+
+  return (
+    <div className="text-xs text-graphite-200">
+      <p className="mb-3 text-[10px] text-graphite-400">
+        Pegá acá el guion completo. La IA saca el roster de personajes y arma un desglose legible por escena
+        (personajes, objetos, y si corresponde, un minijuego sugerido). Después revisás escena por escena: aprobar,
+        cortar o ajustar el resumen — la traducción a escenas reales del motor es un paso aparte, todavía manual.
+      </p>
+
+      <textarea
+        value={scriptText}
+        onChange={(event) => setScriptText(event.target.value)}
+        rows={8}
+        placeholder="Pegá el guion completo acá..."
+        className={`${inputClassName} mb-2`}
+      />
+      <button
+        type="button"
+        onClick={() => onGenerate(scriptText)}
+        disabled={generating || scriptText.trim().length < 20}
+        className="mb-3 w-full rounded border border-amber-accent px-2 py-1.5 text-[10px] font-semibold tracking-widest text-amber-accent uppercase transition-colors hover:bg-amber-accent hover:text-graphite-950 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-amber-accent"
+      >
+        {generating ? 'Generando (puede tardar un minuto)...' : 'Generar desglose con IA'}
+      </button>
+
+      {error && <p className="mb-3 rounded border border-red-500/40 bg-red-950/30 p-2 text-[9px] text-red-300">{error}</p>}
+
+      {breakdown && (
+        <>
+          <p className="mb-1 text-[9px] tracking-widest text-graphite-500 uppercase">
+            Personajes ({breakdown.characters.length})
+          </p>
+          {breakdown.characters.map((character) => (
+            <CharacterCard key={character.id} character={character} />
+          ))}
+
+          <p className="mt-3 mb-1 text-[9px] tracking-widest text-graphite-500 uppercase">
+            Escenas ({breakdown.scenes.length})
+          </p>
+          {breakdown.scenes.map((scene) => (
+            <SceneCard
+              key={scene.id}
+              scene={scene}
+              characters={breakdown.characters}
+              onSummaryChange={(summary) => onSceneSummaryChange(scene.id, summary)}
+              onStatusChange={(status) => onSceneStatusChange(scene.id, status)}
+            />
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
