@@ -7,7 +7,17 @@ import { slugify } from './slug';
 const inputClassName =
   'w-full rounded border border-graphite-700 bg-graphite-900 px-1.5 py-1 text-[10px] text-graphite-100';
 
-function PortraitPreview({ gameId, portrait }: { gameId: string; portrait: string | null }): JSX.Element {
+function PortraitPreview({
+  gameId,
+  portrait,
+  onPreview,
+}: {
+  gameId: string;
+  portrait: string | null;
+  /** Si está presente, hace click-to-preview (ver panel grande a la
+   * derecha del editor) — ausente en contextos donde no aplica. */
+  onPreview?: (path: string) => void;
+}): JSX.Element {
   const [failed, setFailed] = useState(false);
   if (!portrait || failed) {
     return (
@@ -22,7 +32,8 @@ function PortraitPreview({ gameId, portrait }: { gameId: string; portrait: strin
       src={gameAssetUrl(gameId, portrait)}
       alt=""
       onError={() => setFailed(true)}
-      className="h-10 w-10 shrink-0 rounded-full border border-graphite-700 object-cover"
+      onClick={onPreview ? () => onPreview(portrait) : undefined}
+      className={`h-10 w-10 shrink-0 rounded-full border border-graphite-700 object-cover ${onPreview ? 'cursor-pointer hover:border-amber-accent' : ''}`}
     />
   );
 }
@@ -41,6 +52,7 @@ function ExpressionsFields({
   character,
   uploadingKey,
   generatingArtIds,
+  onPreviewPortrait,
   onUploadExpression,
   onRemoveExpression,
   onAddExpression,
@@ -51,6 +63,7 @@ function ExpressionsFields({
   character: Character;
   uploadingKey: string | null;
   generatingArtIds: string[];
+  onPreviewPortrait: (path: string) => void;
   onUploadExpression: (expressionKey: string, file: File) => void;
   onRemoveExpression: (expressionKey: string) => void;
   onAddExpression: (key: string, description: string) => void;
@@ -86,7 +99,7 @@ function ExpressionsFields({
         return (
           <div key={key} className="mb-1 rounded border border-graphite-800 bg-graphite-950/60 p-1.5">
             <div className="mb-1 flex items-center gap-2">
-              <PortraitPreview gameId={gameId} portrait={expression.path} />
+              <PortraitPreview gameId={gameId} portrait={expression.path} onPreview={onPreviewPortrait} />
               <p className="flex-1 truncate text-[9px] text-graphite-300">{key}</p>
               <button
                 type="button"
@@ -165,6 +178,7 @@ function CharacterFields({
   gameId,
   character,
   strings,
+  onPreviewPortrait,
   onNameTextChange,
   onColorChange,
   onDescriptionChange,
@@ -182,6 +196,7 @@ function CharacterFields({
   gameId: string;
   character: Character;
   strings: Record<string, string>;
+  onPreviewPortrait: (path: string) => void;
   onNameTextChange: (text: string) => void;
   onColorChange: (color: string) => void;
   onDescriptionChange: (description: string) => void;
@@ -207,7 +222,7 @@ function CharacterFields({
 
   return (
     <div className="mb-2 flex gap-2 border-b border-graphite-800 pb-2">
-      <PortraitPreview gameId={gameId} portrait={character.portrait} />
+      <PortraitPreview gameId={gameId} portrait={character.portrait} onPreview={onPreviewPortrait} />
       <div className="min-w-0 flex-1">
         <p className="mb-1 truncate text-graphite-100">{character.id}</p>
         <label className="mb-1 flex flex-col">
@@ -263,6 +278,7 @@ function CharacterFields({
           character={character}
           uploadingKey={uploadingExpressionKey}
           generatingArtIds={generatingArtIds}
+          onPreviewPortrait={onPreviewPortrait}
           onUploadExpression={onUploadExpression}
           onRemoveExpression={onRemoveExpression}
           onAddExpression={onAddExpression}
@@ -336,6 +352,7 @@ export function CharacterEditorPanel({
   uploadingId,
   uploadingExpressionKey,
   generatingArtIds,
+  onPreviewPortrait,
   onNameTextChange,
   onColorChange,
   onDescriptionChange,
@@ -357,6 +374,9 @@ export function CharacterEditorPanel({
   /** "<characterId>" o "<characterId>:<expresión>" de cada generación por
    * IA en curso — puede haber varias en paralelo (retrato + identidades). */
   generatingArtIds: string[];
+  /** Click en cualquier miniatura (retrato o expresión) — se usa para
+   * mostrarla grande en el panel de la derecha del editor. */
+  onPreviewPortrait: (path: string) => void;
   onNameTextChange: (characterId: string, nameKey: string, text: string) => void;
   onColorChange: (characterId: string, color: string) => void;
   onDescriptionChange: (characterId: string, description: string) => void;
@@ -387,6 +407,7 @@ export function CharacterEditorPanel({
           strings={strings}
           uploading={uploadingId === character.id}
           generatingArtIds={generatingArtIds}
+          onPreviewPortrait={onPreviewPortrait}
           uploadingExpressionKey={
             uploadingExpressionKey?.startsWith(`${character.id}:`)
               ? uploadingExpressionKey.slice(character.id.length + 1)

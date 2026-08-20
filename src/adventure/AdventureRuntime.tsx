@@ -1,5 +1,6 @@
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, useRef, useState, type JSX, type MouseEvent as ReactMouseEvent } from 'react';
 import { CharacterEditorPanel } from './editor/CharacterEditorPanel';
+import { gameAssetUrl } from './gameAssetUrl';
 import type { EditableRect } from './editor/EditableBox';
 import { boundingBoxOfPoints } from './editor/polygonUtils';
 import { SceneEditorPanel, type ActionComposerValue } from './editor/SceneEditorPanel';
@@ -133,6 +134,44 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     localStorage.setItem(editorTabStorageKey, tab);
     setEditorTabState(tab);
   }
+
+  // Ancho del panel de herramientas a la izquierda, a gusto del usuario
+  // (arrastrando el borde) — global, no por juego, porque es una preferencia
+  // de la interfaz del editor, no del contenido. Clamp para que no desaparezca
+  // ni tape toda la pantalla.
+  const SIDEBAR_MIN_WIDTH = 260;
+  const SIDEBAR_MAX_WIDTH = 900;
+  const sidebarWidthStorageKey = 'verdictUnsolved.editorSidebarWidth';
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    const stored = Number(localStorage.getItem(sidebarWidthStorageKey));
+    return Number.isFinite(stored) && stored >= SIDEBAR_MIN_WIDTH && stored <= SIDEBAR_MAX_WIDTH ? stored : 320;
+  });
+  const [resizingSidebar, setResizingSidebar] = useState(false);
+  const sidebarWidthRef = useRef(sidebarWidth);
+  sidebarWidthRef.current = sidebarWidth;
+
+  function startSidebarResize(event: ReactMouseEvent): void {
+    event.preventDefault();
+    setResizingSidebar(true);
+    function onMouseMove(moveEvent: MouseEvent): void {
+      const next = Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, moveEvent.clientX));
+      setSidebarWidth(next);
+    }
+    function onMouseUp(): void {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      setResizingSidebar(false);
+      localStorage.setItem(sidebarWidthStorageKey, String(sidebarWidthRef.current));
+    }
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }
+
+  // Retrato/expresión sobre el que se hizo click en la pestaña Personajes,
+  // para mostrarlo grande del lado derecho (las miniaturas de la lista son
+  // chicas a propósito, para que quepan muchas). null = nada seleccionado
+  // todavía, o se cambió de pestaña.
+  const [previewedPortrait, setPreviewedPortrait] = useState<string | null>(null);
 
   // Qué escena se está editando: puede ser distinta de `currentSceneId`
   // (la del juego real) — el editor deja navegar/editar cualquier escena.
@@ -1433,7 +1472,10 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         // la escena a la derecha, nada superpuesto sobre el juego. Al salir,
         // este layout entero desaparece y vuelve la vista de juego normal.
         <div className="flex h-full w-full">
-          <aside className="flex h-full w-80 shrink-0 flex-col border-r border-graphite-700 bg-graphite-950">
+          <aside
+            className="flex h-full shrink-0 flex-col border-r border-graphite-700 bg-graphite-950"
+            style={{ width: sidebarWidth }}
+          >
             <div className="flex shrink-0 border-b border-graphite-700">
               <button
                 type="button"
@@ -1537,6 +1579,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   uploadingId={uploadingPortraitId}
                   uploadingExpressionKey={uploadingExpressionKey}
                   generatingArtIds={generatingCharacterArtIds}
+                  onPreviewPortrait={setPreviewedPortrait}
                   onNameTextChange={setCharacterNameText}
                   onColorChange={(id, color) => updateCharacter(id, { color })}
                   onDescriptionChange={updateCharacterDescription}
@@ -1640,8 +1683,32 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
               </div>
             )}
           </aside>
+          {/* Barra de arrastre para achicar/agrandar el panel de la
+              izquierda — con las miniaturas de retrato es fácil quedarse
+              corto de espacio. */}
+          <div
+            onMouseDown={startSidebarResize}
+            className={`w-1 shrink-0 cursor-col-resize bg-graphite-800 transition-colors hover:bg-amber-accent ${
+              resizingSidebar ? 'bg-amber-accent' : ''
+            }`}
+          />
           <div className="min-w-0 flex-1">
-            {displayScene ? (
+            {editorTab === 'characters' ? (
+              <div className="flex h-full w-full items-center justify-center bg-graphite-950 p-10">
+                {previewedPortrait ? (
+                  <img
+                    key={previewedPortrait}
+                    src={gameAssetUrl(gameId, previewedPortrait)}
+                    alt=""
+                    className="max-h-full max-w-full object-contain"
+                  />
+                ) : (
+                  <p className="text-center text-[11px] tracking-widest text-graphite-600 uppercase">
+                    Hacé click en un retrato de la lista para verlo más grande acá
+                  </p>
+                )}
+              </div>
+            ) : displayScene ? (
               <SceneViewer
                 gameId={gameId}
                 scene={displayScene}
