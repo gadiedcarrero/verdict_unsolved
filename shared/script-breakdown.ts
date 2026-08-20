@@ -38,6 +38,13 @@ export type ScriptBreakdownScene = {
   id: string;
   title: string;
   summary: string;
+  /** Línea corta (típicamente de MIRROR, en tono de bloque de terminal —
+   * ver `DialogueNode.terminalBlock` en schemas.ts) que conecta el final de
+   * la escena anterior con esta: salto de tiempo, quién llegó, qué cambió.
+   * `null` si la escena sigue directo de la anterior sin salto (misma
+   * locación/momento) y no hace falta puente. Se traduce a un `onEnter` de
+   * la escena real del motor — ver docs/plataforma/00-vision-ia.md. */
+  bridgeFromPrevious: string | null;
   characterIds: string[];
   objects: ScriptBreakdownObject[];
   minigame: ScriptBreakdownMinigameSuggestion | null;
@@ -84,6 +91,7 @@ function isScriptBreakdownScene(value: unknown): value is ScriptBreakdownScene {
     typeof v['id'] === 'string' &&
     typeof v['title'] === 'string' &&
     typeof v['summary'] === 'string' &&
+    (typeof v['bridgeFromPrevious'] === 'string' || v['bridgeFromPrevious'] === null) &&
     Array.isArray(v['characterIds']) &&
     v['characterIds'].every((id) => typeof id === 'string') &&
     Array.isArray(v['objects']) &&

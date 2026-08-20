@@ -33,11 +33,17 @@ Cada paso ya tiene (o va a tener) su lugar concreto en el motor actual
    acción (Examinar/Interactuar), y si la escena pide un minijuego, **cuál
    de la biblioteca de plantillas encaja y por qué** (ver "Minijuegos" más
    abajo — la propuesta de minijuego pasa a vivir acá, no como paso aparte al
-   final). El usuario revisa esto **escena por escena**, decide qué se queda
-   y qué se recorta o ajusta, antes de que nada se traduzca a datos reales
-   del motor. Este es el punto de control humano central del pipeline — todo
-   lo que viene después (pasos 4-5) es la traducción mecánica de un desglose
-   ya aprobado, no una decisión creativa nueva.
+   final). Cada escena también trae `bridgeFromPrevious`: una línea corta en
+   tono de aviso de MIRROR que conecta el final de la escena anterior con el
+   arranque de esta (salto de tiempo, quién llegó, qué cambió) — `null` si
+   sigue directo sin salto. Se traduce a un `onEnter` de la escena real
+   (diálogo automático al entrar + `transitionTo`), así el juego no salta de
+   fondo a fondo sin explicación. El usuario revisa esto **escena por
+   escena**, decide qué se queda y qué se recorta o ajusta, antes de que nada
+   se traduzca a datos reales del motor. Este es el punto de control humano
+   central del pipeline — todo lo que viene después (pasos 4-5) es la
+   traducción mecánica de un desglose ya aprobado, no una decisión creativa
+   nueva.
 4. **Desglose aprobado → escenas del motor.** Fondos, capas de objetos,
    layout inicial, zonas interactivas (rect o polígono) sobre cada objeto que
    el desglose marcó — el usuario **ajusta la posición** a mano en el editor

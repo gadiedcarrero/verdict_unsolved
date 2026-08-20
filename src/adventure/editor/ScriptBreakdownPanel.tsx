@@ -76,6 +76,13 @@ function SceneCard({
         </div>
       </div>
 
+      {scene.bridgeFromPrevious && (
+        <div className="mb-1 rounded border border-graphite-700 bg-black/40 p-1.5">
+          <p className="text-[8px] tracking-widest text-graphite-500 uppercase">Puente · MIRROR</p>
+          <p className="font-mono text-[9px] text-emerald-400/90">{scene.bridgeFromPrevious}</p>
+        </div>
+      )}
+
       {sceneCharacters && <p className="mb-1 text-[9px] text-graphite-500">Personajes: {sceneCharacters}</p>}
 
       <textarea
