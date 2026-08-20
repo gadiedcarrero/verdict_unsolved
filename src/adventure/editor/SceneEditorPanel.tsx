@@ -787,7 +787,9 @@ function ActionComposer({
       </label>
       {value.characterId && (() => {
         const selectedCharacter = characters.find((c) => c.id === value.characterId);
-        const expressionKeys = Object.keys(selectedCharacter?.expressions ?? {});
+        const expressionKeys = Object.entries(selectedCharacter?.expressions ?? {})
+          .filter(([, expression]) => expression.path)
+          .map(([key]) => key);
         return expressionKeys.length > 0 ? (
           <label className="mb-1 flex flex-col">
             <span className="text-[9px] text-graphite-500 uppercase">Expresión del retrato</span>

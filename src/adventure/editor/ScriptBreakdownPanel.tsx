@@ -1,13 +1,10 @@
 import { useRef, useState, type ChangeEvent, type JSX } from 'react';
 import type {
   ScriptBreakdown,
-  ScriptBreakdownAlternateLook,
   ScriptBreakdownCharacter,
   ScriptBreakdownReviewStatus,
   ScriptBreakdownScene,
 } from '../../../shared/script-breakdown';
-import type { Character } from '../../game-engine/scene-engine/schemas';
-import { gameAssetUrl } from '../gameAssetUrl';
 
 const inputClassName =
   'w-full rounded border border-graphite-700 bg-graphite-900 px-1.5 py-1 text-[10px] text-graphite-100';
@@ -17,141 +14,6 @@ const STATUS_LABEL: Record<ScriptBreakdownReviewStatus, string> = {
   approved: 'Aprobada',
   cut: 'Cortada',
 };
-
-/** `key={portrait}` en el llamador fuerza un <img> nuevo cada vez que cambia
- * la ruta (regenerar guarda en el mismo nombre de archivo) — si no, el
- * navegador a veces se queda mostrando el ícono roto de un intento previo
- * en vez de reintentar cargar la imagen nueva. */
-function SmallPortrait({
-  gameId,
-  portrait,
-  color,
-}: {
-  gameId: string;
-  portrait: string;
-  color: string;
-}): JSX.Element {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return (
-      <div
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed text-[7px] text-graphite-500"
-        style={{ borderColor: color }}
-      >
-        ?
-      </div>
-    );
-  }
-  return (
-    <img
-      src={gameAssetUrl(gameId, portrait)}
-      alt=""
-      onError={() => setFailed(true)}
-      className="h-10 w-10 shrink-0 rounded-full border object-cover"
-      style={{ borderColor: color }}
-    />
-  );
-}
-
-function AlternateLookRow({
-  gameId,
-  look,
-  portrait,
-  generating,
-  onGenerateArt,
-}: {
-  gameId: string;
-  look: ScriptBreakdownAlternateLook;
-  portrait: string | null;
-  generating: boolean;
-  onGenerateArt: () => void;
-}): JSX.Element {
-  return (
-    <div className="mt-1 flex items-start gap-2 rounded border border-graphite-800 bg-graphite-950/60 p-1.5">
-      {portrait ? (
-        <SmallPortrait key={portrait} gameId={gameId} portrait={portrait} color="#6b7280" />
-      ) : (
-        <div className="mt-0.5 h-3 w-3 shrink-0 rounded-full border border-dashed border-graphite-600" />
-      )}
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] text-graphite-200">{look.label}</p>
-        <p className="text-[9px] text-graphite-500">{look.description}</p>
-      </div>
-      <button
-        type="button"
-        onClick={onGenerateArt}
-        disabled={generating}
-        className="shrink-0 self-center rounded border border-graphite-700 px-2 py-1 text-[8px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        {generating ? 'Generando...' : portrait ? 'Regenerar' : 'Generar'}
-      </button>
-    </div>
-  );
-}
-
-function CharacterCard({
-  gameId,
-  character,
-  existingCharacter,
-  generatingArtId,
-  onGenerateArt,
-}: {
-  gameId: string;
-  character: ScriptBreakdownCharacter;
-  existingCharacter: Character | undefined;
-  /** "<characterId>" (retrato por defecto) o "<characterId>:<look.key>"
-   * (identidad alternativa) del que está generando ahora, o null. */
-  generatingArtId: string | null;
-  onGenerateArt: (look?: ScriptBreakdownAlternateLook) => void;
-}): JSX.Element {
-  const portrait = existingCharacter?.portrait ?? null;
-
-  return (
-    <div className="mb-1 rounded border border-graphite-800 bg-graphite-900/60 p-2">
-      <div className="flex items-start gap-2">
-        {portrait ? (
-          <SmallPortrait key={portrait} gameId={gameId} portrait={portrait} color={character.suggestedColor} />
-        ) : (
-          <div
-            className="mt-0.5 h-3 w-3 shrink-0 rounded-full border border-graphite-700"
-            style={{ backgroundColor: character.suggestedColor }}
-          />
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="text-graphite-100">
-            {character.name} <span className="text-graphite-500">· {character.id}</span>
-          </p>
-          <p className="text-[9px] text-graphite-400">{character.description}</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => onGenerateArt()}
-          disabled={generatingArtId === character.id}
-          className="shrink-0 self-center rounded border border-graphite-700 px-2 py-1 text-[8px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {generatingArtId === character.id ? 'Generando...' : portrait ? 'Regenerar retrato' : 'Generar retrato'}
-        </button>
-      </div>
-      {character.alternateLooks.length > 0 && (
-        <div className="mt-1 border-t border-graphite-800 pt-1">
-          <p className="mb-1 text-[8px] tracking-widest text-graphite-500 uppercase">
-            Identidades alternativas — se generan por separado para no mezclar apariencias
-          </p>
-          {character.alternateLooks.map((look) => (
-            <AlternateLookRow
-              key={look.key}
-              gameId={gameId}
-              look={look}
-              portrait={existingCharacter?.expressions[look.key] ?? null}
-              generating={generatingArtId === `${character.id}:${look.key}`}
-              onGenerateArt={() => onGenerateArt(look)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function SceneCard({
   scene,
@@ -242,27 +104,19 @@ function SceneCard({
 }
 
 export function ScriptBreakdownPanel({
-  gameId,
   breakdown,
   generating,
   error,
   mergeNote,
-  existingCharacters,
-  generatingCharacterArtId,
   onGenerate,
-  onGenerateCharacterArt,
   onSceneSummaryChange,
   onSceneStatusChange,
 }: {
-  gameId: string;
   breakdown: ScriptBreakdown | null;
   generating: boolean;
   error: string | null;
   mergeNote: string | null;
-  existingCharacters: Character[];
-  generatingCharacterArtId: string | null;
   onGenerate: (scriptText: string) => void;
-  onGenerateCharacterArt: (character: ScriptBreakdownCharacter, look?: ScriptBreakdownAlternateLook) => void;
   onSceneSummaryChange: (sceneId: string, summary: string) => void;
   onSceneStatusChange: (sceneId: string, status: ScriptBreakdownReviewStatus) => void;
 }): JSX.Element {
@@ -292,10 +146,10 @@ export function ScriptBreakdownPanel({
   return (
     <div className="text-xs text-graphite-200">
       <p className="mb-3 text-[10px] text-graphite-400">
-        Pegá el guion completo o cargá un documento (.txt, .md). La IA saca el roster de personajes y arma un
-        desglose legible por escena (personajes, objetos, y si corresponde, un minijuego sugerido). Después revisás
-        escena por escena: aprobar, cortar o ajustar el resumen — la traducción a escenas reales del motor es un
-        paso aparte, todavía manual.
+        Pegá el guion completo o cargá un documento (.txt, .md). La IA arma un desglose legible por escena (objetos,
+        y si corresponde, un minijuego sugerido) y revisás acá — aprobar, cortar o ajustar el resumen. Los
+        personajes que encuentra aparecen directo en la pestaña &quot;Personajes&quot; (con su descripción cargada,
+        listos para generar retrato) — esta pestaña es solo para escenas.
       </p>
 
       <div className="mb-2 flex gap-1">
@@ -357,24 +211,6 @@ export function ScriptBreakdownPanel({
       {breakdown && (
         <>
           <p className="mb-1 text-[9px] tracking-widest text-graphite-500 uppercase">
-            Personajes ({breakdown.characters.length})
-          </p>
-          <p className="mb-2 text-[9px] text-graphite-500">
-            Generar un retrato crea (o actualiza) el personaje real del juego — pasá después a la pestaña
-            &quot;Personajes&quot; y apretá Guardar para que quede.
-          </p>
-          {breakdown.characters.map((character) => (
-            <CharacterCard
-              key={character.id}
-              gameId={gameId}
-              character={character}
-              existingCharacter={existingCharacters.find((c) => c.id === character.id)}
-              generatingArtId={generatingCharacterArtId}
-              onGenerateArt={(look) => onGenerateCharacterArt(character, look)}
-            />
-          ))}
-
-          <p className="mt-3 mb-1 text-[9px] tracking-widest text-graphite-500 uppercase">
             Escenas ({breakdown.scenes.length})
           </p>
           {breakdown.scenes.map((scene) => (

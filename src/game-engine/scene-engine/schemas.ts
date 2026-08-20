@@ -155,6 +155,18 @@ export const HotspotSchema = z.object({
   interactWithTargets: z.array(InteractWithTargetSchema).default([]),
 });
 
+export const CharacterExpressionSchema = z.object({
+  /** null = todavía no se generó/subió imagen para esta expresión (existe
+   * como entrada propuesta, p. ej. una identidad alternativa detectada por
+   * el desglose de guion, pendiente de generar). */
+  path: z.string().nullable(),
+  /** Descripción visual autocontenida de ESTA apariencia — se manda tal
+   * cual al generador de imagen; nunca debe depender de `Character.description`
+   * ni mencionar otras apariencias del mismo personaje (ver
+   * docs/plataforma/00-vision-ia.md, identidades alternativas). */
+  description: z.string().default(''),
+});
+
 export const CharacterSchema = z.object({
   id: z.string(),
   /** Clave de traducción del nombre mostrado (ver locales/es.json). */
@@ -164,10 +176,13 @@ export const CharacterSchema = z.object({
    * cuando un DialogueNode no pide una expresión particular, o pide una que
    * no existe en `expressions`. */
   portrait: z.string().nullable(),
-  /** Expresión (clave libre, p. ej. "enojado", "sonriendo") → ruta a un
-   * retrato adicional del mismo personaje, mismo formato que `portrait`.
-   * Referenciada por `DialogueNode.portraitExpression`. */
-  expressions: z.record(z.string(), z.string()).default({}),
+  /** Descripción visual del look base/neutral — usada para (re)generar
+   * `portrait` con IA. Vacía en personajes creados a mano sin ese paso. */
+  description: z.string().default(''),
+  /** Expresión (clave libre, p. ej. "enojado", "sonriendo", o una identidad
+   * alternativa completa como "wraith") → retrato adicional del mismo
+   * personaje. Referenciada por `DialogueNode.portraitExpression`. */
+  expressions: z.record(z.string(), CharacterExpressionSchema).default({}),
   /** Color del nombre y del texto de diálogo, en hex (p. ej. "#e0a636"). */
   color: z.string(),
 });
@@ -435,6 +450,7 @@ export type FontFamily = z.infer<typeof FontFamilySchema>;
 export type MenuAppearance = z.infer<typeof MenuAppearanceSchema>;
 export type MenuTitle = z.infer<typeof MenuTitleSchema>;
 export type Character = z.infer<typeof CharacterSchema>;
+export type CharacterExpression = z.infer<typeof CharacterExpressionSchema>;
 export type DialogueChoice = z.infer<typeof DialogueChoiceSchema>;
 export type DialogueNode = z.infer<typeof DialogueNodeSchema>;
 export type Scene = z.infer<typeof SceneSchema>;

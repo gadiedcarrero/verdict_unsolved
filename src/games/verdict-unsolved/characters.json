@@ -1,6 +1,59 @@
 [
-  { "id": "director", "name": "character.director.name", "portrait": null, "color": "#f2b74a" },
-  { "id": "mirror", "name": "character.mirror.name", "portrait": null, "color": "#6ba8c9" },
-  { "id": "lena", "name": "character.lena.name", "portrait": null, "color": "#c98bd6" },
-  { "id": "sistema", "name": "character.sistema.name", "portrait": null, "color": "#8a94a6" }
+  {
+    "id": "director",
+    "name": "character.director.name",
+    "portrait": null,
+    "description": "",
+    "expressions": {},
+    "color": "#f2b74a"
+  },
+  {
+    "id": "mirror",
+    "name": "character.mirror.name",
+    "portrait": null,
+    "description": "Interfaz digital sin forma física, representada por una pantalla o icono luminoso, voz sintetizada y presencia en terminales y monitores.",
+    "expressions": {},
+    "color": "#6ba8c9"
+  },
+  {
+    "id": "lena",
+    "name": "character.lena.name",
+    "portrait": null,
+    "description": "",
+    "expressions": {},
+    "color": "#c98bd6"
+  },
+  {
+    "id": "sistema",
+    "name": "character.sistema.name",
+    "portrait": null,
+    "description": "",
+    "expressions": {},
+    "color": "#8a94a6"
+  },
+  {
+    "id": "adrian-cross",
+    "name": "character.adrian-cross.name",
+    "portrait": "portraits/adrian-cross.png",
+    "description": "Hombre de unos 40 años, complexión atlética, cabello oscuro corto, rostro marcado por cicatrices leves. Viste ropa funcional, generalmente traje oscuro o ropa táctica cuando opera como agente. Postura segura y mirada intensa.",
+    "expressions": {
+      "director-gray": {
+        "path": "portraits/adrian-cross-director-gray.png",
+        "description": "Hombre de unos 40 años, cabello oscuro corto, rostro serio y cansado. Siempre sentado en una silla de ruedas, viste traje gris oscuro y camisa blanca, con corbata sobria. Suele estar detrás de un escritorio de madera oscura en una oficina poco iluminada."
+      },
+      "wraith": {
+        "path": "portraits/adrian-cross-wraith.png",
+        "description": "Figura alta y atlética, completamente cubierta por un traje táctico negro ajustado, guantes negros y botas militares. Lleva una máscara negra sin rasgos, sólo con una delgada ranura para los ojos, y ningún rasgo identificable. Movimientos precisos y silenciosos."
+      }
+    },
+    "color": "#1a4d8f"
+  },
+  {
+    "id": "evelyn-marlowe",
+    "name": "character.evelyn-marlowe.name",
+    "portrait": "portraits/evelyn-marlowe.png",
+    "description": "Mujer de unos 30-35 años, cabello oscuro (más corto y con una cicatriz junto a la sien en su versión posterior a la explosión), complexión ágil. Viste ropa táctica o de infiltración, rostro expresivo y mirada decidida.",
+    "expressions": {},
+    "color": "#ad1457"
+  }
 ]

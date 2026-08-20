@@ -68,11 +68,12 @@ export function DialogueOverlay({
   const speakerColor = character?.color;
   const choices = node.choices ?? [];
   const hasChoices = choices.length > 0;
-  // Si el nodo pide una expresión y el personaje la tiene cargada, se usa
-  // esa variante de retrato; si no, el retrato por defecto (ver
+  // Si el nodo pide una expresión y el personaje tiene imagen cargada para
+  // ella, se usa esa variante de retrato; si no (o si la expresión todavía
+  // no tiene imagen generada — path null), el retrato por defecto (ver
   // Character.expressions / ActionComposer "Expresión del retrato").
   const portrait = node.portraitExpression
-    ? (character?.expressions[node.portraitExpression] ?? character?.portrait)
+    ? (character?.expressions[node.portraitExpression]?.path ?? character?.portrait)
     : character?.portrait;
 
   return (

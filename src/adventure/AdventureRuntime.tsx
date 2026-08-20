@@ -36,7 +36,6 @@ import { ScriptBreakdownPanel } from './editor/ScriptBreakdownPanel';
 import {
   mergeScriptBreakdownReview,
   type ScriptBreakdown,
-  type ScriptBreakdownAlternateLook,
   type ScriptBreakdownCharacter,
   type ScriptBreakdownReviewStatus,
 } from '../../shared/script-breakdown';
@@ -170,7 +169,10 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const [uploadingExpressionKey, setUploadingExpressionKey] = useState<string | null>(null);
   // Id de personaje del desglose (Guion IA) para el que se está generando un
   // retrato con IA en este momento, o null.
-  const [generatingCharacterArtId, setGeneratingCharacterArtId] = useState<string | null>(null);
+  // "<characterId>" (retrato por defecto) o "<characterId>:<expresión>" por
+  // cada generación en curso — array en vez de un solo id porque es normal
+  // disparar varias en paralelo (personaje + sus identidades alternativas).
+  const [generatingCharacterArtIds, setGeneratingCharacterArtIds] = useState<string[]>([]);
 
   const [editedSiteSettings, setEditedSiteSettings] = useState<SiteSettings | null>(null);
   const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
@@ -989,22 +991,35 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
 
   // --- Personajes: retrato, color y nombre válidos para toda la novela, no
   // solo esta escena. Ver editor/CharacterEditorPanel.tsx.
+  //
+  // Todas las funciones de acá usan la forma funcional de setEditedCharacters
+  // (lee el estado más reciente en vez de una copia capturada al momento de
+  // llamar) a propósito: con generación de arte por IA tardando 30-40s, es
+  // normal disparar varias en paralelo (un personaje + sus identidades
+  // alternativas), y con la forma no funcional la segunda en terminar pisaba
+  // por completo lo que había agregado la primera.
   function updateCharacter(characterId: string, patch: Partial<Character>): void {
-    const base = editedCharacters ?? baseCharacters;
-    setEditedCharacters(base.map((c) => (c.id === characterId ? { ...c, ...patch } : c)));
+    setEditedCharacters((prev) => (prev ?? baseCharacters).map((c) => (c.id === characterId ? { ...c, ...patch } : c)));
   }
 
   function setCharacterNameText(_characterId: string, nameKey: string, text: string): void {
     setPendingCharacterStrings((prev) => ({ ...prev, [nameKey]: text }));
   }
 
+  function updateCharacterDescription(characterId: string, description: string): void {
+    updateCharacter(characterId, { description });
+  }
+
   function createCharacter(name: string, nameText: string, color: string): void {
-    const base = editedCharacters ?? baseCharacters;
-    const taken = new Set(base.map((c) => c.id));
-    const id = uniqueId(slugify(name), taken);
-    const nameKey = `character.${id}.name`;
-    setEditedCharacters([...base, { id, name: nameKey, portrait: null, expressions: {}, color }]);
-    setPendingCharacterStrings((prev) => ({ ...prev, [nameKey]: nameText }));
+    let createdNameKey = '';
+    setEditedCharacters((prev) => {
+      const base = prev ?? baseCharacters;
+      const taken = new Set(base.map((c) => c.id));
+      const id = uniqueId(slugify(name), taken);
+      createdNameKey = `character.${id}.name`;
+      return [...base, { id, name: createdNameKey, portrait: null, description: '', expressions: {}, color }];
+    });
+    setPendingCharacterStrings((prev) => ({ ...prev, [createdNameKey]: nameText }));
   }
 
   async function uploadPortrait(characterId: string, file: File): Promise<void> {
@@ -1026,6 +1041,22 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     }
   }
 
+  function setExpressionPath(characterId: string, expressionKey: string, path: string): void {
+    setEditedCharacters((prev) =>
+      (prev ?? baseCharacters).map((c) =>
+        c.id !== characterId
+          ? c
+          : {
+              ...c,
+              expressions: {
+                ...c.expressions,
+                [expressionKey]: { path, description: c.expressions[expressionKey]?.description ?? '' },
+              },
+            },
+      ),
+    );
+  }
+
   async function uploadExpressionPortrait(characterId: string, expressionKey: string, file: File): Promise<void> {
     setUploadingExpressionKey(`${characterId}:${expressionKey}`);
     setCharacterSaveMessage(null);
@@ -1034,11 +1065,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       const ext = file.name.split('.').pop() || 'png';
       const result = await window.api.saveCharacterPortrait(gameId, characterId, ext, buffer, expressionKey);
       if (result.ok) {
-        const base = editedCharacters ?? baseCharacters;
-        const character = base.find((c) => c.id === characterId);
-        if (character) {
-          updateCharacter(characterId, { expressions: { ...character.expressions, [expressionKey]: result.path } });
-        }
+        setExpressionPath(characterId, expressionKey, result.path);
       } else {
         setCharacterSaveMessage(`Error subiendo expresión: ${result.error}`);
       }
@@ -1049,71 +1076,126 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     }
   }
 
-  function removeExpression(characterId: string, expressionKey: string): void {
-    const base = editedCharacters ?? baseCharacters;
-    const character = base.find((c) => c.id === characterId);
-    if (!character) return;
-    const expressions = { ...character.expressions };
-    delete expressions[expressionKey];
-    updateCharacter(characterId, { expressions });
+  function addExpression(characterId: string, key: string, description: string): void {
+    setEditedCharacters((prev) =>
+      (prev ?? baseCharacters).map((c) =>
+        c.id !== characterId ? c : { ...c, expressions: { ...c.expressions, [key]: { path: null, description } } },
+      ),
+    );
   }
 
-  // Convierte una entrada del roster propuesto por la IA (Guion IA) en un
-  // Character real: lo crea si no existe (matcheando por id, mismo slug que
-  // createCharacter) o le actualiza el retrato si ya existe. El retrato en sí
-  // se sube y persiste al toque vía IPC; el Character (portrait/color/nombre)
-  // queda en el borrador de la pestaña Personajes hasta "Guardar cambios" —
-  // mismo criterio que uploadPortrait. `look` presente = generar una
-  // identidad alternativa (Adrian/Gray/Wraith...) como Character.expressions
-  // en vez de tocar el retrato por defecto — cada una con su propia
-  // descripción autocontenida para no mezclar dos apariencias en una imagen.
-  async function generateCharacterArt(
-    breakdownCharacter: ScriptBreakdownCharacter,
-    look?: ScriptBreakdownAlternateLook,
+  function updateExpressionDescription(characterId: string, expressionKey: string, description: string): void {
+    setEditedCharacters((prev) =>
+      (prev ?? baseCharacters).map((c) =>
+        c.id !== characterId
+          ? c
+          : {
+              ...c,
+              expressions: {
+                ...c.expressions,
+                [expressionKey]: { path: c.expressions[expressionKey]?.path ?? null, description },
+              },
+            },
+      ),
+    );
+  }
+
+  function removeExpression(characterId: string, expressionKey: string): void {
+    setEditedCharacters((prev) =>
+      (prev ?? baseCharacters).map((c) => {
+        if (c.id !== characterId) return c;
+        const expressions = { ...c.expressions };
+        delete expressions[expressionKey];
+        return { ...c, expressions };
+      }),
+    );
+  }
+
+  // Genera (o regenera) el retrato de un personaje YA existente en el
+  // borrador — a diferencia de la versión anterior, ya no crea el Character:
+  // eso ahora lo hace promoteBreakdownCharacters en cuanto se genera el
+  // desglose (ver más abajo), así el roster completo aparece de una en la
+  // pestaña Personajes sin pasos intermedios. `expressionKey` null = retrato
+  // por defecto; una clave = esa identidad/expresión (Character.expressions).
+  async function generateCharacterPortraitArt(
+    characterId: string,
+    description: string,
+    expressionKey: string | null,
   ): Promise<void> {
-    setGeneratingCharacterArtId(look ? `${breakdownCharacter.id}:${look.key}` : breakdownCharacter.id);
+    const genId = expressionKey ? `${characterId}:${expressionKey}` : characterId;
+    setGeneratingCharacterArtIds((prev) => [...prev, genId]);
     setCharacterSaveMessage(null);
     try {
-      const result = await window.api.generateCharacterPortrait(
-        gameId,
-        breakdownCharacter.id,
-        (look ? look.description : breakdownCharacter.description) || breakdownCharacter.name,
-        look?.key ?? null,
-      );
+      const result = await window.api.generateCharacterPortrait(gameId, characterId, description, expressionKey);
       if (!result.ok) {
-        const label = look ? `${breakdownCharacter.name} (${look.label})` : breakdownCharacter.name;
-        setCharacterSaveMessage(`Error generando retrato de ${label}: ${result.error}`);
+        setCharacterSaveMessage(`Error generando retrato: ${result.error}`);
         return;
       }
-      const base = editedCharacters ?? baseCharacters;
-      const existing = base.find((c) => c.id === breakdownCharacter.id);
-      if (existing) {
-        if (look) {
-          updateCharacter(existing.id, { expressions: { ...existing.expressions, [look.key]: result.path } });
-        } else {
-          updateCharacter(existing.id, { portrait: result.path });
-        }
+      if (expressionKey) {
+        setExpressionPath(characterId, expressionKey, result.path);
       } else {
-        const nameKey = `character.${breakdownCharacter.id}.name`;
-        setEditedCharacters([
-          ...base,
-          {
-            id: breakdownCharacter.id,
-            name: nameKey,
-            portrait: look ? null : result.path,
-            expressions: look ? { [look.key]: result.path } : {},
-            color: breakdownCharacter.suggestedColor,
-          },
-        ]);
-        setPendingCharacterStrings((prev) => ({ ...prev, [nameKey]: breakdownCharacter.name }));
+        updateCharacter(characterId, { portrait: result.path });
       }
     } catch (error) {
-      const label = look ? `${breakdownCharacter.name} (${look.label})` : breakdownCharacter.name;
-      setCharacterSaveMessage(
-        `Error generando retrato de ${label}: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      setCharacterSaveMessage(`Error generando retrato: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
-      setGeneratingCharacterArtId(null);
+      setGeneratingCharacterArtIds((prev) => prev.filter((id) => id !== genId));
+    }
+  }
+
+  // Paso 3→2 del pipeline (ver docs/plataforma/00-vision-ia.md): en cuanto
+  // se genera un desglose de guion, su roster propuesto pasa a ser parte del
+  // borrador real de personajes — así todo se edita y guarda desde un solo
+  // lugar (pestaña Personajes), sin una lista aparte acá que hubiera que
+  // promover a mano. Nunca pisa un personaje que ya existe (ni su
+  // descripción ni sus expresiones ya generadas) — solo agrega personajes
+  // nuevos y, en los que ya existían, identidades alternativas que todavía
+  // no tenían.
+  function promoteBreakdownCharacters(breakdownCharacters: ScriptBreakdownCharacter[]): void {
+    const pendingNameStrings: Record<string, string> = {};
+    setEditedCharacters((prev) => {
+      const base = prev ?? baseCharacters;
+      const result = [...base];
+      let changed = false;
+      for (const bc of breakdownCharacters) {
+        const idx = result.findIndex((c) => c.id === bc.id);
+        if (idx === -1) {
+          const nameKey = `character.${bc.id}.name`;
+          pendingNameStrings[nameKey] = bc.name;
+          const expressions: Character['expressions'] = {};
+          for (const look of bc.alternateLooks) {
+            expressions[look.key] = { path: null, description: look.description };
+          }
+          result.push({
+            id: bc.id,
+            name: nameKey,
+            portrait: null,
+            description: bc.description,
+            expressions,
+            color: bc.suggestedColor,
+          });
+          changed = true;
+        } else {
+          const existing = result[idx];
+          if (!existing) continue;
+          const newExpressions = { ...existing.expressions };
+          let expressionsChanged = false;
+          for (const look of bc.alternateLooks) {
+            if (!newExpressions[look.key]) {
+              newExpressions[look.key] = { path: null, description: look.description };
+              expressionsChanged = true;
+            }
+          }
+          if (expressionsChanged) {
+            result[idx] = { ...existing, expressions: newExpressions };
+            changed = true;
+          }
+        }
+      }
+      return changed ? result : base;
+    });
+    if (Object.keys(pendingNameStrings).length > 0) {
+      setPendingCharacterStrings((prev) => ({ ...prev, ...pendingNameStrings }));
     }
   }
 
@@ -1135,6 +1217,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         // ya hecho (ver mergeScriptBreakdownReview).
         const { breakdown, carriedOverCount } = mergeScriptBreakdownReview(scriptBreakdown, result.breakdown);
         persistScriptBreakdown(breakdown);
+        promoteBreakdownCharacters(breakdown.characters);
         if (scriptBreakdown) {
           setScriptBreakdownMergeNote(
             carriedOverCount > 0
@@ -1453,11 +1536,19 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   strings={strings}
                   uploadingId={uploadingPortraitId}
                   uploadingExpressionKey={uploadingExpressionKey}
+                  generatingArtIds={generatingCharacterArtIds}
                   onNameTextChange={setCharacterNameText}
                   onColorChange={(id, color) => updateCharacter(id, { color })}
+                  onDescriptionChange={updateCharacterDescription}
                   onUploadPortrait={(id, file) => void uploadPortrait(id, file)}
                   onUploadExpression={(id, expressionKey, file) => void uploadExpressionPortrait(id, expressionKey, file)}
                   onRemoveExpression={removeExpression}
+                  onAddExpression={addExpression}
+                  onExpressionDescriptionChange={updateExpressionDescription}
+                  onGeneratePortrait={(id, description) => void generateCharacterPortraitArt(id, description, null)}
+                  onGenerateExpression={(id, expressionKey, description) =>
+                    void generateCharacterPortraitArt(id, description, expressionKey)
+                  }
                   onCreateCharacter={createCharacter}
                 />
               ) : editorTab === 'settings' ? (
@@ -1475,15 +1566,11 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 />
               ) : (
                 <ScriptBreakdownPanel
-                  gameId={gameId}
                   breakdown={scriptBreakdown}
                   generating={scriptBreakdownGenerating}
                   error={scriptBreakdownError}
                   mergeNote={scriptBreakdownMergeNote}
-                  existingCharacters={displayCharacters}
-                  generatingCharacterArtId={generatingCharacterArtId}
                   onGenerate={(scriptText) => void generateScriptBreakdown(scriptText)}
-                  onGenerateCharacterArt={(character, look) => void generateCharacterArt(character, look)}
                   onSceneSummaryChange={updateScriptBreakdownSceneSummary}
                   onSceneStatusChange={updateScriptBreakdownSceneStatus}
                 />
