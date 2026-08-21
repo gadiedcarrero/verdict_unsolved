@@ -15,6 +15,29 @@ const STATUS_LABEL: Record<ScriptBreakdownReviewStatus, string> = {
   cut: 'Cortada',
 };
 
+const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
+
+/** Los mensajes de error de OpenAI a veces traen un link (ej: "cargá
+ * crédito en https://...") — se muestra clickeable, abre en el navegador de
+ * verdad (setWindowOpenHandler en electron/main/window.ts intercepta
+ * target="_blank" para eso, no navega la ventana de la app). */
+function ErrorText({ message }: { message: string }): JSX.Element {
+  const parts = message.split(URL_PATTERN);
+  return (
+    <p className="mb-3 rounded border border-red-500/40 bg-red-950/30 p-2 text-[9px] text-red-300">
+      {parts.map((part, index) =>
+        /^https?:\/\//.test(part) ? (
+          <a key={index} href={part} target="_blank" rel="noreferrer" className="underline hover:text-red-200">
+            {part}
+          </a>
+        ) : (
+          <span key={index}>{part}</span>
+        ),
+      )}
+    </p>
+  );
+}
+
 function SceneCard({
   scene,
   characters,
@@ -206,7 +229,7 @@ export function ScriptBreakdownPanel({
           {mergeNote}
         </p>
       )}
-      {error && <p className="mb-3 rounded border border-red-500/40 bg-red-950/30 p-2 text-[9px] text-red-300">{error}</p>}
+      {error && <ErrorText message={error} />}
 
       {breakdown && (
         <>

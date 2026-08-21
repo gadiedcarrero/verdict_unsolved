@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { app, ipcMain } from 'electron';
+import { formatApiError } from './apiErrors';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
 
 const ID_PATTERN = /^[a-z0-9-]+$/;
@@ -60,8 +61,7 @@ async function requestImageBytes(
     });
   }
   if (!response.ok) {
-    const errorBody = await response.text();
-    return { ok: false, error: `OpenAI devolvió un error (${response.status}): ${errorBody.slice(0, 500)}` };
+    return { ok: false, error: await formatApiError('OpenAI', response) };
   }
   const data = (await response.json()) as { data?: { b64_json?: string }[] };
   const b64 = data.data?.[0]?.b64_json;

@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
 import type { ElevenLabsVoice } from '../../../shared/elevenlabs';
+import { formatApiError } from './apiErrors';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
 
 type RawVerifiedLanguage = { language?: unknown; preview_url?: unknown };
@@ -52,8 +53,7 @@ export function registerElevenLabsHandlers(): void {
         headers: { 'xi-api-key': config.elevenLabsApiKey },
       });
       if (!response.ok) {
-        const errorBody = await response.text();
-        return { ok: false, error: `ElevenLabs devolvió un error (${response.status}): ${errorBody.slice(0, 500)}` };
+        return { ok: false, error: await formatApiError('ElevenLabs', response) };
       }
       const data = (await response.json()) as { voices?: RawVoice[] };
       const voices = (data.voices ?? []).map(mapVoice).filter((v): v is ElevenLabsVoice => v !== null);

@@ -8,6 +8,7 @@ import type {
   ScriptBreakdownObject,
   ScriptBreakdownScene,
 } from '../../../shared/script-breakdown';
+import { formatApiError } from './apiErrors';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
 
 const ID_PATTERN = /^[a-z0-9-]+$/;
@@ -158,8 +159,7 @@ export function registerScriptBreakdownHandlers(): void {
         }),
       });
       if (!response.ok) {
-        const errorBody = await response.text();
-        return { ok: false, error: `OpenAI devolvió un error (${response.status}): ${errorBody.slice(0, 500)}` };
+        return { ok: false, error: await formatApiError('OpenAI', response) };
       }
       const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
       const content = data.choices?.[0]?.message?.content;

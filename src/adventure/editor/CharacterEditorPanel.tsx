@@ -8,6 +8,35 @@ import { gameAssetUrl } from '../gameAssetUrl';
 const inputClassName =
   'w-full rounded border border-graphite-700 bg-graphite-900 px-1.5 py-1 text-[10px] text-graphite-100';
 
+const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
+
+/** Los mensajes de error de la IA a veces traen un link (ej: "cargá crédito
+ * en https://...") — se muestra clickeable, abre en el navegador de verdad
+ * en vez de navegar la ventana de la app (setWindowOpenHandler en
+ * electron/main/window.ts ya intercepta target="_blank" para eso). */
+function ErrorText({ message, className }: { message: string; className?: string }): JSX.Element {
+  const parts = message.split(URL_PATTERN);
+  return (
+    <p className={`text-[9px] text-red-300 ${className ?? ''}`}>
+      {parts.map((part, index) =>
+        /^https?:\/\//.test(part) ? (
+          <a
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noreferrer"
+            className="underline hover:text-red-200"
+          >
+            {part}
+          </a>
+        ) : (
+          <span key={index}>{part}</span>
+        ),
+      )}
+    </p>
+  );
+}
+
 /** Solo estos dos por ahora — ver memoria project_dialogue_audio_elevenlabs:
  * el guion está en español, pero el juego puede salir primero en inglés. Si
  * hace falta un tercer idioma más adelante, el dato ya soporta cualquier
@@ -383,7 +412,7 @@ function EmotionsFields({
                 className="hidden"
               />
             </div>
-            {error && <p className="mt-1 text-[9px] text-red-300">{error}</p>}
+            {error && <ErrorText message={error} className="mt-1" />}
           </div>
         );
       })}
@@ -490,7 +519,7 @@ function CreateVariantForm({
           cancelar
         </button>
       </div>
-      {error && <p className="mt-1 text-[9px] text-red-300">{error}</p>}
+      {error && <ErrorText message={error} className="mt-1" />}
     </div>
   );
 }
@@ -616,7 +645,7 @@ function CharacterFields({
           </button>
           <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
         </div>
-        {portraitError && <p className="mb-1 text-[9px] text-red-300">{portraitError}</p>}
+        {portraitError && <ErrorText message={portraitError} className="mb-1" />}
         <EmotionsFields
           gameId={gameId}
           character={character}
@@ -778,7 +807,7 @@ export function CharacterEditorPanel({
           </button>
           {voices && <p className="text-[9px] text-graphite-500">{voices.length} voces disponibles</p>}
         </div>
-        {voicesError && <p className="mt-1 text-[9px] text-red-300">{voicesError}</p>}
+        {voicesError && <ErrorText message={voicesError} className="mt-1" />}
       </div>
 
       <CreateCharacterForm onCreate={onCreateCharacter} />
