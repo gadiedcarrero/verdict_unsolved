@@ -4,12 +4,16 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; media-src 'self' https://storage.googleapis.com"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; media-src 'self' https://storage.googleapis.com https://*.elevenlabs.io"
     />
-    <!-- media-src incluye storage.googleapis.com: ahí sirve ElevenLabs las
-         muestras de audio de sus voces (preview_url) — ver VoiceRow en
-         CharacterEditorPanel.tsx. Sin esto, default-src 'self' bloquea la
-         reproducción del <audio> con un error de CSP silencioso. -->
+    <!-- media-src: ahí sirve ElevenLabs las muestras de audio de sus voces
+         (preview_url) — ver VoiceRow en CharacterEditorPanel.tsx. El
+         preview_url "general" de un voice vive en storage.googleapis.com,
+         pero las muestras por idioma (verified_languages[].preview_url)
+         vienen de un subdominio regional de la propia API (ej:
+         api.us.elevenlabs.io) — de ahí el wildcard *.elevenlabs.io en vez
+         de listar cada región a mano. Sin esto, default-src 'self' bloquea
+         la reproducción del <audio> con un error de CSP silencioso. -->
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NarraDos</title>
