@@ -7,19 +7,20 @@
   },
   "photo-2": {
     "id": "photo-2",
-    "speaker": "adrian-cross",
-    "portraitExpression": "director-gray",
+    "speaker": "director-gray",
     "line": "Eso decíamos.",
-    "onShow": [{ "type": "addFlag", "flag": "photoLogged" }]
+    "onShow": [
+      {
+        "type": "addFlag",
+        "flag": "photoLogged"
+      }
+    ]
   },
-
   "cajon-1": {
     "id": "cajon-1",
-    "speaker": "adrian-cross",
-    "portraitExpression": "director-gray",
+    "speaker": "director-gray",
     "line": "Ese archivo todavía no."
   },
-
   "zero-network-boot": {
     "id": "zero-network-boot",
     "speaker": "sistema",
@@ -32,9 +33,21 @@
     "speaker": "mirror",
     "line": "Identidad de operación confirmada. Han transcurrido mil ciento cuarenta y siete días desde la última activación completa.",
     "choices": [
-      { "id": "c1", "text": "\"No esperaba volver a usarla.\"", "next": "zero-network-close" },
-      { "id": "c2", "text": "\"Mantén los canales cerrados.\"", "next": "zero-network-close" },
-      { "id": "c3", "text": "\"¿Alguna actividad en Protocolo Zero?\"", "next": "zero-network-protocol-zero" }
+      {
+        "id": "c1",
+        "text": "\"No esperaba volver a usarla.\"",
+        "next": "zero-network-close"
+      },
+      {
+        "id": "c2",
+        "text": "\"Mantén los canales cerrados.\"",
+        "next": "zero-network-close"
+      },
+      {
+        "id": "c3",
+        "text": "\"¿Alguna actividad en Protocolo Zero?\"",
+        "next": "zero-network-protocol-zero"
+      }
     ]
   },
   "zero-network-protocol-zero": {
@@ -48,22 +61,31 @@
     "speaker": "sistema",
     "line": "(Conexión con MIRROR en espera.)"
   },
-
   "telefono-idle": {
     "id": "telefono-idle",
-    "speaker": "adrian-cross",
-    "portraitExpression": "director-gray",
+    "speaker": "director-gray",
     "line": "Nadie llama a este número desde hace tres años."
   },
-
   "telefono-ring-choice": {
     "id": "telefono-ring-choice",
     "speaker": "sistema",
     "line": "El teléfono suena violentamente. La lámpara parpadea.",
     "choices": [
-      { "id": "contestar", "text": "Contestar", "next": "telefono-contestar" },
-      { "id": "dejar-sonar", "text": "Dejarlo sonar", "next": "telefono-sigue-sonando" },
-      { "id": "rastrear", "text": "Pedir a MIRROR que rastree", "next": "telefono-mirror-rastreo" }
+      {
+        "id": "contestar",
+        "text": "Contestar",
+        "next": "telefono-contestar"
+      },
+      {
+        "id": "dejar-sonar",
+        "text": "Dejarlo sonar",
+        "next": "telefono-sigue-sonando"
+      },
+      {
+        "id": "rastrear",
+        "text": "Pedir a MIRROR que rastree",
+        "next": "telefono-mirror-rastreo"
+      }
     ]
   },
   "telefono-sigue-sonando": {
@@ -86,15 +108,26 @@
   },
   "telefono-mirror-intervencion-2": {
     "id": "telefono-mirror-intervencion-2",
-    "speaker": "adrian-cross",
-    "portraitExpression": "director-gray",
+    "speaker": "director-gray",
     "line": "(El Director deja de fingir indiferencia.)",
-    "onShow": [{ "type": "transitionTo", "sceneId": "oficina-llamada", "fade": "fadeToBlack" }]
+    "onShow": [
+      {
+        "type": "transitionTo",
+        "sceneId": "oficina-llamada",
+        "fade": "fadeToBlack"
+      }
+    ]
   },
   "telefono-contestar": {
     "id": "telefono-contestar",
     "speaker": "sistema",
     "line": "",
-    "onShow": [{ "type": "transitionTo", "sceneId": "oficina-llamada", "fade": "fadeToBlack" }]
+    "onShow": [
+      {
+        "type": "transitionTo",
+        "sceneId": "oficina-llamada",
+        "fade": "fadeToBlack"
+      }
+    ]
   }
 }

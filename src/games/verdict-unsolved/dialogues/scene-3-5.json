@@ -1,62 +1,100 @@
 {
   "acto2-intro": {
     "id": "acto2-intro",
-    "speaker": "adrian-cross",
-    "portraitExpression": "director-gray",
+    "speaker": "director-gray",
     "line": "Ahora hay que verificar a Lena, elegir quién entra y con qué."
   },
-
   "telefono-acto2-idle": {
     "id": "telefono-acto2-idle",
-    "speaker": "adrian-cross",
-    "portraitExpression": "director-gray",
+    "speaker": "director-gray",
     "line": "La línea con Lena sigue abierta. No hay nada más que decirle todavía."
   },
-
   "mirror-hub": {
     "id": "mirror-hub",
     "speaker": "mirror",
     "line": "Puedo abrir tres áreas: investigación del cliente, mercado de agentes o la tienda de equipo.",
     "choices": [
-      { "id": "investigar", "text": "Investigar a Lena", "next": "mirror-hub-investigar" },
-      { "id": "mercado", "text": "Mercado de agentes", "next": "mirror-hub-mercado" },
-      { "id": "tienda", "text": "Tienda y equipo", "next": "mirror-hub-tienda" },
-      { "id": "operar", "text": "Iniciar operación (Halcyon)", "next": "mirror-hub-operar" }
+      {
+        "id": "investigar",
+        "text": "Investigar a Lena",
+        "next": "mirror-hub-investigar"
+      },
+      {
+        "id": "mercado",
+        "text": "Mercado de agentes",
+        "next": "mirror-hub-mercado"
+      },
+      {
+        "id": "tienda",
+        "text": "Tienda y equipo",
+        "next": "mirror-hub-tienda"
+      },
+      {
+        "id": "operar",
+        "text": "Iniciar operación (Halcyon)",
+        "next": "mirror-hub-operar"
+      }
     ]
   },
   "mirror-hub-investigar": {
     "id": "mirror-hub-investigar",
     "speaker": "sistema",
     "line": "",
-    "onShow": [{ "type": "openInterface", "interfaceId": "mirror-investigation" }]
+    "onShow": [
+      {
+        "type": "openInterface",
+        "interfaceId": "mirror-investigation"
+      }
+    ]
   },
   "mirror-hub-mercado": {
     "id": "mirror-hub-mercado",
     "speaker": "sistema",
     "line": "",
-    "onShow": [{ "type": "openInterface", "interfaceId": "agent-market" }]
+    "onShow": [
+      {
+        "type": "openInterface",
+        "interfaceId": "agent-market"
+      }
+    ]
   },
   "mirror-hub-tienda": {
     "id": "mirror-hub-tienda",
     "speaker": "sistema",
     "line": "",
-    "onShow": [{ "type": "openInterface", "interfaceId": "equipment-shop" }]
+    "onShow": [
+      {
+        "type": "openInterface",
+        "interfaceId": "equipment-shop"
+      }
+    ]
   },
   "mirror-hub-operar": {
     "id": "mirror-hub-operar",
     "speaker": "sistema",
     "line": "(Con el agente y el equipo asignados, tocaría iniciar la operación en Halcyon — el Acto III todavía no está construido.)"
   },
-
   "confrontar-lena-1": {
     "id": "confrontar-lena-1",
-    "speaker": "lena",
-    "portraitExpression": "defensiva",
+    "speaker": "lena-hart",
+    "portraitExpression": "serio",
     "line": "Daniel dijo que si mencionaba Acheron antes de que usted aceptara, colgaría. No sabía en quién confiar.",
     "choices": [
-      { "id": "termino", "text": "\"Una mentira más y termino el contrato.\"", "next": "confrontar-lena-cierre" },
-      { "id": "desconfiar", "text": "\"Hizo bien en desconfiar.\"", "next": "confrontar-lena-cierre" },
-      { "id": "sabia", "text": "\"Su hermano conocía demasiado sobre mí.\"", "next": "confrontar-lena-cierre" }
+      {
+        "id": "termino",
+        "text": "\"Una mentira más y termino el contrato.\"",
+        "next": "confrontar-lena-cierre"
+      },
+      {
+        "id": "desconfiar",
+        "text": "\"Hizo bien en desconfiar.\"",
+        "next": "confrontar-lena-cierre"
+      },
+      {
+        "id": "sabia",
+        "text": "\"Su hermano conocía demasiado sobre mí.\"",
+        "next": "confrontar-lena-cierre"
+      }
     ]
   },
   "confrontar-lena-cierre": {

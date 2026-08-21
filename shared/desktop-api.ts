@@ -74,17 +74,22 @@ export type DesktopApi = {
    * en src/games/<gameId>/script-breakdown.json. */
   saveScriptBreakdown: (gameId: string, breakdown: ScriptBreakdown) => Promise<SceneEditorSaveResult>;
   readScriptBreakdown: (gameId: string) => Promise<ScriptBreakdownReadResult>;
-  /** Genera un retrato (busto 3/4, fondo transparente) con OpenAI a partir de
-   * la descripción del roster propuesto por el desglose de guion, y lo
-   * guarda directo en portraits/<characterId>.png (o
-   * portraits/<characterId>-<expressionKey>.png si se pasa una identidad
-   * alternativa) — usa la key ya guardada en Integraciones IA. Solo funciona
-   * en `pnpm dev`. */
+  /** Genera un retrato (busto 3/4, fondo transparente) con OpenAI y lo
+   * guarda en portraits/<characterId>.png (o
+   * portraits/<characterId>-<expressionKey>.png con expressionKey) — usa la
+   * key ya guardada en Integraciones IA. Solo funciona en `pnpm dev`.
+   * `referenceImagePath`: ruta relativa (dentro de assets/games/<gameId>/)
+   * a una imagen YA generada para usar como referencia visual (vía
+   * /images/edits — redibuja partiendo de esa imagen en vez de texto puro),
+   * para expresiones (mismo personaje, cambia la cara) y variantes (mismo
+   * personaje base, cambia edad/vestuario/identidad) — null = generación
+   * desde cero por texto. */
   generateCharacterPortrait: (
     gameId: string,
     characterId: string,
-    description: string,
+    prompt: string,
     expressionKey: string | null,
+    referenceImagePath: string | null,
   ) => Promise<PortraitSaveResult>;
   /** Lista las voces disponibles en la cuenta de ElevenLabs (premade +
    * propias) — usa la key ya guardada en Integraciones IA. No es por juego:

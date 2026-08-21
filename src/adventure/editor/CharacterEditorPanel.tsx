@@ -2,8 +2,8 @@ import { useEffect, useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { translate } from '../../i18n/translate';
 import type { Character } from '../../game-engine/scene-engine/schemas';
 import type { ElevenLabsVoice } from '../../../shared/elevenlabs';
+import { EMOTIONS } from '../../../shared/emotions';
 import { gameAssetUrl } from '../gameAssetUrl';
-import { slugify } from './slug';
 
 const inputClassName =
   'w-full rounded border border-graphite-700 bg-graphite-900 px-1.5 py-1 text-[10px] text-graphite-100';
@@ -290,16 +290,16 @@ function PortraitPreview({
   );
 }
 
-/** Cada personaje puede tener variantes de retrato además de la "por
- * defecto" — una emoción puntual (enojado, sonriendo) o una identidad
- * visualmente distinta del mismo personaje (ej: Adrian Cross también
- * aparece como "Director Gray" o como el agente enmascarado "Wraith").
- * Referenciadas desde un diálogo puntual vía DialogueNode.portraitExpression
- * — ver ActionComposer en SceneEditorPanel.tsx. Cada expresión guarda su
- * propia descripción visual (autocontenida — nunca depende de la
- * descripción base ni de otra expresión) para poder generar/regenerar su
- * imagen con IA sin mezclar apariencias en un mismo prompt. */
-function ExpressionsFields({
+/** Expresiones emocionales: vocabulario fijo (shared/emotions.ts), no texto
+ * libre — así el desplegable "Expresión del retrato" en el compositor de
+ * diálogo siempre elige entre las mismas opciones conocidas. Cada una se
+ * genera con un click: usa el retrato por defecto del personaje como
+ * referencia visual (edición de imagen, no texto puro), así la cara se
+ * mantiene reconocible entre expresiones — por eso requiere que el
+ * personaje ya tenga retrato base. Identidades distintas (Wraith, Director
+ * Gray) o edades distintas del mismo personaje NO van acá — son personajes
+ * separados, ver "Crear variante" más abajo. */
+function EmotionsFields({
   gameId,
   character,
   uploadingKey,
@@ -308,9 +308,7 @@ function ExpressionsFields({
   onPreviewPortrait,
   onUploadExpression,
   onRemoveExpression,
-  onAddExpression,
-  onExpressionDescriptionChange,
-  onGenerateExpression,
+  onGenerateEmotion,
 }: {
   gameId: string;
   character: Character;
@@ -320,14 +318,10 @@ function ExpressionsFields({
   onPreviewPortrait: (path: string) => void;
   onUploadExpression: (expressionKey: string, file: File) => void;
   onRemoveExpression: (expressionKey: string) => void;
-  onAddExpression: (key: string, description: string) => void;
-  onExpressionDescriptionChange: (expressionKey: string, description: string) => void;
-  onGenerateExpression: (expressionKey: string, description: string) => void;
+  onGenerateEmotion: (emotionCode: string) => void;
 }): JSX.Element {
-  const [newKey, setNewKey] = useState('');
-  const [newDescription, setNewDescription] = useState('');
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const entries = Object.entries(character.expressions);
+  const hasBasePortrait = Boolean(character.portrait);
 
   function handleFileChange(expressionKey: string, event: ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
@@ -335,66 +329,57 @@ function ExpressionsFields({
     event.target.value = '';
   }
 
-  function submitNewExpression(): void {
-    const trimmed = newKey.trim();
-    if (!trimmed) return;
-    onAddExpression(slugify(trimmed), newDescription.trim());
-    setNewKey('');
-    setNewDescription('');
-  }
-
   return (
     <div className="mt-2 border-t border-graphite-800 pt-1">
-      <p className="mb-1 text-[9px] text-graphite-500 uppercase">
-        Expresiones e identidades alternativas (para diálogo)
-      </p>
-      {entries.map(([key, expression]) => {
-        const generating = generatingArtIds.includes(`${character.id}:${key}`);
-        const error = artErrors[`${character.id}:${key}`];
+      <p className="mb-1 text-[9px] text-graphite-500 uppercase">Expresiones emocionales</p>
+      {!hasBasePortrait && (
+        <p className="mb-1 text-[9px] text-graphite-600">
+          Generá primero el retrato base de arriba — las expresiones parten de esa imagen como referencia.
+        </p>
+      )}
+      {EMOTIONS.map(({ code, label }) => {
+        const expression = character.expressions[code];
+        const generating = generatingArtIds.includes(`${character.id}:${code}`);
+        const error = artErrors[`${character.id}:${code}`];
         return (
-          <div key={key} className="mb-1 rounded border border-graphite-800 bg-graphite-950/60 p-1.5">
+          <div key={code} className="mb-1 rounded border border-graphite-800 bg-graphite-950/60 p-1.5">
             <div className="mb-1 flex items-center gap-2">
-              <PortraitPreview gameId={gameId} portrait={expression.path} onPreview={onPreviewPortrait} />
-              <p className="flex-1 truncate text-[9px] text-graphite-300">{key}</p>
-              <button
-                type="button"
-                onClick={() => onRemoveExpression(key)}
-                className="text-[8px] text-graphite-500 uppercase hover:text-red-400"
-              >
-                quitar
-              </button>
+              <PortraitPreview gameId={gameId} portrait={expression?.path ?? null} onPreview={onPreviewPortrait} />
+              <p className="flex-1 text-[9px] text-graphite-300">{label}</p>
+              {expression?.path && (
+                <button
+                  type="button"
+                  onClick={() => onRemoveExpression(code)}
+                  className="shrink-0 text-[8px] text-graphite-500 uppercase hover:text-red-400"
+                >
+                  quitar
+                </button>
+              )}
             </div>
-            <textarea
-              value={expression.description}
-              onChange={(event) => onExpressionDescriptionChange(key, event.target.value)}
-              placeholder="Descripción visual autocontenida (para generar con IA)..."
-              rows={2}
-              className={`${inputClassName} mb-1`}
-            />
             <div className="flex gap-1">
               <button
                 type="button"
-                onClick={() => onGenerateExpression(key, expression.description)}
-                disabled={!expression.description.trim() || generating}
+                onClick={() => onGenerateEmotion(code)}
+                disabled={!hasBasePortrait || generating}
                 className="flex-1 rounded border border-sky-400/40 px-2 py-1 text-[8px] tracking-widest text-sky-300 uppercase transition-colors hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {generating ? 'Generando...' : expression.path ? 'Regenerar con IA' : 'Generar con IA'}
+                {generating ? 'Generando...' : expression?.path ? 'Regenerar con IA' : 'Generar con IA'}
               </button>
               <button
                 type="button"
-                onClick={() => fileInputRefs.current[key]?.click()}
-                disabled={uploadingKey === key}
+                onClick={() => fileInputRefs.current[code]?.click()}
+                disabled={uploadingKey === code}
                 className="shrink-0 rounded border border-graphite-700 px-2 py-1 text-[8px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {uploadingKey === key ? 'Subiendo...' : 'Subir manual'}
+                {uploadingKey === code ? 'Subiendo...' : 'Subir manual'}
               </button>
               <input
                 ref={(el) => {
-                  fileInputRefs.current[key] = el;
+                  fileInputRefs.current[code] = el;
                 }}
                 type="file"
                 accept="image/*"
-                onChange={(event) => handleFileChange(key, event)}
+                onChange={(event) => handleFileChange(code, event)}
                 className="hidden"
               />
             </div>
@@ -402,30 +387,110 @@ function ExpressionsFields({
           </div>
         );
       })}
-      <div className="rounded border border-dashed border-graphite-700 p-1.5">
-        <input
-          type="text"
-          value={newKey}
-          onChange={(event) => setNewKey(event.target.value)}
-          placeholder="nombre (ej: enojado, o una identidad como wraith)"
-          className={`${inputClassName} mb-1`}
-        />
-        <textarea
-          value={newDescription}
-          onChange={(event) => setNewDescription(event.target.value)}
-          placeholder="Descripción visual (opcional si vas a subir la imagen a mano)..."
-          rows={2}
-          className={`${inputClassName} mb-1`}
-        />
+    </div>
+  );
+}
+
+/** Identidades distintas del mismo personaje en la trama (Wraith, Director
+ * Gray) o versiones de otra edad (Adrian joven en un flashback) son
+ * personajes NUEVOS y separados, no expresiones — cada uno necesita su
+ * propio set completo de expresiones emocionales, y mezclar "identidad" con
+ * "emoción" en un mismo campo no escala. Genera partiendo del retrato de
+ * ESTE personaje como referencia visual. */
+function CreateVariantForm({
+  hasSourcePortrait,
+  onCreate,
+}: {
+  hasSourcePortrait: boolean;
+  onCreate: (name: string, description: string, color: string) => Promise<{ ok: boolean; error?: string }>;
+}): JSX.Element {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [color, setColor] = useState('#8fa3c9');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(): Promise<void> {
+    const trimmedName = name.trim();
+    const trimmedDescription = description.trim();
+    if (!trimmedName || !trimmedDescription) return;
+    setSubmitting(true);
+    setError(null);
+    const result = await onCreate(trimmedName, trimmedDescription, color);
+    setSubmitting(false);
+    if (result.ok) {
+      setName('');
+      setDescription('');
+      setOpen(false);
+    } else {
+      setError(result.error ?? 'Error desconocido.');
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        disabled={!hasSourcePortrait}
+        title={hasSourcePortrait ? undefined : 'Generá primero el retrato base'}
+        className="mt-2 w-full rounded border border-dashed border-graphite-700 px-2 py-1 text-[8px] tracking-widest text-graphite-400 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        + Crear variante (otra identidad o edad de este mismo personaje)
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-2 rounded border border-dashed border-graphite-700 p-1.5">
+      <p className="mb-1 text-[8px] text-graphite-500">
+        Ej: &quot;Wraith&quot; con descripción &quot;misma persona pero con máscara táctica negra cubriendo todo el
+        rostro, ropa de agente de campo&quot;, o &quot;Adrian joven&quot; con &quot;misma persona pero unos 15 años
+        más joven, sin canas, rostro más suave&quot;. La descripción tiene que ser autocontenida — no dependas de la
+        descripción del personaje original.
+      </p>
+      <input
+        type="text"
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        placeholder="Nombre (ej: Wraith, Adrian joven)"
+        className={`${inputClassName} mb-1`}
+      />
+      <textarea
+        value={description}
+        onChange={(event) => setDescription(event.target.value)}
+        placeholder="Qué cambia — descripción visual autocontenida..."
+        rows={2}
+        className={`${inputClassName} mb-1`}
+      />
+      <div className="flex items-center gap-2">
+        <label className="flex items-center gap-1 text-[9px] text-graphite-400">
+          color
+          <input
+            type="color"
+            value={color}
+            onChange={(event) => setColor(event.target.value)}
+            className="h-5 w-8 cursor-pointer rounded border border-graphite-700 bg-graphite-900"
+          />
+        </label>
         <button
           type="button"
-          onClick={submitNewExpression}
-          disabled={!newKey.trim()}
-          className="w-full rounded border border-graphite-700 px-2 py-1 text-[8px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={() => void submit()}
+          disabled={!name.trim() || !description.trim() || submitting}
+          className="flex-1 rounded border border-sky-400/40 px-2 py-1 text-[9px] tracking-widest text-sky-300 uppercase transition-colors hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          + Agregar expresión
+          {submitting ? 'Generando...' : 'Crear variante'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="shrink-0 text-[9px] text-graphite-500 uppercase hover:text-graphite-300"
+        >
+          cancelar
         </button>
       </div>
+      {error && <p className="mt-1 text-[9px] text-red-300">{error}</p>}
     </div>
   );
 }
@@ -446,13 +511,12 @@ function CharacterFields({
   uploadingExpressionKey,
   onUploadExpression,
   onRemoveExpression,
-  onAddExpression,
-  onExpressionDescriptionChange,
-  onGenerateExpression,
+  onGenerateEmotion,
   voices,
   onVoiceChange,
   onRemoveVoice,
   onRemoveCharacter,
+  onCreateVariant,
 }: {
   gameId: string;
   character: Character;
@@ -469,13 +533,12 @@ function CharacterFields({
   uploadingExpressionKey: string | null;
   onUploadExpression: (expressionKey: string, file: File) => void;
   onRemoveExpression: (expressionKey: string) => void;
-  onAddExpression: (key: string, description: string) => void;
-  onExpressionDescriptionChange: (expressionKey: string, description: string) => void;
-  onGenerateExpression: (expressionKey: string, description: string) => void;
+  onGenerateEmotion: (emotionCode: string) => void;
   voices: ElevenLabsVoice[] | null;
   onVoiceChange: (language: string, voiceId: string) => void;
   onRemoveVoice: (language: string) => void;
   onRemoveCharacter: () => void;
+  onCreateVariant: (name: string, description: string, color: string) => Promise<{ ok: boolean; error?: string }>;
 }): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const generatingPortrait = generatingArtIds.includes(character.id);
@@ -554,7 +617,7 @@ function CharacterFields({
           <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
         </div>
         {portraitError && <p className="mb-1 text-[9px] text-red-300">{portraitError}</p>}
-        <ExpressionsFields
+        <EmotionsFields
           gameId={gameId}
           character={character}
           uploadingKey={uploadingExpressionKey}
@@ -563,11 +626,10 @@ function CharacterFields({
           onPreviewPortrait={onPreviewPortrait}
           onUploadExpression={onUploadExpression}
           onRemoveExpression={onRemoveExpression}
-          onAddExpression={onAddExpression}
-          onExpressionDescriptionChange={onExpressionDescriptionChange}
-          onGenerateExpression={onGenerateExpression}
+          onGenerateEmotion={onGenerateEmotion}
         />
         <VoicesFields character={character} voices={voices} onVoiceChange={onVoiceChange} onRemoveVoice={onRemoveVoice} />
+        <CreateVariantForm hasSourcePortrait={Boolean(character.portrait)} onCreate={onCreateVariant} />
       </div>
     </div>
   );
@@ -643,12 +705,11 @@ export function CharacterEditorPanel({
   onUploadPortrait,
   onUploadExpression,
   onRemoveExpression,
-  onAddExpression,
-  onExpressionDescriptionChange,
+  onGenerateEmotion,
   onGeneratePortrait,
-  onGenerateExpression,
   onCreateCharacter,
   onRemoveCharacter,
+  onCreateVariant,
   voices,
   voicesLoading,
   voicesError,
@@ -663,7 +724,7 @@ export function CharacterEditorPanel({
   /** "<characterId>:<expresión>" del upload en curso, o null. */
   uploadingExpressionKey: string | null;
   /** "<characterId>" o "<characterId>:<expresión>" de cada generación por
-   * IA en curso — puede haber varias en paralelo (retrato + identidades). */
+   * IA en curso — puede haber varias en paralelo (retrato + expresiones). */
   generatingArtIds: string[];
   /** Mismas claves que generatingArtIds → mensaje de error de esa
    * generación puntual, si falló — cada una la suya, no se pisan entre
@@ -678,12 +739,16 @@ export function CharacterEditorPanel({
   onUploadPortrait: (characterId: string, file: File) => void;
   onUploadExpression: (characterId: string, expressionKey: string, file: File) => void;
   onRemoveExpression: (characterId: string, expressionKey: string) => void;
-  onAddExpression: (characterId: string, key: string, description: string) => void;
-  onExpressionDescriptionChange: (characterId: string, expressionKey: string, description: string) => void;
+  onGenerateEmotion: (characterId: string, emotionCode: string) => void;
   onGeneratePortrait: (characterId: string, description: string) => void;
-  onGenerateExpression: (characterId: string, expressionKey: string, description: string) => void;
   onCreateCharacter: (name: string, nameText: string, color: string) => void;
   onRemoveCharacter: (characterId: string) => void;
+  onCreateVariant: (
+    sourceCharacterId: string,
+    name: string,
+    description: string,
+    color: string,
+  ) => Promise<{ ok: boolean; error?: string }>;
   /** null = todavía no se pidieron a la cuenta de ElevenLabs (ver botón
    * "Cargar voces" abajo). */
   voices: ElevenLabsVoice[] | null;
@@ -740,17 +805,12 @@ export function CharacterEditorPanel({
           onGeneratePortrait={(description) => onGeneratePortrait(character.id, description)}
           onUploadExpression={(expressionKey, file) => onUploadExpression(character.id, expressionKey, file)}
           onRemoveExpression={(expressionKey) => onRemoveExpression(character.id, expressionKey)}
-          onAddExpression={(key, description) => onAddExpression(character.id, key, description)}
-          onExpressionDescriptionChange={(expressionKey, description) =>
-            onExpressionDescriptionChange(character.id, expressionKey, description)
-          }
-          onGenerateExpression={(expressionKey, description) =>
-            onGenerateExpression(character.id, expressionKey, description)
-          }
+          onGenerateEmotion={(emotionCode) => onGenerateEmotion(character.id, emotionCode)}
           voices={voices}
           onVoiceChange={(language, voiceId) => onVoiceChange(character.id, language, voiceId)}
           onRemoveVoice={(language) => onRemoveVoice(character.id, language)}
           onRemoveCharacter={() => onRemoveCharacter(character.id)}
+          onCreateVariant={(name, description, color) => onCreateVariant(character.id, name, description, color)}
         />
       ))}
     </div>

@@ -41,6 +41,7 @@ import {
   type ScriptBreakdownReviewStatus,
 } from '../../shared/script-breakdown';
 import type { ElevenLabsVoice } from '../../shared/elevenlabs';
+import { EMOTIONS } from '../../shared/emotions';
 
 type EditorTab = 'scene' | 'characters' | 'settings' | 'script-ai';
 
@@ -1152,30 +1153,6 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     }
   }
 
-  function addExpression(characterId: string, key: string, description: string): void {
-    setEditedCharacters((prev) =>
-      (prev ?? baseCharacters).map((c) =>
-        c.id !== characterId ? c : { ...c, expressions: { ...c.expressions, [key]: { path: null, description } } },
-      ),
-    );
-  }
-
-  function updateExpressionDescription(characterId: string, expressionKey: string, description: string): void {
-    setEditedCharacters((prev) =>
-      (prev ?? baseCharacters).map((c) =>
-        c.id !== characterId
-          ? c
-          : {
-              ...c,
-              expressions: {
-                ...c.expressions,
-                [expressionKey]: { path: c.expressions[expressionKey]?.path ?? null, description },
-              },
-            },
-      ),
-    );
-  }
-
   function removeExpression(characterId: string, expressionKey: string): void {
     setEditedCharacters((prev) =>
       (prev ?? baseCharacters).map((c) => {
@@ -1234,8 +1211,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   // por defecto; una clave = esa identidad/expresión (Character.expressions).
   async function generateCharacterPortraitArt(
     characterId: string,
-    description: string,
+    prompt: string,
     expressionKey: string | null,
+    referenceImagePath: string | null,
   ): Promise<void> {
     const genId = expressionKey ? `${characterId}:${expressionKey}` : characterId;
     setGeneratingCharacterArtIds((prev) => [...prev, genId]);
@@ -1246,7 +1224,13 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
     try {
       console.log('[retrato]', genId, 'generando...');
-      const result = await window.api.generateCharacterPortrait(gameId, characterId, description, expressionKey);
+      const result = await window.api.generateCharacterPortrait(
+        gameId,
+        characterId,
+        prompt,
+        expressionKey,
+        referenceImagePath,
+      );
       console.log('[retrato]', genId, 'resultado', result);
       if (!result.ok) {
         setCharacterArtErrors((prev) => ({ ...prev, [genId]: result.error }));
@@ -1266,54 +1250,135 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     }
   }
 
+  // Genera una expresión emocional (vocabulario fijo, ver shared/emotions.ts)
+  // usando SIEMPRE el retrato por defecto del personaje como referencia
+  // visual (/images/edits) — así la cara se mantiene reconocible entre
+  // expresiones en vez de reinterpretarse desde cero cada vez. Por eso
+  // requiere que el personaje ya tenga retrato base generado.
+  function generateEmotionExpression(characterId: string, emotionCode: string): void {
+    const character = displayCharacters.find((c) => c.id === characterId);
+    if (!character?.portrait) return;
+    const hint = EMOTIONS.find((e) => e.code === emotionCode)?.promptHint ?? emotionCode;
+    const prompt =
+      `Redraw this exact same character with a ${hint} facial expression. Keep everything else identical: ` +
+      `same face structure, same hairstyle, same outfit, same art style, same framing. Only the facial ` +
+      `expression (and subtly the pose, if it helps convey the emotion) should change.` +
+      (character.description ? `\n\nCharacter description for reference: ${character.description}` : '');
+    void generateCharacterPortraitArt(characterId, prompt, emotionCode, character.portrait);
+  }
+
+  // "Crear variante": genera un personaje NUEVO a partir de otro ya
+  // existente, usando SU retrato como referencia visual — para identidades
+  // alternativas (Wraith, Director Gray) o versiones de otra edad del mismo
+  // personaje (Adrian joven en un flashback). A propósito es un Character
+  // aparte, no una expresión: cada uno necesita su propio set completo de
+  // expresiones emocionales, y mezclar "identidad" con "emoción" en el mismo
+  // campo no escala (ver conversación — antes Wraith vivía mal como
+  // expresión de Adrian Cross).
+  async function createCharacterVariant(
+    sourceCharacterId: string,
+    name: string,
+    transformationDescription: string,
+    color: string,
+  ): Promise<{ ok: boolean; error?: string }> {
+    const source = displayCharacters.find((c) => c.id === sourceCharacterId);
+    if (!source?.portrait) return { ok: false, error: 'El personaje de origen todavía no tiene retrato base.' };
+    const base = editedCharacters ?? baseCharacters;
+    const newId = uniqueId(slugify(name), new Set(base.map((c) => c.id)));
+    setGeneratingCharacterArtIds((prev) => [...prev, newId]);
+    setCharacterArtErrors((prev) => {
+      const next = { ...prev };
+      delete next[newId];
+      return next;
+    });
+    try {
+      const prompt =
+        `Redraw this exact same character but: ${transformationDescription}. Keep the same general art style.` +
+        (source.description ? `\n\nOriginal character description for reference: ${source.description}` : '');
+      console.log('[variante]', newId, 'generando...');
+      const result = await window.api.generateCharacterPortrait(gameId, newId, prompt, null, source.portrait);
+      console.log('[variante]', newId, 'resultado', result);
+      if (!result.ok) {
+        setCharacterArtErrors((prev) => ({ ...prev, [newId]: result.error }));
+        return { ok: false, error: result.error };
+      }
+      const nameKey = `character.${newId}.name`;
+      setEditedCharacters((prev) => [
+        ...(prev ?? baseCharacters),
+        {
+          id: newId,
+          name: nameKey,
+          portrait: result.path,
+          description: transformationDescription,
+          expressions: {},
+          voices: {},
+          color,
+        },
+      ]);
+      setPendingCharacterStrings((prev) => ({ ...prev, [nameKey]: name }));
+      return { ok: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('[variante]', newId, 'error', error);
+      setCharacterArtErrors((prev) => ({ ...prev, [newId]: message }));
+      return { ok: false, error: message };
+    } finally {
+      setGeneratingCharacterArtIds((prev) => prev.filter((id) => id !== newId));
+    }
+  }
+
   // Paso 3→2 del pipeline (ver docs/plataforma/00-vision-ia.md): en cuanto
   // se genera un desglose de guion, su roster propuesto pasa a ser parte del
   // borrador real de personajes — así todo se edita y guarda desde un solo
   // lugar (pestaña Personajes), sin una lista aparte acá que hubiera que
   // promover a mano. Nunca pisa un personaje que ya existe (ni su
   // descripción ni sus expresiones ya generadas) — solo agrega personajes
-  // nuevos y, en los que ya existían, identidades alternativas que todavía
-  // no tenían.
+  // nuevos. Las identidades alternativas que detecta la IA (alternateLooks)
+  // se promueven como personajes NUEVOS separados, no como expresiones del
+  // personaje base — son la misma persona en la trama, pero necesitan su
+  // propio set de expresiones emocionales igual que cualquier otro.
   function promoteBreakdownCharacters(breakdownCharacters: ScriptBreakdownCharacter[]): void {
     const pendingNameStrings: Record<string, string> = {};
     setEditedCharacters((prev) => {
       const base = prev ?? baseCharacters;
       const result = [...base];
+      const takenIds = new Set(result.map((c) => c.id));
       let changed = false;
       for (const bc of breakdownCharacters) {
-        const idx = result.findIndex((c) => c.id === bc.id);
-        if (idx === -1) {
+        if (!takenIds.has(bc.id)) {
           const nameKey = `character.${bc.id}.name`;
           pendingNameStrings[nameKey] = bc.name;
-          const expressions: Character['expressions'] = {};
-          for (const look of bc.alternateLooks) {
-            expressions[look.key] = { path: null, description: look.description };
-          }
           result.push({
             id: bc.id,
             name: nameKey,
             portrait: null,
             description: bc.description,
-            expressions,
+            expressions: {},
             voices: {},
             color: bc.suggestedColor,
           });
+          takenIds.add(bc.id);
           changed = true;
-        } else {
-          const existing = result[idx];
-          if (!existing) continue;
-          const newExpressions = { ...existing.expressions };
-          let expressionsChanged = false;
-          for (const look of bc.alternateLooks) {
-            if (!newExpressions[look.key]) {
-              newExpressions[look.key] = { path: null, description: look.description };
-              expressionsChanged = true;
-            }
-          }
-          if (expressionsChanged) {
-            result[idx] = { ...existing, expressions: newExpressions };
-            changed = true;
-          }
+        }
+        // Cada identidad alternativa (Wraith, Director Gray...) se agrega
+        // como personaje propio, no como expresión del personaje base — ver
+        // comentario arriba de la función. Si ya existe un personaje con ese
+        // id (promovido antes, o creado a mano), no se toca.
+        for (const look of bc.alternateLooks) {
+          if (takenIds.has(look.key)) continue;
+          const nameKey = `character.${look.key}.name`;
+          pendingNameStrings[nameKey] = look.label;
+          result.push({
+            id: look.key,
+            name: nameKey,
+            portrait: null,
+            description: look.description,
+            expressions: {},
+            voices: {},
+            color: bc.suggestedColor,
+          });
+          takenIds.add(look.key);
+          changed = true;
         }
       }
       return changed ? result : base;
@@ -1672,14 +1737,13 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onUploadPortrait={(id, file) => void uploadPortrait(id, file)}
                   onUploadExpression={(id, expressionKey, file) => void uploadExpressionPortrait(id, expressionKey, file)}
                   onRemoveExpression={removeExpression}
-                  onAddExpression={addExpression}
-                  onExpressionDescriptionChange={updateExpressionDescription}
-                  onGeneratePortrait={(id, description) => void generateCharacterPortraitArt(id, description, null)}
-                  onGenerateExpression={(id, expressionKey, description) =>
-                    void generateCharacterPortraitArt(id, description, expressionKey)
-                  }
+                  onGenerateEmotion={generateEmotionExpression}
+                  onGeneratePortrait={(id, description) => void generateCharacterPortraitArt(id, description, null, null)}
                   onCreateCharacter={createCharacter}
                   onRemoveCharacter={removeCharacter}
+                  onCreateVariant={(sourceId, name, description, color) =>
+                    createCharacterVariant(sourceId, name, description, color)
+                  }
                   voices={elevenLabsVoices}
                   voicesLoading={elevenLabsVoicesLoading}
                   voicesError={elevenLabsVoicesError}

@@ -9,15 +9,6 @@
     "color": "#6ba8c9"
   },
   {
-    "id": "lena",
-    "name": "character.lena.name",
-    "portrait": null,
-    "description": "",
-    "expressions": {},
-    "voices": {},
-    "color": "#c98bd6"
-  },
-  {
     "id": "sistema",
     "name": "character.sistema.name",
     "portrait": null,
@@ -31,18 +22,27 @@
     "name": "character.adrian-cross.name",
     "portrait": "portraits/adrian-cross.png",
     "description": "Hombre de unos 40 años, complexión atlética, cabello oscuro corto, rostro marcado por cicatrices leves. Viste ropa funcional, generalmente traje oscuro o ropa táctica cuando opera como agente. Postura segura y mirada intensa.",
-    "expressions": {
-      "director-gray": {
-        "path": "portraits/adrian-cross-director-gray.png",
-        "description": "Hombre de unos 40 años, cabello oscuro corto, rostro serio y cansado. Siempre sentado en una silla de ruedas, viste traje gris oscuro y camisa blanca, con corbata sobria. Suele estar detrás de un escritorio de madera oscura en una oficina poco iluminada."
-      },
-      "wraith": {
-        "path": "portraits/adrian-cross-wraith.png",
-        "description": "Figura alta y atlética, completamente cubierta por un traje táctico negro ajustado, guantes negros y botas militares. Lleva una máscara negra sin rasgos, sólo con una delgada ranura para los ojos, y ningún rasgo identificable. Movimientos precisos y silenciosos."
-      }
-    },
+    "expressions": {},
     "voices": {},
     "color": "#1a4d8f"
+  },
+  {
+    "id": "director-gray",
+    "name": "character.director-gray.name",
+    "portrait": "portraits/adrian-cross-director-gray.png",
+    "description": "Hombre de unos 40 años, cabello oscuro corto, rostro serio y cansado. Siempre sentado en una silla de ruedas, viste traje gris oscuro y camisa blanca, con corbata sobria. Suele estar detrás de un escritorio de madera oscura en una oficina poco iluminada.",
+    "expressions": {},
+    "voices": {},
+    "color": "#8a7048"
+  },
+  {
+    "id": "wraith",
+    "name": "character.wraith.name",
+    "portrait": "portraits/adrian-cross-wraith.png",
+    "description": "Figura alta y atlética, completamente cubierta por un traje táctico negro ajustado, guantes negros y botas militares. Lleva una máscara negra sin rasgos, sólo con una delgada ranura para los ojos, y ningún rasgo identificable. Movimientos precisos y silenciosos.",
+    "expressions": {},
+    "voices": {},
+    "color": "#4a4a6a"
   },
   {
     "id": "evelyn-marlowe",
