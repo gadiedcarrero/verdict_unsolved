@@ -22,6 +22,12 @@ function voiceOptionLabel(voice: ElevenLabsVoice): string {
   return bits.length > 0 ? `${voice.name} (${bits.join(', ')})` : voice.name;
 }
 
+const GENDER_FILTERS: { value: string; label: string }[] = [
+  { value: 'any', label: 'Cualquiera' },
+  { value: 'male', label: 'Masculino' },
+  { value: 'female', label: 'Femenino' },
+];
+
 function VoiceRow({
   language,
   label,
@@ -38,8 +44,24 @@ function VoiceRow({
   onRemove: () => void;
 }): JSX.Element {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [genderFilter, setGenderFilter] = useState('any');
   const selectedVoice = voices?.find((v) => v.voiceId === voiceId) ?? null;
   const previewUrl = selectedVoice ? (selectedVoice.previewUrlByLanguage[language] ?? selectedVoice.previewUrl) : null;
+
+  // Filtro de idioma "duro": solo voces verificadas para este idioma (por
+  // muestra propia o por ser su idioma base) — mostrar las 21 igual en
+  // todos lados no ayuda a elegir. El filtro de género es manual, no hay
+  // dato de género guardado en el personaje para autodetectarlo. La voz ya
+  // elegida se mantiene visible aunque deje de matchear el filtro activo,
+  // para no perder la selección al tocar el filtro.
+  const filteredVoices = (voices ?? []).filter((voice) => {
+    const matchesLanguage = Boolean(voice.previewUrlByLanguage[language]) || voice.language === language;
+    const matchesGender = genderFilter === 'any' || voice.gender === genderFilter;
+    return matchesLanguage && matchesGender;
+  });
+  if (selectedVoice && !filteredVoices.some((v) => v.voiceId === selectedVoice.voiceId)) {
+    filteredVoices.unshift(selectedVoice);
+  }
 
   function playPreview(): void {
     if (!previewUrl || !audioRef.current) return;
@@ -48,31 +70,50 @@ function VoiceRow({
   }
 
   return (
-    <div className="mb-1 flex items-center gap-1">
-      <span className="w-12 shrink-0 text-[9px] text-graphite-500 uppercase">{label}</span>
-      <select
-        value={voiceId ?? ''}
-        onChange={(event) => (event.target.value ? onChange(event.target.value) : onRemove())}
-        disabled={!voices}
-        className={`${inputClassName} flex-1`}
-      >
-        <option value="">{voices ? '(sin voz)' : 'Cargando voces...'}</option>
-        {voices?.map((voice) => (
-          <option key={voice.voiceId} value={voice.voiceId}>
-            {voiceOptionLabel(voice)}
-          </option>
-        ))}
-      </select>
-      <button
-        type="button"
-        onClick={playPreview}
-        disabled={!previewUrl}
-        title="Escuchar muestra"
-        className="shrink-0 rounded border border-graphite-700 px-2 py-1 text-[9px] text-graphite-300 transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        ▶
-      </button>
-      <audio ref={audioRef} className="hidden" />
+    <div className="mb-1">
+      <div className="mb-0.5 flex items-center justify-between gap-1">
+        <span className="text-[9px] text-graphite-500 uppercase">{label}</span>
+        <select
+          value={genderFilter}
+          onChange={(event) => setGenderFilter(event.target.value)}
+          disabled={!voices}
+          className="rounded border border-graphite-700 bg-graphite-900 px-1 py-0.5 text-[9px] text-graphite-400"
+        >
+          {GENDER_FILTERS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="flex items-center gap-1">
+        <select
+          value={voiceId ?? ''}
+          onChange={(event) => (event.target.value ? onChange(event.target.value) : onRemove())}
+          disabled={!voices}
+          className={`${inputClassName} flex-1`}
+        >
+          <option value="">{voices ? '(sin voz)' : 'Cargando voces...'}</option>
+          {filteredVoices.map((voice) => (
+            <option key={voice.voiceId} value={voice.voiceId}>
+              {voiceOptionLabel(voice)}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={playPreview}
+          disabled={!previewUrl}
+          title="Escuchar muestra"
+          className="shrink-0 rounded border border-graphite-700 px-2 py-1 text-[9px] text-graphite-300 transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ▶
+        </button>
+        <audio ref={audioRef} className="hidden" />
+      </div>
+      {voices && filteredVoices.length === 0 && (
+        <p className="mt-0.5 text-[8px] text-graphite-600">Ninguna voz coincide con este filtro.</p>
+      )}
     </div>
   );
 }

@@ -6,13 +6,14 @@ type RawVerifiedLanguage = { language?: unknown; preview_url?: unknown };
 type RawVoice = {
   voice_id?: unknown;
   name?: unknown;
-  labels?: { gender?: unknown; accent?: unknown; descriptive?: unknown };
+  labels?: { gender?: unknown; accent?: unknown; descriptive?: unknown; language?: unknown };
   preview_url?: unknown;
   verified_languages?: unknown;
 };
 
 function mapVoice(raw: RawVoice): ElevenLabsVoice | null {
   if (typeof raw.voice_id !== 'string' || typeof raw.name !== 'string') return null;
+  const language = typeof raw.labels?.language === 'string' ? raw.labels.language : null;
   const previewUrlByLanguage: Record<string, string> = {};
   if (Array.isArray(raw.verified_languages)) {
     for (const entry of raw.verified_languages as RawVerifiedLanguage[]) {
@@ -21,12 +22,20 @@ function mapVoice(raw: RawVoice): ElevenLabsVoice | null {
       }
     }
   }
+  // Respaldo: si ElevenLabs no mandó verified_languages para el idioma base
+  // del voice (pasa con algunas voces "premade"), lo agregamos igual usando
+  // la muestra general — si no, esa voz desaparecería del filtro por idioma
+  // en su propio idioma base.
+  if (language && !previewUrlByLanguage[language] && typeof raw.preview_url === 'string') {
+    previewUrlByLanguage[language] = raw.preview_url;
+  }
   return {
     voiceId: raw.voice_id,
     name: raw.name,
     gender: typeof raw.labels?.gender === 'string' ? raw.labels.gender : null,
     accent: typeof raw.labels?.accent === 'string' ? raw.labels.accent : null,
     descriptive: typeof raw.labels?.descriptive === 'string' ? raw.labels.descriptive : null,
+    language,
     previewUrl: typeof raw.preview_url === 'string' ? raw.preview_url : null,
     previewUrlByLanguage,
   };
