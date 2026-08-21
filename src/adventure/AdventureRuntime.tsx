@@ -276,6 +276,18 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     }
   }, [isLoaded, bundle, init, persistedAdventureState, project]);
 
+  // Cargar la lista de voces de ElevenLabs a mano (un botón aparte antes de
+  // que existiera esto) era demasiado fácil de pasar por alto — se abría el
+  // desplegable de un personaje sin haber cargado nada y parecía roto. Se
+  // pide sola una vez al entrar a Personajes; si falla (key faltante, etc.)
+  // no reintenta sola en cada cambio de pestaña, pero el botón "Recargar
+  // voces" sigue disponible a mano.
+  useEffect(() => {
+    if (editorTab === 'characters' && elevenLabsVoices === null && !elevenLabsVoicesLoading && !elevenLabsVoicesError) {
+      void loadElevenLabsVoices();
+    }
+  }, [editorTab]);
+
   const activeEditorSceneId = editorSceneId ?? currentSceneId;
 
   useEffect(() => {
@@ -1159,16 +1171,19 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   }
 
   async function loadElevenLabsVoices(): Promise<void> {
+    console.log('[voices] cargando...');
     setElevenLabsVoicesLoading(true);
     setElevenLabsVoicesError(null);
     try {
       const result = await window.api.listElevenLabsVoices();
+      console.log('[voices] resultado', result);
       if (result.ok) {
         setElevenLabsVoices(result.voices);
       } else {
         setElevenLabsVoicesError(result.error);
       }
     } catch (error) {
+      console.error('[voices] error', error);
       setElevenLabsVoicesError(error instanceof Error ? error.message : String(error));
     } finally {
       setElevenLabsVoicesLoading(false);

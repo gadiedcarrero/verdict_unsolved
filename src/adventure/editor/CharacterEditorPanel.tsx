@@ -56,7 +56,7 @@ function VoiceRow({
         disabled={!voices}
         className={`${inputClassName} flex-1`}
       >
-        <option value="">{voices ? '(sin voz)' : 'Cargá las voces arriba primero...'}</option>
+        <option value="">{voices ? '(sin voz)' : 'Cargando voces...'}</option>
         {voices?.map((voice) => (
           <option key={voice.voiceId} value={voice.voiceId}>
             {voiceOptionLabel(voice)}
