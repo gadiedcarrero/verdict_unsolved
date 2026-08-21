@@ -75,7 +75,8 @@
   },
   "director-respuesta": {
     "id": "director-respuesta",
-    "speaker": "director",
+    "speaker": "adrian-cross",
+    "portraitExpression": "director-gray",
     "line": "Yo ya no entro en edificios. Me aseguro de que los demás salgan.",
     "choices": [
       { "id": "aceptar", "text": "Aceptar el caso", "next": "caso-registrado" },

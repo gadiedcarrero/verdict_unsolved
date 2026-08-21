@@ -1,13 +1,15 @@
 {
   "acto2-intro": {
     "id": "acto2-intro",
-    "speaker": "director",
+    "speaker": "adrian-cross",
+    "portraitExpression": "director-gray",
     "line": "Ahora hay que verificar a Lena, elegir quién entra y con qué."
   },
 
   "telefono-acto2-idle": {
     "id": "telefono-acto2-idle",
-    "speaker": "director",
+    "speaker": "adrian-cross",
+    "portraitExpression": "director-gray",
     "line": "La línea con Lena sigue abierta. No hay nada más que decirle todavía."
   },
 

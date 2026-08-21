@@ -7,14 +7,16 @@
   },
   "photo-2": {
     "id": "photo-2",
-    "speaker": "director",
+    "speaker": "adrian-cross",
+    "portraitExpression": "director-gray",
     "line": "Eso decíamos.",
     "onShow": [{ "type": "addFlag", "flag": "photoLogged" }]
   },
 
   "cajon-1": {
     "id": "cajon-1",
-    "speaker": "director",
+    "speaker": "adrian-cross",
+    "portraitExpression": "director-gray",
     "line": "Ese archivo todavía no."
   },
 
@@ -49,7 +51,8 @@
 
   "telefono-idle": {
     "id": "telefono-idle",
-    "speaker": "director",
+    "speaker": "adrian-cross",
+    "portraitExpression": "director-gray",
     "line": "Nadie llama a este número desde hace tres años."
   },
 
@@ -83,7 +86,8 @@
   },
   "telefono-mirror-intervencion-2": {
     "id": "telefono-mirror-intervencion-2",
-    "speaker": "director",
+    "speaker": "adrian-cross",
+    "portraitExpression": "director-gray",
     "line": "(El Director deja de fingir indiferencia.)",
     "onShow": [{ "type": "transitionTo", "sceneId": "oficina-llamada", "fade": "fadeToBlack" }]
   },

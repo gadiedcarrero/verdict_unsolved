@@ -1,18 +1,11 @@
 [
   {
-    "id": "director",
-    "name": "character.director.name",
-    "portrait": null,
-    "description": "",
-    "expressions": {},
-    "color": "#f2b74a"
-  },
-  {
     "id": "mirror",
     "name": "character.mirror.name",
     "portrait": "portraits/mirror.png",
     "description": "Interfaz digital sin forma física, representada por una pantalla o icono luminoso, voz sintetizada y presencia en terminales y monitores.",
     "expressions": {},
+    "voices": {},
     "color": "#6ba8c9"
   },
   {
@@ -21,6 +14,7 @@
     "portrait": null,
     "description": "",
     "expressions": {},
+    "voices": {},
     "color": "#c98bd6"
   },
   {
@@ -29,6 +23,7 @@
     "portrait": null,
     "description": "",
     "expressions": {},
+    "voices": {},
     "color": "#8a94a6"
   },
   {
@@ -46,6 +41,7 @@
         "description": "Figura alta y atlética, completamente cubierta por un traje táctico negro ajustado, guantes negros y botas militares. Lleva una máscara negra sin rasgos, sólo con una delgada ranura para los ojos, y ningún rasgo identificable. Movimientos precisos y silenciosos."
       }
     },
+    "voices": {},
     "color": "#1a4d8f"
   },
   {
@@ -54,6 +50,120 @@
     "portrait": "portraits/evelyn-marlowe.png",
     "description": "Mujer de unos 30-35 años, cabello oscuro (más corto y con una cicatriz junto a la sien en su versión posterior a la explosión), complexión ágil. Viste ropa táctica o de infiltración, rostro expresivo y mirada decidida.",
     "expressions": {},
+    "voices": {},
     "color": "#ad1457"
+  },
+  {
+    "id": "theo-kade",
+    "name": "character.theo-kade.name",
+    "portrait": "portraits/theo-kade.png",
+    "description": "Hombre de poco más de 30 años, contextura robusta, cabello rubio corto, mandíbula cuadrada. Viste ropa táctica, generalmente con chaleco y pantalones de carga. Su postura es firme y su expresión seria, casi rígida.",
+    "expressions": {},
+    "voices": {},
+    "color": "#BFA73D"
+  },
+  {
+    "id": "marcus-wynn",
+    "name": "character.marcus-wynn.name",
+    "portrait": null,
+    "description": "Hombre de unos 35 años, piel oscura, cabello rapado, complexión fuerte. Suele llevar camisetas oscuras y chaquetas funcionales, con un reloj grande en la muñeca. Su expresión es protectora y atenta.",
+    "expressions": {},
+    "voices": {},
+    "color": "#3DA76F"
+  },
+  {
+    "id": "june-sato",
+    "name": "character.june-sato.name",
+    "portrait": null,
+    "description": "Mujer asiática de unos 30 años, cabello oscuro, liso y largo, generalmente recogido en una coleta. Complexión delgada, rostro ovalado, mirada intensa. Viste ropa cómoda y funcional, a menudo con auriculares o accesorios tecnológicos visibles.",
+    "expressions": {
+      "june-sato-cautiva": {
+        "path": null,
+        "description": "Mujer asiática de unos 30 años, cabello oscuro largo con canas incipientes, cicatriz marcada en el lado izquierdo del rostro, brazo izquierdo sujeto por una abrazadera médica. Viste ropa sencilla y clara, a menudo sentada frente a una terminal en una habitación blanca, con postura cansada pero firme."
+      }
+    },
+    "voices": {},
+    "color": "#A73DA7"
+  },
+  {
+    "id": "elias-voss",
+    "name": "character.elias-voss.name",
+    "portrait": null,
+    "description": "Hombre de unos 60 años, cabello gris peinado hacia atrás, rostro alargado y arrugas marcadas en la frente y alrededor de los ojos. Suele vestir trajes grises o azul oscuro con corbata, y mantiene una postura erguida y calmada.",
+    "expressions": {},
+    "voices": {},
+    "color": "#6F3DA7"
+  },
+  {
+    "id": "lena-hart",
+    "name": "character.lena-hart.name",
+    "portrait": null,
+    "description": "Mujer de unos 25 años, piel clara, cabello castaño claro y liso, peinado sencillo. Viste ropa casual, generalmente chaquetas ligeras y jeans. Su expresión es ansiosa y determinada.",
+    "expressions": {},
+    "voices": {},
+    "color": "#A77E3D"
+  },
+  {
+    "id": "daniel-hart",
+    "name": "character.daniel-hart.name",
+    "portrait": null,
+    "description": "Hombre de unos 30 años, piel clara, cabello castaño oscuro, barba de pocos días. Viste ropa informal, camisa y pantalón, a veces con chaqueta. Suele tener aspecto cansado o herido.",
+    "expressions": {},
+    "voices": {},
+    "color": "#3DA7A7"
+  },
+  {
+    "id": "ghost",
+    "name": "character.ghost.name",
+    "portrait": null,
+    "description": "Mujer de unos 28 años, piel morena clara, cabello negro corto y desordenado, complexión ágil. Viste ropa táctica ligera, pantalones oscuros, chaqueta ajustada y botas. Lleva guantes y a veces máscara o bufanda cubriendo parte del rostro.",
+    "expressions": {},
+    "voices": {},
+    "color": "#A73D3D"
+  },
+  {
+    "id": "patch",
+    "name": "character.patch.name",
+    "portrait": null,
+    "description": "Hombre de unos 26 años, piel clara, cabello rubio desordenado, gafas de montura fina. Viste sudaderas o camisas de manga larga, jeans y zapatillas. Suele llevar dispositivos electrónicos o herramientas en los bolsillos.",
+    "expressions": {},
+    "voices": {},
+    "color": "#3D8EA7"
+  },
+  {
+    "id": "rook",
+    "name": "character.rook.name",
+    "portrait": null,
+    "description": "Hombre de unos 40 años, piel oscura, complexión grande y musculosa, cabeza afeitada, barba corta. Viste ropa táctica pesada, chaleco antibalas y botas reforzadas. Su expresión es seria y protectora.",
+    "expressions": {},
+    "voices": {},
+    "color": "#A75F3D"
+  },
+  {
+    "id": "iris",
+    "name": "character.iris.name",
+    "portrait": null,
+    "description": "Mujer de unos 30 años, piel clara, cabello oscuro y largo, generalmente recogido. Lleva un anillo colgado al cuello. Viste ropa oscura, chaqueta de cuero, pantalones ajustados y botas. Su mirada es intensa y vigilante.",
+    "expressions": {},
+    "voices": {},
+    "color": "#3DA759"
+  },
+  {
+    "id": "celia-ward",
+    "name": "character.celia-ward.name",
+    "portrait": null,
+    "description": "Mujer de unos 35 años, piel clara, cabello rubio oscuro recogido en moño, gafas rectangulares. Viste blusa clara, pantalón oscuro y bata de laboratorio cuando está en entornos médicos. Su expresión es preocupada y atenta.",
+    "expressions": {},
+    "voices": {},
+    "color": "#A73D8E"
+  },
+  {
+    "id": "nora-mercer",
+    "name": "character.nora-mercer.name",
+    "portrait": null,
+    "description": "Adolescente de unos 16 años, piel clara, cabello rubio largo y liso, rostro delicado. Viste ropa cómoda, sudaderas y pantalones deportivos. Suele estar sentada o recostada, con expresión tranquila o soñadora.",
+    "expressions": {},
+    "voices": {},
+    "color": "#3D6FA7"
   }
 ]
