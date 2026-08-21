@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type JSX } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { translate } from '../../i18n/translate';
 import type { Character } from '../../game-engine/scene-engine/schemas';
 import type { ElevenLabsVoice } from '../../../shared/elevenlabs';
@@ -28,6 +28,107 @@ const GENDER_FILTERS: { value: string; label: string }[] = [
   { value: 'female', label: 'Femenino' },
 ];
 
+/** Desplegable propio en vez de un <select> nativo — un <option> no puede
+ * tener un botón adentro, y el pedido puntual fue poder escuchar cada voz
+ * SIN que el menú se cierre entre una y otra (con el nativo, cada muestra
+ * significaba cerrar, reabrir y volver a ubicarse en la lista). Se cierra
+ * solo al elegir una fila o al clickear afuera. */
+function VoicePicker({
+  voices,
+  voiceId,
+  previewingId,
+  onSelect,
+  onClear,
+  onPlayPreview,
+  disabled,
+}: {
+  voices: ElevenLabsVoice[];
+  voiceId: string | null;
+  /** voiceId de la fila cuya muestra está sonando ahora, para marcarla. */
+  previewingId: string | null;
+  onSelect: (voiceId: string) => void;
+  onClear: () => void;
+  onPlayPreview: (voice: ElevenLabsVoice) => void;
+  disabled: boolean;
+}): JSX.Element {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const selected = voices.find((v) => v.voiceId === voiceId) ?? null;
+
+  useEffect(() => {
+    if (!open) return;
+    function handlePointerDown(event: MouseEvent): void {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    window.addEventListener('mousedown', handlePointerDown);
+    return () => window.removeEventListener('mousedown', handlePointerDown);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative flex-1">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        disabled={disabled}
+        className={`${inputClassName} flex items-center justify-between text-left disabled:cursor-not-allowed disabled:opacity-40`}
+      >
+        <span className="min-w-0 truncate">
+          {selected ? voiceOptionLabel(selected) : disabled ? 'Cargando voces...' : '(sin voz)'}
+        </span>
+        <span className="ml-1 shrink-0 text-graphite-500">{open ? '▴' : '▾'}</span>
+      </button>
+      {open && (
+        <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded border border-graphite-700 bg-graphite-900 shadow-xl">
+          <button
+            type="button"
+            onClick={() => {
+              onClear();
+              setOpen(false);
+            }}
+            className="block w-full px-2 py-1 text-left text-[10px] text-graphite-500 uppercase hover:bg-graphite-800"
+          >
+            (sin voz)
+          </button>
+          {voices.map((voice) => (
+            <div
+              key={voice.voiceId}
+              className={`flex items-center gap-1 px-1 py-0.5 hover:bg-graphite-800 ${
+                voice.voiceId === voiceId ? 'bg-graphite-800' : ''
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  onSelect(voice.voiceId);
+                  setOpen(false);
+                }}
+                className="min-w-0 flex-1 truncate px-1 py-0.5 text-left text-[10px] text-graphite-200"
+              >
+                {voiceOptionLabel(voice)}
+              </button>
+              <button
+                type="button"
+                onClick={() => onPlayPreview(voice)}
+                title="Escuchar muestra"
+                className={`shrink-0 rounded border px-1.5 py-0.5 text-[9px] transition-colors ${
+                  previewingId === voice.voiceId
+                    ? 'border-amber-accent text-amber-accent'
+                    : 'border-graphite-700 text-graphite-400 hover:border-amber-accent hover:text-amber-accent'
+                }`}
+              >
+                ▶
+              </button>
+            </div>
+          ))}
+          {voices.length === 0 && <p className="px-2 py-1 text-[9px] text-graphite-600">Ninguna voz coincide.</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function VoiceRow({
   language,
   label,
@@ -45,8 +146,8 @@ function VoiceRow({
 }): JSX.Element {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [genderFilter, setGenderFilter] = useState('any');
+  const [previewingId, setPreviewingId] = useState<string | null>(null);
   const selectedVoice = voices?.find((v) => v.voiceId === voiceId) ?? null;
-  const previewUrl = selectedVoice ? (selectedVoice.previewUrlByLanguage[language] ?? selectedVoice.previewUrl) : null;
 
   // Filtro de idioma "duro": solo voces verificadas para este idioma (por
   // muestra propia o por ser su idioma base) — mostrar las 21 igual en
@@ -63,9 +164,11 @@ function VoiceRow({
     filteredVoices.unshift(selectedVoice);
   }
 
-  function playPreview(): void {
+  function playPreview(voice: ElevenLabsVoice): void {
+    const previewUrl = voice.previewUrlByLanguage[language] ?? voice.previewUrl;
     if (!previewUrl || !audioRef.current) return;
     audioRef.current.src = previewUrl;
+    setPreviewingId(voice.voiceId);
     void audioRef.current.play();
   }
 
@@ -86,31 +189,16 @@ function VoiceRow({
           ))}
         </select>
       </div>
-      <div className="flex items-center gap-1">
-        <select
-          value={voiceId ?? ''}
-          onChange={(event) => (event.target.value ? onChange(event.target.value) : onRemove())}
-          disabled={!voices}
-          className={`${inputClassName} flex-1`}
-        >
-          <option value="">{voices ? '(sin voz)' : 'Cargando voces...'}</option>
-          {filteredVoices.map((voice) => (
-            <option key={voice.voiceId} value={voice.voiceId}>
-              {voiceOptionLabel(voice)}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={playPreview}
-          disabled={!previewUrl}
-          title="Escuchar muestra"
-          className="shrink-0 rounded border border-graphite-700 px-2 py-1 text-[9px] text-graphite-300 transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          ▶
-        </button>
-        <audio ref={audioRef} className="hidden" />
-      </div>
+      <VoicePicker
+        voices={filteredVoices}
+        voiceId={voiceId}
+        previewingId={previewingId}
+        disabled={!voices}
+        onSelect={onChange}
+        onClear={onRemove}
+        onPlayPreview={playPreview}
+      />
+      <audio ref={audioRef} onEnded={() => setPreviewingId(null)} className="hidden" />
       {voices && filteredVoices.length === 0 && (
         <p className="mt-0.5 text-[8px] text-graphite-600">Ninguna voz coincide con este filtro.</p>
       )}
