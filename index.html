@@ -4,8 +4,13 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; media-src 'self' https://storage.googleapis.com"
     />
+    <!-- media-src incluye storage.googleapis.com: ahí sirve ElevenLabs las
+         muestras de audio de sus voces (preview_url) — ver VoiceRow en
+         CharacterEditorPanel.tsx. Sin esto, default-src 'self' bloquea la
+         reproducción del <audio> con un error de CSP silencioso. -->
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NarraDos</title>
   </head>
