@@ -235,6 +235,8 @@ function VoicesFields({
   );
 }
 
+const PORTRAIT_LOAD_MAX_RETRIES = 3;
+
 function PortraitPreview({
   gameId,
   portrait,
@@ -246,7 +248,28 @@ function PortraitPreview({
    * derecha del editor) — ausente en contextos donde no aplica. */
   onPreview?: (path: string) => void;
 }): JSX.Element {
+  const [retry, setRetry] = useState(0);
   const [failed, setFailed] = useState(false);
+
+  // Justo después de generar/subir, el archivo recién escrito a veces no
+  // está listo para servirse todavía en el primer intento (visto con
+  // retratos generados por IA: la IPC ya devolvió éxito, pero el <img> falla
+  // igual la primera carga) — sin reintento quedaba en "sin foto" para
+  // siempre aunque el archivo estuviera perfectamente bien. Reintenta con
+  // backoff antes de rendirse. Cambiar de retrato reinicia el contador.
+  useEffect(() => {
+    setRetry(0);
+    setFailed(false);
+  }, [portrait]);
+
+  function handleError(): void {
+    if (retry < PORTRAIT_LOAD_MAX_RETRIES) {
+      setTimeout(() => setRetry((n) => n + 1), 400 * (retry + 1));
+    } else {
+      setFailed(true);
+    }
+  }
+
   if (!portrait || failed) {
     return (
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-graphite-600 text-[8px] text-graphite-500">
@@ -254,12 +277,13 @@ function PortraitPreview({
       </div>
     );
   }
+  const src = gameAssetUrl(gameId, portrait);
   return (
     <img
-      key={portrait}
-      src={gameAssetUrl(gameId, portrait)}
+      key={`${portrait}-${retry}`}
+      src={retry > 0 ? `${src}?retry=${retry}` : src}
       alt=""
-      onError={() => setFailed(true)}
+      onError={handleError}
       onClick={onPreview ? () => onPreview(portrait) : undefined}
       className={`h-10 w-10 shrink-0 rounded-full border border-graphite-700 object-cover ${onPreview ? 'cursor-pointer hover:border-amber-accent' : ''}`}
     />

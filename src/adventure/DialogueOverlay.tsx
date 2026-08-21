@@ -1,7 +1,9 @@
-import { useState, type JSX } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 import type { Character, DialogueNode } from '../game-engine/scene-engine/schemas';
 import { gameAssetUrl } from './gameAssetUrl';
 import { translate } from '../i18n/translate';
+
+const PORTRAIT_LOAD_MAX_RETRIES = 3;
 
 /** El busto se dibuja sin recorte (pensado para arte 3/4 con fondo
  * transparente — ver memoria "busto 3/4") apoyado sobre un aro decorativo:
@@ -19,7 +21,25 @@ function CharacterPortrait({
   portrait: string;
   color: string;
 }): JSX.Element {
+  const [retry, setRetry] = useState(0);
   const [failed, setFailed] = useState(false);
+
+  // Mismo motivo que PortraitPreview en el editor: un retrato recién
+  // generado a veces no está listo para servirse en el primer intento de
+  // carga — sin reintento, el jugador se queda viendo el círculo roto para
+  // siempre en esa escena aunque el archivo esté perfectamente bien.
+  useEffect(() => {
+    setRetry(0);
+    setFailed(false);
+  }, [portrait]);
+
+  function handleError(): void {
+    if (retry < PORTRAIT_LOAD_MAX_RETRIES) {
+      setTimeout(() => setRetry((n) => n + 1), 400 * (retry + 1));
+    } else {
+      setFailed(true);
+    }
+  }
 
   if (failed) {
     return (
@@ -32,6 +52,7 @@ function CharacterPortrait({
     );
   }
 
+  const src = gameAssetUrl(gameId, portrait);
   return (
     <div className="relative h-28 w-20 shrink-0 self-end">
       <div
@@ -39,9 +60,10 @@ function CharacterPortrait({
         style={{ borderColor: color, backgroundColor: 'rgba(12,13,16,0.55)' }}
       />
       <img
-        src={gameAssetUrl(gameId, portrait)}
+        key={`${portrait}-${retry}`}
+        src={retry > 0 ? `${src}?retry=${retry}` : src}
         alt=""
-        onError={() => setFailed(true)}
+        onError={handleError}
         className="absolute inset-x-0 bottom-0 mx-auto h-28 w-auto object-contain object-bottom drop-shadow-[0_4px_10px_rgba(0,0,0,0.55)]"
       />
     </div>
