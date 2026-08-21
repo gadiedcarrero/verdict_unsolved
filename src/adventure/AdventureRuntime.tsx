@@ -213,6 +213,14 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   // cada generación en curso — array en vez de un solo id porque es normal
   // disparar varias en paralelo (personaje + sus identidades alternativas).
   const [generatingCharacterArtIds, setGeneratingCharacterArtIds] = useState<string[]>([]);
+  // Mismas claves que generatingCharacterArtIds ("<characterId>" o
+  // "<characterId>:<expresión>") → mensaje de error de ESA generación
+  // puntual. Separado de characterSaveMessage a propósito: generando varios
+  // personajes seguidos, el error del primero quedaba pisado apenas
+  // arrancaba la generación del segundo (era un solo mensaje compartido) —
+  // acá cada uno tiene el suyo y no se toca hasta que se reintenta esa
+  // generación en particular.
+  const [characterArtErrors, setCharacterArtErrors] = useState<Record<string, string>>({});
 
   const [editedSiteSettings, setEditedSiteSettings] = useState<SiteSettings | null>(null);
   const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
@@ -1081,6 +1089,15 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setPendingCharacterStrings((prev) => ({ ...prev, [createdNameKey]: nameText }));
   }
 
+  // No valida referencias (diálogo/hotspots que lo citen como speaker) antes
+  // de borrar — a propósito, igual que "eliminar zona" en el editor de
+  // escena: es responsabilidad de quien edita, no algo que el editor
+  // bloquee. Si el personaje borrado tenía diálogo apuntándole, ese diálogo
+  // simplemente muestra el id crudo como nombre hasta que se reapunte.
+  function removeCharacter(characterId: string): void {
+    setEditedCharacters((prev) => (prev ?? baseCharacters).filter((c) => c.id !== characterId));
+  }
+
   async function uploadPortrait(characterId: string, file: File): Promise<void> {
     setUploadingPortraitId(characterId);
     setCharacterSaveMessage(null);
@@ -1222,11 +1239,17 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   ): Promise<void> {
     const genId = expressionKey ? `${characterId}:${expressionKey}` : characterId;
     setGeneratingCharacterArtIds((prev) => [...prev, genId]);
-    setCharacterSaveMessage(null);
+    setCharacterArtErrors((prev) => {
+      const next = { ...prev };
+      delete next[genId];
+      return next;
+    });
     try {
+      console.log('[retrato]', genId, 'generando...');
       const result = await window.api.generateCharacterPortrait(gameId, characterId, description, expressionKey);
+      console.log('[retrato]', genId, 'resultado', result);
       if (!result.ok) {
-        setCharacterSaveMessage(`Error generando retrato: ${result.error}`);
+        setCharacterArtErrors((prev) => ({ ...prev, [genId]: result.error }));
         return;
       }
       if (expressionKey) {
@@ -1235,7 +1258,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         updateCharacter(characterId, { portrait: result.path });
       }
     } catch (error) {
-      setCharacterSaveMessage(`Error generando retrato: ${error instanceof Error ? error.message : String(error)}`);
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('[retrato]', genId, 'error', error);
+      setCharacterArtErrors((prev) => ({ ...prev, [genId]: message }));
     } finally {
       setGeneratingCharacterArtIds((prev) => prev.filter((id) => id !== genId));
     }
@@ -1639,6 +1664,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   uploadingId={uploadingPortraitId}
                   uploadingExpressionKey={uploadingExpressionKey}
                   generatingArtIds={generatingCharacterArtIds}
+                  artErrors={characterArtErrors}
                   onPreviewPortrait={setPreviewedPortrait}
                   onNameTextChange={setCharacterNameText}
                   onColorChange={(id, color) => updateCharacter(id, { color })}
@@ -1653,6 +1679,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                     void generateCharacterPortraitArt(id, description, expressionKey)
                   }
                   onCreateCharacter={createCharacter}
+                  onRemoveCharacter={removeCharacter}
                   voices={elevenLabsVoices}
                   voicesLoading={elevenLabsVoicesLoading}
                   voicesError={elevenLabsVoicesError}

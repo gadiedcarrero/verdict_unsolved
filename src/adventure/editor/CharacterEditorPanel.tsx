@@ -280,6 +280,7 @@ function ExpressionsFields({
   character,
   uploadingKey,
   generatingArtIds,
+  artErrors,
   onPreviewPortrait,
   onUploadExpression,
   onRemoveExpression,
@@ -291,6 +292,7 @@ function ExpressionsFields({
   character: Character;
   uploadingKey: string | null;
   generatingArtIds: string[];
+  artErrors: Record<string, string>;
   onPreviewPortrait: (path: string) => void;
   onUploadExpression: (expressionKey: string, file: File) => void;
   onRemoveExpression: (expressionKey: string) => void;
@@ -324,6 +326,7 @@ function ExpressionsFields({
       </p>
       {entries.map(([key, expression]) => {
         const generating = generatingArtIds.includes(`${character.id}:${key}`);
+        const error = artErrors[`${character.id}:${key}`];
         return (
           <div key={key} className="mb-1 rounded border border-graphite-800 bg-graphite-950/60 p-1.5">
             <div className="mb-1 flex items-center gap-2">
@@ -371,6 +374,7 @@ function ExpressionsFields({
                 className="hidden"
               />
             </div>
+            {error && <p className="mt-1 text-[9px] text-red-300">{error}</p>}
           </div>
         );
       })}
@@ -414,6 +418,7 @@ function CharacterFields({
   onGeneratePortrait,
   uploading,
   generatingArtIds,
+  artErrors,
   uploadingExpressionKey,
   onUploadExpression,
   onRemoveExpression,
@@ -423,6 +428,7 @@ function CharacterFields({
   voices,
   onVoiceChange,
   onRemoveVoice,
+  onRemoveCharacter,
 }: {
   gameId: string;
   character: Character;
@@ -435,6 +441,7 @@ function CharacterFields({
   onGeneratePortrait: (description: string) => void;
   uploading: boolean;
   generatingArtIds: string[];
+  artErrors: Record<string, string>;
   uploadingExpressionKey: string | null;
   onUploadExpression: (expressionKey: string, file: File) => void;
   onRemoveExpression: (expressionKey: string) => void;
@@ -444,9 +451,11 @@ function CharacterFields({
   voices: ElevenLabsVoice[] | null;
   onVoiceChange: (language: string, voiceId: string) => void;
   onRemoveVoice: (language: string) => void;
+  onRemoveCharacter: () => void;
 }): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const generatingPortrait = generatingArtIds.includes(character.id);
+  const portraitError = artErrors[character.id];
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
@@ -458,7 +467,20 @@ function CharacterFields({
     <div className="mb-2 flex gap-2 border-b border-graphite-800 pb-2">
       <PortraitPreview gameId={gameId} portrait={character.portrait} onPreview={onPreviewPortrait} />
       <div className="min-w-0 flex-1">
-        <p className="mb-1 truncate text-graphite-100">{character.id}</p>
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <p className="truncate text-graphite-100">{character.id}</p>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm(`¿Eliminar "${character.id}"? Si hay diálogo apuntándole por id, va a quedar sin nombre/color hasta que lo reapuntes.`)) {
+                onRemoveCharacter();
+              }
+            }}
+            className="shrink-0 text-[9px] text-graphite-500 uppercase hover:text-red-400"
+          >
+            eliminar
+          </button>
+        </div>
         <label className="mb-1 flex flex-col">
           <span className="text-[9px] text-graphite-500 uppercase">Nombre mostrado</span>
           <input
@@ -507,11 +529,13 @@ function CharacterFields({
           </button>
           <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
         </div>
+        {portraitError && <p className="mb-1 text-[9px] text-red-300">{portraitError}</p>}
         <ExpressionsFields
           gameId={gameId}
           character={character}
           uploadingKey={uploadingExpressionKey}
           generatingArtIds={generatingArtIds}
+          artErrors={artErrors}
           onPreviewPortrait={onPreviewPortrait}
           onUploadExpression={onUploadExpression}
           onRemoveExpression={onRemoveExpression}
@@ -587,6 +611,7 @@ export function CharacterEditorPanel({
   uploadingId,
   uploadingExpressionKey,
   generatingArtIds,
+  artErrors,
   onPreviewPortrait,
   onNameTextChange,
   onColorChange,
@@ -599,6 +624,7 @@ export function CharacterEditorPanel({
   onGeneratePortrait,
   onGenerateExpression,
   onCreateCharacter,
+  onRemoveCharacter,
   voices,
   voicesLoading,
   voicesError,
@@ -615,6 +641,10 @@ export function CharacterEditorPanel({
   /** "<characterId>" o "<characterId>:<expresión>" de cada generación por
    * IA en curso — puede haber varias en paralelo (retrato + identidades). */
   generatingArtIds: string[];
+  /** Mismas claves que generatingArtIds → mensaje de error de esa
+   * generación puntual, si falló — cada una la suya, no se pisan entre
+   * personajes generados en la misma tanda. */
+  artErrors: Record<string, string>;
   /** Click en cualquier miniatura (retrato o expresión) — se usa para
    * mostrarla grande en el panel de la derecha del editor. */
   onPreviewPortrait: (path: string) => void;
@@ -629,6 +659,7 @@ export function CharacterEditorPanel({
   onGeneratePortrait: (characterId: string, description: string) => void;
   onGenerateExpression: (characterId: string, expressionKey: string, description: string) => void;
   onCreateCharacter: (name: string, nameText: string, color: string) => void;
+  onRemoveCharacter: (characterId: string) => void;
   /** null = todavía no se pidieron a la cuenta de ElevenLabs (ver botón
    * "Cargar voces" abajo). */
   voices: ElevenLabsVoice[] | null;
@@ -671,6 +702,7 @@ export function CharacterEditorPanel({
           strings={strings}
           uploading={uploadingId === character.id}
           generatingArtIds={generatingArtIds}
+          artErrors={artErrors}
           onPreviewPortrait={onPreviewPortrait}
           uploadingExpressionKey={
             uploadingExpressionKey?.startsWith(`${character.id}:`)
@@ -694,6 +726,7 @@ export function CharacterEditorPanel({
           voices={voices}
           onVoiceChange={(language, voiceId) => onVoiceChange(character.id, language, voiceId)}
           onRemoveVoice={(language) => onRemoveVoice(character.id, language)}
+          onRemoveCharacter={() => onRemoveCharacter(character.id)}
         />
       ))}
     </div>

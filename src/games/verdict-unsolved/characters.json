@@ -65,7 +65,7 @@
   {
     "id": "marcus-wynn",
     "name": "character.marcus-wynn.name",
-    "portrait": null,
+    "portrait": "portraits/marcus-wynn.png",
     "description": "Hombre de unos 35 años, piel oscura, cabello rapado, complexión fuerte. Suele llevar camisetas oscuras y chaquetas funcionales, con un reloj grande en la muñeca. Su expresión es protectora y atenta.",
     "expressions": {},
     "voices": {},
@@ -74,7 +74,7 @@
   {
     "id": "june-sato",
     "name": "character.june-sato.name",
-    "portrait": null,
+    "portrait": "portraits/june-sato.png",
     "description": "Mujer asiática de unos 30 años, cabello oscuro, liso y largo, generalmente recogido en una coleta. Complexión delgada, rostro ovalado, mirada intensa. Viste ropa cómoda y funcional, a menudo con auriculares o accesorios tecnológicos visibles.",
     "expressions": {
       "june-sato-cautiva": {
@@ -88,7 +88,7 @@
   {
     "id": "elias-voss",
     "name": "character.elias-voss.name",
-    "portrait": null,
+    "portrait": "portraits/elias-voss.png",
     "description": "Hombre de unos 60 años, cabello gris peinado hacia atrás, rostro alargado y arrugas marcadas en la frente y alrededor de los ojos. Suele vestir trajes grises o azul oscuro con corbata, y mantiene una postura erguida y calmada.",
     "expressions": {},
     "voices": {},
@@ -97,7 +97,7 @@
   {
     "id": "lena-hart",
     "name": "character.lena-hart.name",
-    "portrait": null,
+    "portrait": "portraits/lena-hart.png",
     "description": "Mujer de unos 25 años, piel clara, cabello castaño claro y liso, peinado sencillo. Viste ropa casual, generalmente chaquetas ligeras y jeans. Su expresión es ansiosa y determinada.",
     "expressions": {},
     "voices": {},
@@ -106,7 +106,7 @@
   {
     "id": "daniel-hart",
     "name": "character.daniel-hart.name",
-    "portrait": null,
+    "portrait": "portraits/daniel-hart.png",
     "description": "Hombre de unos 30 años, piel clara, cabello castaño oscuro, barba de pocos días. Viste ropa informal, camisa y pantalón, a veces con chaqueta. Suele tener aspecto cansado o herido.",
     "expressions": {},
     "voices": {},
@@ -115,7 +115,7 @@
   {
     "id": "ghost",
     "name": "character.ghost.name",
-    "portrait": null,
+    "portrait": "portraits/ghost.png",
     "description": "Mujer de unos 28 años, piel morena clara, cabello negro corto y desordenado, complexión ágil. Viste ropa táctica ligera, pantalones oscuros, chaqueta ajustada y botas. Lleva guantes y a veces máscara o bufanda cubriendo parte del rostro.",
     "expressions": {},
     "voices": {},
@@ -124,7 +124,7 @@
   {
     "id": "patch",
     "name": "character.patch.name",
-    "portrait": null,
+    "portrait": "portraits/patch.png",
     "description": "Hombre de unos 26 años, piel clara, cabello rubio desordenado, gafas de montura fina. Viste sudaderas o camisas de manga larga, jeans y zapatillas. Suele llevar dispositivos electrónicos o herramientas en los bolsillos.",
     "expressions": {},
     "voices": {},
