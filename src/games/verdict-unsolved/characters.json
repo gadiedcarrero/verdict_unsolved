@@ -4,7 +4,32 @@
     "name": "character.mirror.name",
     "portrait": "portraits/mirror.png",
     "description": "Interfaz digital sin forma física, representada por una pantalla o icono luminoso, voz sintetizada y presencia en terminales y monitores.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/mirror-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/mirror-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/mirror-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/mirror-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/mirror-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/mirror-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#6ba8c9"
   },
@@ -22,16 +47,66 @@
     "name": "character.adrian-cross.name",
     "portrait": "portraits/adrian-cross.png",
     "description": "Hombre de unos 40 años, complexión atlética, cabello oscuro corto, rostro marcado por cicatrices leves. Viste ropa funcional, generalmente traje oscuro o ropa táctica cuando opera como agente. Postura segura y mirada intensa.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/adrian-cross-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/adrian-cross-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/adrian-cross-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/adrian-cross-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/adrian-cross-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/adrian-cross-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#1a4d8f"
   },
   {
     "id": "director-gray",
     "name": "character.director-gray.name",
-    "portrait": "portraits/adrian-cross-director-gray.png",
+    "portrait": "portraits/director-gray.png",
     "description": "Hombre de unos 40 años, cabello oscuro corto, rostro serio y cansado. Siempre sentado en una silla de ruedas, viste traje gris oscuro y camisa blanca, con corbata sobria. Suele estar detrás de un escritorio de madera oscura en una oficina poco iluminada.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/director-gray-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/director-gray-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/director-gray-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/director-gray-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/director-gray-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/director-gray-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#8a7048"
   },
@@ -40,7 +115,32 @@
     "name": "character.wraith.name",
     "portrait": "portraits/adrian-cross-wraith.png",
     "description": "Figura alta y atlética, completamente cubierta por un traje táctico negro ajustado, guantes negros y botas militares. Lleva una máscara negra sin rasgos, sólo con una delgada ranura para los ojos, y ningún rasgo identificable. Movimientos precisos y silenciosos.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/wraith-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/wraith-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/wraith-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/wraith-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/wraith-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/wraith-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#4a4a6a"
   },
@@ -49,7 +149,32 @@
     "name": "character.evelyn-marlowe.name",
     "portrait": "portraits/evelyn-marlowe.png",
     "description": "Mujer de unos 30-35 años, cabello oscuro (más corto y con una cicatriz junto a la sien en su versión posterior a la explosión), complexión ágil. Viste ropa táctica o de infiltración, rostro expresivo y mirada decidida.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/evelyn-marlowe-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/evelyn-marlowe-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/evelyn-marlowe-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/evelyn-marlowe-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/evelyn-marlowe-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/evelyn-marlowe-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#ad1457"
   },
@@ -58,7 +183,32 @@
     "name": "character.theo-kade.name",
     "portrait": "portraits/theo-kade.png",
     "description": "Hombre de poco más de 30 años, contextura robusta, cabello rubio corto, mandíbula cuadrada. Viste ropa táctica, generalmente con chaleco y pantalones de carga. Su postura es firme y su expresión seria, casi rígida.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/theo-kade-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/theo-kade-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/theo-kade-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/theo-kade-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/theo-kade-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/theo-kade-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#BFA73D"
   },
@@ -67,7 +217,32 @@
     "name": "character.marcus-wynn.name",
     "portrait": "portraits/marcus-wynn.png",
     "description": "Hombre de unos 35 años, piel oscura, cabello rapado, complexión fuerte. Suele llevar camisetas oscuras y chaquetas funcionales, con un reloj grande en la muñeca. Su expresión es protectora y atenta.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/marcus-wynn-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/marcus-wynn-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/marcus-wynn-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/marcus-wynn-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/marcus-wynn-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/marcus-wynn-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#3DA76F"
   },
@@ -80,6 +255,30 @@
       "june-sato-cautiva": {
         "path": null,
         "description": "Mujer asiática de unos 30 años, cabello oscuro largo con canas incipientes, cicatriz marcada en el lado izquierdo del rostro, brazo izquierdo sujeto por una abrazadera médica. Viste ropa sencilla y clara, a menudo sentada frente a una terminal en una habitación blanca, con postura cansada pero firme."
+      },
+      "alegre": {
+        "path": "portraits/june-sato-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/june-sato-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/june-sato-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/june-sato-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/june-sato-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/june-sato-triste.png",
+        "description": ""
       }
     },
     "voices": {},
@@ -90,7 +289,32 @@
     "name": "character.elias-voss.name",
     "portrait": "portraits/elias-voss.png",
     "description": "Hombre de unos 60 años, cabello gris peinado hacia atrás, rostro alargado y arrugas marcadas en la frente y alrededor de los ojos. Suele vestir trajes grises o azul oscuro con corbata, y mantiene una postura erguida y calmada.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/elias-voss-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/elias-voss-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/elias-voss-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/elias-voss-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/elias-voss-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/elias-voss-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#6F3DA7"
   },
@@ -99,7 +323,32 @@
     "name": "character.lena-hart.name",
     "portrait": "portraits/lena-hart.png",
     "description": "Mujer de unos 25 años, piel clara, cabello castaño claro y liso, peinado sencillo. Viste ropa casual, generalmente chaquetas ligeras y jeans. Su expresión es ansiosa y determinada.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/lena-hart-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/lena-hart-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/lena-hart-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/lena-hart-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/lena-hart-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/lena-hart-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#A77E3D"
   },
@@ -108,7 +357,32 @@
     "name": "character.daniel-hart.name",
     "portrait": "portraits/daniel-hart.png",
     "description": "Hombre de unos 30 años, piel clara, cabello castaño oscuro, barba de pocos días. Viste ropa informal, camisa y pantalón, a veces con chaqueta. Suele tener aspecto cansado o herido.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/daniel-hart-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/daniel-hart-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/daniel-hart-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/daniel-hart-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/daniel-hart-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/daniel-hart-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#3DA7A7"
   },
@@ -117,7 +391,32 @@
     "name": "character.ghost.name",
     "portrait": "portraits/ghost.png",
     "description": "Mujer de unos 28 años, piel morena clara, cabello negro corto y desordenado, complexión ágil. Viste ropa táctica ligera, pantalones oscuros, chaqueta ajustada y botas. Lleva guantes y a veces máscara o bufanda cubriendo parte del rostro.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/ghost-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/ghost-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/ghost-molesto.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/ghost-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/ghost-triste.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/ghost-asustado.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#A73D3D"
   },
@@ -126,43 +425,168 @@
     "name": "character.patch.name",
     "portrait": "portraits/patch.png",
     "description": "Hombre de unos 26 años, piel clara, cabello rubio desordenado, gafas de montura fina. Viste sudaderas o camisas de manga larga, jeans y zapatillas. Suele llevar dispositivos electrónicos o herramientas en los bolsillos.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/patch-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/patch-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/patch-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/patch-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/patch-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/patch-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#3D8EA7"
   },
   {
     "id": "rook",
     "name": "character.rook.name",
-    "portrait": null,
+    "portrait": "portraits/rook.png",
     "description": "Hombre de unos 40 años, piel oscura, complexión grande y musculosa, cabeza afeitada, barba corta. Viste ropa táctica pesada, chaleco antibalas y botas reforzadas. Su expresión es seria y protectora.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/rook-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/rook-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/rook-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/rook-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/rook-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/rook-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#A75F3D"
   },
   {
     "id": "iris",
     "name": "character.iris.name",
-    "portrait": null,
+    "portrait": "portraits/iris.png",
     "description": "Mujer de unos 30 años, piel clara, cabello oscuro y largo, generalmente recogido. Lleva un anillo colgado al cuello. Viste ropa oscura, chaqueta de cuero, pantalones ajustados y botas. Su mirada es intensa y vigilante.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/iris-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/iris-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/iris-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/iris-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/iris-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/iris-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#3DA759"
   },
   {
     "id": "celia-ward",
     "name": "character.celia-ward.name",
-    "portrait": null,
+    "portrait": "portraits/celia-ward.png",
     "description": "Mujer de unos 35 años, piel clara, cabello rubio oscuro recogido en moño, gafas rectangulares. Viste blusa clara, pantalón oscuro y bata de laboratorio cuando está en entornos médicos. Su expresión es preocupada y atenta.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/celia-ward-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/celia-ward-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/celia-ward-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/celia-ward-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/celia-ward-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/celia-ward-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#A73D8E"
   },
   {
     "id": "nora-mercer",
     "name": "character.nora-mercer.name",
-    "portrait": null,
+    "portrait": "portraits/nora-mercer.png",
     "description": "Adolescente de unos 16 años, piel clara, cabello rubio largo y liso, rostro delicado. Viste ropa cómoda, sudaderas y pantalones deportivos. Suele estar sentada o recostada, con expresión tranquila o soñadora.",
-    "expressions": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/nora-mercer-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/nora-mercer-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/nora-mercer-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/nora-mercer-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/nora-mercer-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/nora-mercer-triste.png",
+        "description": ""
+      }
+    },
     "voices": {},
     "color": "#3D6FA7"
   }
