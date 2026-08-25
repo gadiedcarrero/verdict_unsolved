@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { app, ipcMain } from 'electron';
+import sharp from 'sharp';
 import { formatApiError } from './apiErrors';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
 
@@ -45,6 +46,66 @@ const POSE_GUIDE_INSTRUCTION =
 const PORTRAIT_STYLE_PROMPT =
   'Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Fully transparent background — no scenery, no backdrop, no ground. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No text, no watermark, no border or frame.';
 
+// Ni el texto del prompt ni la imagen de referencia de pose garantizan la
+// orientación final — probado: mismo pipeline, mismo personaje, un intento
+// salió mirando bien y el siguiente mal, así que ningún truco de generación
+// alcanza por sí solo. Última verificación, decisiva: preguntarle a un
+// modelo con visión en qué MITAD del cuadro (izquierda o derecha en
+// coordenadas de la imagen, x<512 o x>512 sobre 1024px) cae la oreja
+// visible del personaje — reformular la pregunta en coordenadas de píxeles
+// en vez de "¿mira para la izquierda o la derecha?" evita la confusión
+// egocéntrica que hacía fallar tanto a la generación como a un intento
+// anterior de clasificación (gpt-4o-mini con esa frase se contradijo en la
+// MISMA imagen sin espejar y espejada). Con gpt-4o + temperatura 0 y esta
+// formulación, contestó consistente y correcto en varias imágenes ya
+// verificadas a ojo antes de confiarle esta corrección.
+async function findsEarOnRightHalf(apiKey: string, pngBytes: Buffer): Promise<boolean | null> {
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        temperature: 0,
+        max_tokens: 10,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text:
+                  "This square image is 1024x1024 pixels. The character's VISIBLE EAR (the one clearly drawn) is located at some x-coordinate. Is that ear at an x-coordinate LESS than 512 (left half of the image) or GREATER than 512 (right half of the image)? If no ear is clearly visible, answer based on which half of the image has more of the face/head area. Reply with exactly one token: \"left-half\" or \"right-half\".",
+              },
+              { type: 'image_url', image_url: { url: `data:image/png;base64,${pngBytes.toString('base64')}` } },
+            ],
+          },
+        ],
+      }),
+    });
+    if (!response.ok) return null;
+    const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
+    const answer = data.choices?.[0]?.message?.content?.trim().toLowerCase();
+    if (answer?.startsWith('right')) return true;
+    if (answer?.startsWith('left')) return false;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Oreja visible en la mitad derecha del cuadro (x>512) = el personaje está
+// mirando hacia la IZQUIERDA (el lado visible de la cabeza es el que queda
+// más lejos del giro) — confirmado visualmente contra varias imágenes
+// reales. Como acá siempre queremos que termine mirando a la derecha (ver
+// DialogueOverlay.tsx — el retrato va pegado al borde izquierdo del cuadro
+// de diálogo), ese es exactamente el caso a espejar.
+async function ensureFacingRight(apiKey: string, bytes: Buffer): Promise<Buffer> {
+  const earOnRightHalf = await findsEarOnRightHalf(apiKey, bytes);
+  if (earOnRightHalf !== true) return bytes;
+  return sharp(bytes).flop().png().toBuffer();
+}
+
 async function requestImageBytes(
   apiKey: string,
   prompt: string,
@@ -74,7 +135,8 @@ async function requestImageBytes(
   if (!b64) {
     return { ok: false, error: 'OpenAI no devolvió una imagen.' };
   }
-  return { ok: true, bytes: Buffer.from(b64, 'base64') };
+  const bytes = await ensureFacingRight(apiKey, Buffer.from(b64, 'base64'));
+  return { ok: true, bytes };
 }
 
 export function registerCharacterArtHandlers(): void {
