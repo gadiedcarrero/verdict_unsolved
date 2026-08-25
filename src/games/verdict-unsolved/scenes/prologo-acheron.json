@@ -1,0 +1,101 @@
+{
+  "id": "prologo-acheron",
+  "act": 1,
+  "kind": "standard",
+  "backgrounds": [
+    {
+      "id": "bg-1",
+      "assetPath": "backgrounds/prologo-acheron-bg-1.png"
+    }
+  ],
+  "layers": [],
+  "hotspots": [
+    {
+      "id": "fotografia-de-unidad-cero",
+      "label": "hotspot.prologo-acheron.fotografia-de-unidad-cero",
+      "area": {
+        "x": 6,
+        "y": 28,
+        "width": 17,
+        "height": 26
+      },
+      "shape": "rect",
+      "onInteract": [
+        {
+          "type": "dialogue",
+          "nodeId": "dialogue.prologo-acheron.fotografia-de-unidad-cero.interact"
+        }
+      ],
+      "repeatable": true,
+      "interactable": true,
+      "actionMenuEnabled": true,
+      "onExamine": [
+        {
+          "type": "dialogue",
+          "nodeId": "dialogue.prologo-acheron.fotografia-de-unidad-cero.examine"
+        }
+      ],
+      "interactWithTargets": []
+    },
+    {
+      "id": "terminales-de-june",
+      "label": "hotspot.prologo-acheron.terminales-de-june",
+      "area": {
+        "x": 35,
+        "y": 48,
+        "width": 48,
+        "height": 22
+      },
+      "shape": "rect",
+      "onInteract": [
+        {
+          "type": "dialogue",
+          "nodeId": "dialogue.prologo-acheron.terminales-de-june.interact"
+        }
+      ],
+      "repeatable": true,
+      "interactable": true,
+      "actionMenuEnabled": true,
+      "onExamine": [
+        {
+          "type": "dialogue",
+          "nodeId": "dialogue.prologo-acheron.terminales-de-june.examine"
+        }
+      ],
+      "interactWithTargets": []
+    }
+  ],
+  "dialogueNodes": {
+    "dialogue.prologo-acheron.fotografia-de-unidad-cero.examine": {
+      "id": "dialogue.prologo-acheron.fotografia-de-unidad-cero.examine",
+      "speaker": "sistema",
+      "line": "Cinco jóvenes en un patio, con Voss al fondo. En el reverso: \"UNIDAD CERO — QUE NADIE QUEDE ATRÁS.\""
+    },
+    "dialogue.prologo-acheron.fotografia-de-unidad-cero.interact": {
+      "id": "dialogue.prologo-acheron.fotografia-de-unidad-cero.interact",
+      "speaker": "sistema",
+      "line": "Se puede girar la foto y ver la inscripción."
+    },
+    "dialogue.prologo-acheron.terminales-de-june.examine": {
+      "id": "dialogue.prologo-acheron.terminales-de-june.examine",
+      "speaker": "sistema",
+      "line": "Tres terminales encendidos, líneas de código y barras de progreso. June conecta módulos y fragmenta archivos."
+    },
+    "dialogue.prologo-acheron.terminales-de-june.interact": {
+      "id": "dialogue.prologo-acheron.terminales-de-june.interact",
+      "speaker": "sistema",
+      "line": "Se puede intentar acelerar o sabotear la copia de JANUS."
+    }
+  },
+  "introSkippable": true,
+  "menuTitle": null,
+  "menuButtons": [],
+  "menuAppearance": {
+    "position": "center",
+    "buttonStyle": "bordered",
+    "fontFamily": "sans",
+    "fontSize": 16,
+    "fontColor": "#e6eaef",
+    "hoverColor": "#e0a636"
+  }
+}
