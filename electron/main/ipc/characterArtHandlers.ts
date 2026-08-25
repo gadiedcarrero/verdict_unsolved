@@ -1,7 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { app, ipcMain } from 'electron';
-import sharp from 'sharp';
 import { formatApiError } from './apiErrors';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
 
@@ -18,21 +17,12 @@ function portraitsDir(gameId: string): string {
   return `${assetsDir(gameId)}/portraits`;
 }
 
-// Retrato de un personaje ya existente (cualquiera, guardado una sola vez
-// acá) usado SOLO como guía estructural de pose para el retrato base de
-// personajes nuevos — ver POSE_GUIDE_INSTRUCTION más abajo. Pedirle a
-// gpt-image-1 la orientación por texto ("girá a la derecha") resultó nada
-// confiable: probado con varias vueltas de wording cada vez más explícito
-// (cabeza, hombros, torso) y terminó dibujando para la izquierda de todos
-// modos la mayoría de las veces; hasta un clasificador con visión (gpt-4o-mini)
-// dio respuestas contradictorias para la MISMA imagen sin espejar y
-// espejada. Copiar la pose de una imagen de referencia sí es confiable
-// (probado: identidad completamente distinta, pose transferida bien) — los
-// modelos de imagen son mucho mejores imitando estructura visual que
-// interpretando izquierda/derecha en texto.
-// Ruta relativa a app.getAppPath() (= raíz del repo en dev, ver el resto de
-// este archivo) y no a __dirname — este PNG vive en el código fuente, no en
-// out/main/ como el preload/renderer, así que no hay build que lo copie ahí.
+// Retrato de un personaje ya existente (guardado una sola vez acá) usado
+// SOLO como guía estructural de pose para el retrato base de personajes
+// nuevos — ver POSE_GUIDE_INSTRUCTION más abajo. Ruta relativa a
+// app.getAppPath() (= raíz del repo en dev) y no a __dirname — este PNG
+// vive en el código fuente, no en out/main/ como el preload/renderer, así
+// que no hay build que lo copie ahí.
 function poseReferencePath(): string {
   return join(app.getAppPath(), 'electron/main/assets/portrait-pose-reference.png');
 }
@@ -43,100 +33,66 @@ const POSE_GUIDE_INSTRUCTION =
 // Ver memoria "busto 3/4, fondo transparente" — mismo criterio que
 // DialogueOverlay.tsx (el retrato se dibuja sin recorte, sobresaliendo de
 // un aro decorativo, así que necesita fondo transparente para verse bien).
+// Nano Banana no tiene canal alfa real: pedirle "fondo transparente" en el
+// prompt hace que dibuje un cuadriculado de transparencia como imagen
+// (píxeles opacos, no alfa de verdad) en vez de dejar el fondo vacío. Así
+// que acá se le pide un fondo simple/liso (fácil de recortar después) y la
+// transparencia real se logra con un recorte de fondo aparte (ver
+// removeBackground más abajo), no con el modelo de generación.
 const PORTRAIT_STYLE_PROMPT =
-  'Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Fully transparent background — no scenery, no backdrop, no ground. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No text, no watermark, no border or frame.';
+  'Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Plain, simple, softly lit background — no scenery, no props, no other characters. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No text, no watermark, no border or frame, no checkerboard/transparency pattern drawn as an image.';
 
-// Ni el texto del prompt ni la imagen de referencia de pose garantizan la
-// orientación final — probado: mismo pipeline, mismo personaje, un intento
-// salió mirando bien y el siguiente mal, así que ningún truco de generación
-// alcanza por sí solo. Última verificación, decisiva: preguntarle a un
-// modelo con visión en qué MITAD del cuadro (izquierda o derecha en
-// coordenadas de la imagen, x<512 o x>512 sobre 1024px) cae la oreja
-// visible del personaje — reformular la pregunta en coordenadas de píxeles
-// en vez de "¿mira para la izquierda o la derecha?" evita la confusión
-// egocéntrica que hacía fallar tanto a la generación como a un intento
-// anterior de clasificación (gpt-4o-mini con esa frase se contradijo en la
-// MISMA imagen sin espejar y espejada). Con gpt-4o + temperatura 0 y esta
-// formulación, contestó consistente y correcto en varias imágenes ya
-// verificadas a ojo antes de confiarle esta corrección.
-async function findsEarOnRightHalf(apiKey: string, pngBytes: Buffer): Promise<boolean | null> {
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        temperature: 0,
-        max_tokens: 10,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text:
-                  "This square image is 1024x1024 pixels. The character's VISIBLE EAR (the one clearly drawn) is located at some x-coordinate. Is that ear at an x-coordinate LESS than 512 (left half of the image) or GREATER than 512 (right half of the image)? If no ear is clearly visible, answer based on which half of the image has more of the face/head area. Reply with exactly one token: \"left-half\" or \"right-half\".",
-              },
-              { type: 'image_url', image_url: { url: `data:image/png;base64,${pngBytes.toString('base64')}` } },
-            ],
-          },
-        ],
-      }),
-    });
-    if (!response.ok) return null;
-    const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
-    const answer = data.choices?.[0]?.message?.content?.trim().toLowerCase();
-    if (answer?.startsWith('right')) return true;
-    if (answer?.startsWith('left')) return false;
-    return null;
-  } catch {
-    return null;
-  }
+async function fetchBytes(url: string): Promise<Buffer> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`No se pudo descargar ${url} (${response.status})`);
+  return Buffer.from(await response.arrayBuffer());
 }
 
-// Oreja visible en la mitad derecha del cuadro (x>512) = el personaje está
-// mirando hacia la IZQUIERDA (el lado visible de la cabeza es el que queda
-// más lejos del giro) — confirmado visualmente contra varias imágenes
-// reales. Como acá siempre queremos que termine mirando a la derecha (ver
-// DialogueOverlay.tsx — el retrato va pegado al borde izquierdo del cuadro
-// de diálogo), ese es exactamente el caso a espejar.
-async function ensureFacingRight(apiKey: string, bytes: Buffer): Promise<Buffer> {
-  const earOnRightHalf = await findsEarOnRightHalf(apiKey, bytes);
-  if (earOnRightHalf !== true) return bytes;
-  return sharp(bytes).flop().png().toBuffer();
+// Recorte de fondo real (canal alfa) vía fal.ai — separado de la
+// generación en sí porque Nano Banana no produce alfa (ver comentario de
+// arriba). rembg necesita una URL pública, no bytes crudos — por eso todo
+// este pipeline pasa imágenes como URLs de fal.media en vez de descargar y
+// resubir en cada paso.
+async function removeBackground(apiKey: string, imageUrl: string): Promise<string> {
+  const response = await fetch('https://fal.run/fal-ai/imageutils/rembg', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Key ${apiKey}` },
+    body: JSON.stringify({ image_url: imageUrl }),
+  });
+  if (!response.ok) {
+    throw new Error(await formatApiError('fal.ai (rembg)', response));
+  }
+  const data = (await response.json()) as { image?: { url?: string } };
+  const url = data.image?.url;
+  if (!url) throw new Error('fal.ai (rembg) no devolvió una imagen.');
+  return url;
 }
 
 async function requestImageBytes(
   apiKey: string,
   prompt: string,
-  referenceImageBytes: Buffer,
+  referenceImageDataUri: string,
 ): Promise<{ ok: true; bytes: Buffer } | { ok: false; error: string }> {
   const fullPrompt = `${prompt}\n\n${PORTRAIT_STYLE_PROMPT}`;
-  const form = new FormData();
-  form.append('model', 'gpt-image-1');
-  form.append('image', new Blob([new Uint8Array(referenceImageBytes)], { type: 'image/png' }), 'reference.png');
-  form.append('prompt', fullPrompt);
-  form.append('size', '1024x1024');
-  form.append('quality', 'high');
-  // Sin esto, /edits deja que el modelo decida el fondo por su cuenta — el
-  // texto del prompt ("fondo transparente") no alcanza de forma confiable,
-  // a veces sale RGBA (transparente) y a veces RGB plano.
-  form.append('background', 'transparent');
-  const response = await fetch('https://api.openai.com/v1/images/edits', {
+  const response = await fetch('https://fal.run/fal-ai/nano-banana/edit', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}` },
-    body: form,
+    headers: { 'Content-Type': 'application/json', Authorization: `Key ${apiKey}` },
+    body: JSON.stringify({ prompt: fullPrompt, image_urls: [referenceImageDataUri] }),
   });
   if (!response.ok) {
-    return { ok: false, error: await formatApiError('OpenAI', response) };
+    return { ok: false, error: await formatApiError('fal.ai (Nano Banana)', response) };
   }
-  const data = (await response.json()) as { data?: { b64_json?: string }[] };
-  const b64 = data.data?.[0]?.b64_json;
-  if (!b64) {
-    return { ok: false, error: 'OpenAI no devolvió una imagen.' };
+  const data = (await response.json()) as { images?: { url?: string }[] };
+  const rawUrl = data.images?.[0]?.url;
+  if (!rawUrl) {
+    return { ok: false, error: 'fal.ai (Nano Banana) no devolvió una imagen.' };
   }
-  const bytes = await ensureFacingRight(apiKey, Buffer.from(b64, 'base64'));
-  return { ok: true, bytes };
+  try {
+    const transparentUrl = await removeBackground(apiKey, rawUrl);
+    return { ok: true, bytes: await fetchBytes(transparentUrl) };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 export function registerCharacterArtHandlers(): void {
@@ -171,8 +127,8 @@ export function registerCharacterArtHandlers(): void {
         return { ok: false, error: 'Ruta de referencia inválida.' };
       }
       const config = await getStoredAiIntegrationsConfig();
-      if (!config.openaiApiKey) {
-        return { ok: false, error: 'Falta la API key de OpenAI en Ajustes → Integraciones IA.' };
+      if (!config.falApiKey) {
+        return { ok: false, error: 'Falta la API key de fal.ai en Ajustes → Integraciones IA.' };
       }
       try {
         // Con referenceImagePath: retrato/expresión de un personaje que ya
@@ -180,8 +136,7 @@ export function registerCharacterArtHandlers(): void {
         // identidad. Sin referenceImagePath (retrato base de un personaje
         // nuevo): se manda la imagen de pose genérica de arriba con
         // POSE_GUIDE_INSTRUCTION, que le pide ignorar su identidad y copiar
-        // solo la orientación/encuadre — así el personaje nuevo nace con la
-        // orientación correcta sin depender de texto para lograrlo.
+        // solo la orientación/encuadre.
         let referenceImageBytes: Buffer;
         let effectivePrompt: string;
         if (referenceImagePath) {
@@ -195,7 +150,8 @@ export function registerCharacterArtHandlers(): void {
           referenceImageBytes = await readFile(poseReferencePath());
           effectivePrompt = `${POSE_GUIDE_INSTRUCTION}${prompt.trim()}`;
         }
-        const result = await requestImageBytes(config.openaiApiKey, effectivePrompt, referenceImageBytes);
+        const referenceImageDataUri = `data:image/png;base64,${referenceImageBytes.toString('base64')}`;
+        const result = await requestImageBytes(config.falApiKey, effectivePrompt, referenceImageDataUri);
         if (!result.ok) return result;
         const dir = join(app.getAppPath(), portraitsDir(gameId));
         await mkdir(dir, { recursive: true });
