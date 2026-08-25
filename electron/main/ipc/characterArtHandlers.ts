@@ -1,7 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { app, ipcMain } from 'electron';
-import sharp from 'sharp';
 import { formatApiError } from './apiErrors';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
 
@@ -18,60 +17,55 @@ function portraitsDir(gameId: string): string {
   return `${assetsDir(gameId)}/portraits`;
 }
 
+// Retrato de un personaje ya existente (cualquiera, guardado una sola vez
+// acá) usado SOLO como guía estructural de pose para el retrato base de
+// personajes nuevos — ver POSE_GUIDE_INSTRUCTION más abajo. Pedirle a
+// gpt-image-1 la orientación por texto ("girá a la derecha") resultó nada
+// confiable: probado con varias vueltas de wording cada vez más explícito
+// (cabeza, hombros, torso) y terminó dibujando para la izquierda de todos
+// modos la mayoría de las veces; hasta un clasificador con visión (gpt-4o-mini)
+// dio respuestas contradictorias para la MISMA imagen sin espejar y
+// espejada. Copiar la pose de una imagen de referencia sí es confiable
+// (probado: identidad completamente distinta, pose transferida bien) — los
+// modelos de imagen son mucho mejores imitando estructura visual que
+// interpretando izquierda/derecha en texto.
+// Ruta relativa a app.getAppPath() (= raíz del repo en dev, ver el resto de
+// este archivo) y no a __dirname — este PNG vive en el código fuente, no en
+// out/main/ como el preload/renderer, así que no hay build que lo copie ahí.
+function poseReferencePath(): string {
+  return join(app.getAppPath(), 'electron/main/assets/portrait-pose-reference.png');
+}
+
+const POSE_GUIDE_INSTRUCTION =
+  "Use the attached reference image ONLY as a structural pose guide: copy its camera framing, bust crop, and exact 3/4 body/head turn direction and angle. Completely ignore and discard the reference image's identity — different face, different hair, different age, different clothing, different everything except the pose/orientation/framing. Draw this character instead: ";
+
 // Ver memoria "busto 3/4, fondo transparente" — mismo criterio que
 // DialogueOverlay.tsx (el retrato se dibuja sin recorte, sobresaliendo de
 // un aro decorativo, así que necesita fondo transparente para verse bien).
-// El retrato siempre se dibuja pegado al borde IZQUIERDO del cuadro de
-// diálogo, con el texto a la derecha (ver DialogueOverlay.tsx) — así que el
-// personaje tiene que estar girado hacia la derecha de la imagen, como
-// mirando hacia el texto/la conversación, nunca hacia la izquierda ni de
-// frente a cámara.
 const PORTRAIT_STYLE_PROMPT =
-  'Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Body orientation: the character\'s whole upper body is rotated in a 3/4 turn toward the RIGHT side of the frame — shoulders, torso and head all rotated together, not a front-facing torso with only the head turned. The shoulder nearer the camera is their LEFT shoulder (foreground, closer to the right edge of the frame); their right shoulder is the far one, angled back. Face and gaze also point screen-right, as if looking at someone standing to their right. Never a front-facing torso, never facing or looking left. Fully transparent background — no scenery, no backdrop, no ground. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No text, no watermark, no border or frame.';
+  'Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Fully transparent background — no scenery, no backdrop, no ground. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No text, no watermark, no border or frame.';
 
 async function requestImageBytes(
   apiKey: string,
   prompt: string,
-  referenceImageBytes: Buffer | null,
+  referenceImageBytes: Buffer,
 ): Promise<{ ok: true; bytes: Buffer } | { ok: false; error: string }> {
   const fullPrompt = `${prompt}\n\n${PORTRAIT_STYLE_PROMPT}`;
-  let response: Response;
-  // Con referencia: /images/edits (multipart, redibuja partiendo de esa
-  // imagen — así el personaje se mantiene reconocible). Sin referencia:
-  // /images/generations (texto puro), para el retrato base de un
-  // personaje nuevo que todavía no tiene ninguna imagen propia.
-  if (referenceImageBytes) {
-    const form = new FormData();
-    form.append('model', 'gpt-image-1');
-    form.append('image', new Blob([new Uint8Array(referenceImageBytes)], { type: 'image/png' }), 'reference.png');
-    form.append('prompt', fullPrompt);
-    form.append('size', '1024x1024');
-    form.append('quality', 'high');
-    // Sin esto, /edits deja que el modelo decida el fondo por su cuenta —
-    // el texto del prompt ("fondo transparente") no alcanza de forma
-    // confiable, a veces sale RGBA (transparente) y a veces RGB plano
-    // (visto en expresiones/variantes generadas por referencia). El
-    // endpoint de /generations de abajo ya lo pasa explícito.
-    form.append('background', 'transparent');
-    response = await fetch('https://api.openai.com/v1/images/edits', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}` },
-      body: form,
-    });
-  } else {
-    response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: 'gpt-image-1',
-        prompt: fullPrompt,
-        size: '1024x1024',
-        quality: 'high',
-        background: 'transparent',
-        n: 1,
-      }),
-    });
-  }
+  const form = new FormData();
+  form.append('model', 'gpt-image-1');
+  form.append('image', new Blob([new Uint8Array(referenceImageBytes)], { type: 'image/png' }), 'reference.png');
+  form.append('prompt', fullPrompt);
+  form.append('size', '1024x1024');
+  form.append('quality', 'high');
+  // Sin esto, /edits deja que el modelo decida el fondo por su cuenta — el
+  // texto del prompt ("fondo transparente") no alcanza de forma confiable,
+  // a veces sale RGBA (transparente) y a veces RGB plano.
+  form.append('background', 'transparent');
+  const response = await fetch('https://api.openai.com/v1/images/edits', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}` },
+    body: form,
+  });
   if (!response.ok) {
     return { ok: false, error: await formatApiError('OpenAI', response) };
   }
@@ -80,15 +74,7 @@ async function requestImageBytes(
   if (!b64) {
     return { ok: false, error: 'OpenAI no devolvió una imagen.' };
   }
-  // gpt-image-1 ignora de forma consistente la instrucción de girar hacia
-  // la DERECHA del prompt de arriba y dibuja el giro hacia la izquierda de
-  // todos modos (confirmado con varias generaciones reales, con y sin
-  // imagen de referencia) — un problema conocido de los modelos de imagen
-  // con términos espaciales tipo izquierda/derecha. En vez de seguir
-  // peleando con el texto del prompt, se espeja horizontalmente el
-  // resultado acá, que sí es 100% determinístico.
-  const bytes = await sharp(Buffer.from(b64, 'base64')).flop().png().toBuffer();
-  return { ok: true, bytes };
+  return { ok: true, bytes: Buffer.from(b64, 'base64') };
 }
 
 export function registerCharacterArtHandlers(): void {
@@ -127,15 +113,27 @@ export function registerCharacterArtHandlers(): void {
         return { ok: false, error: 'Falta la API key de OpenAI en Ajustes → Integraciones IA.' };
       }
       try {
-        let referenceImageBytes: Buffer | null = null;
+        // Con referenceImagePath: retrato/expresión de un personaje que ya
+        // tiene imagen propia — se manda tal cual, el modelo mantiene esa
+        // identidad. Sin referenceImagePath (retrato base de un personaje
+        // nuevo): se manda la imagen de pose genérica de arriba con
+        // POSE_GUIDE_INSTRUCTION, que le pide ignorar su identidad y copiar
+        // solo la orientación/encuadre — así el personaje nuevo nace con la
+        // orientación correcta sin depender de texto para lograrlo.
+        let referenceImageBytes: Buffer;
+        let effectivePrompt: string;
         if (referenceImagePath) {
           try {
             referenceImageBytes = await readFile(join(app.getAppPath(), assetsDir(gameId), referenceImagePath));
           } catch {
             return { ok: false, error: `No se pudo leer la imagen de referencia: ${referenceImagePath}` };
           }
+          effectivePrompt = prompt.trim();
+        } else {
+          referenceImageBytes = await readFile(poseReferencePath());
+          effectivePrompt = `${POSE_GUIDE_INSTRUCTION}${prompt.trim()}`;
         }
-        const result = await requestImageBytes(config.openaiApiKey, prompt.trim(), referenceImageBytes);
+        const result = await requestImageBytes(config.openaiApiKey, effectivePrompt, referenceImageBytes);
         if (!result.ok) return result;
         const dir = join(app.getAppPath(), portraitsDir(gameId));
         await mkdir(dir, { recursive: true });
