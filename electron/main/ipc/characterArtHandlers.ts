@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { app, ipcMain } from 'electron';
+import sharp from 'sharp';
 import { formatApiError } from './apiErrors';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
 
@@ -160,6 +161,34 @@ export function registerCharacterArtHandlers(): void {
         const filePath = join(app.getAppPath(), assetsDir(gameId), relativePath);
         await writeFile(filePath, result.bytes);
         return { ok: true, path: relativePath };
+      } catch (error) {
+        return { ok: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    },
+  );
+
+  // Ningún proveedor de imagen probado (OpenAI, y ahora fal.ai/Nano Banana)
+  // acierta siempre la orientación del retrato — se probaron varias
+  // estrategias (texto, imagen de referencia, verificación con IA aparte) y
+  // todas fallan alguna vez. En vez de perseguir el 100% automático, este
+  // botón deja arreglarlo a mano en un click: espeja horizontalmente el
+  // archivo YA guardado, en el mismo path (no genera de nuevo, no gasta
+  // crédito de ningún proveedor).
+  ipcMain.handle(
+    'ai:flip-character-portrait',
+    async (_event, gameId: unknown, relativePath: unknown) => {
+      if (!isValidId(gameId)) {
+        return { ok: false, error: `Id de juego inválido: ${String(gameId)}` };
+      }
+      if (typeof relativePath !== 'string' || !relativePath.startsWith('portraits/')) {
+        return { ok: false, error: 'Ruta de retrato inválida.' };
+      }
+      try {
+        const filePath = join(app.getAppPath(), assetsDir(gameId), relativePath);
+        const bytes = await readFile(filePath);
+        const flipped = await sharp(bytes).flop().png().toBuffer();
+        await writeFile(filePath, flipped);
+        return { ok: true };
       } catch (error) {
         return { ok: false, error: error instanceof Error ? error.message : String(error) };
       }

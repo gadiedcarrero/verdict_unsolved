@@ -222,6 +222,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   // acá cada uno tiene el suyo y no se toca hasta que se reintenta esa
   // generación en particular.
   const [characterArtErrors, setCharacterArtErrors] = useState<Record<string, string>>({});
+  // Voltear un retrato reescribe el archivo en el MISMO path — sin esto, el
+  // <img> sigue mostrando la versión vieja cacheada por el navegador porque
+  // la URL no cambió. Clave = path relativo (ej. "portraits/adrian.png"),
+  // valor = contador que se suma a la URL como cache-buster.
+  const [portraitCacheBust, setPortraitCacheBust] = useState<Record<string, number>>({});
+  const [flippingPortraitPath, setFlippingPortraitPath] = useState<string | null>(null);
 
   const [editedSiteSettings, setEditedSiteSettings] = useState<SiteSettings | null>(null);
   const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
@@ -1250,6 +1256,27 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     }
   }
 
+  // Ningún proveedor de imagen probado acierta siempre la orientación del
+  // retrato — en vez de perseguir el 100% automático, esto deja arreglarlo
+  // a mano: espeja el archivo YA guardado en el mismo lugar (no genera de
+  // nuevo, no gasta crédito). El cache-bust es necesario porque el path no
+  // cambia — sin eso el <img> sigue mostrando la versión vieja.
+  async function flipPortrait(relativePath: string): Promise<void> {
+    setFlippingPortraitPath(relativePath);
+    try {
+      const result = await window.api.flipCharacterPortrait(gameId, relativePath);
+      if (result.ok) {
+        setPortraitCacheBust((prev) => ({ ...prev, [relativePath]: (prev[relativePath] ?? 0) + 1 }));
+      } else {
+        setCharacterSaveMessage(`Error volteando retrato: ${result.error}`);
+      }
+    } catch (error) {
+      setCharacterSaveMessage(`Error volteando retrato: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setFlippingPortraitPath(null);
+    }
+  }
+
   // Genera una expresión emocional (vocabulario fijo, ver shared/emotions.ts)
   // usando SIEMPRE el retrato por defecto del personaje como referencia
   // visual (/images/edits) — así la cara se mantiene reconocible entre
@@ -1730,6 +1757,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   uploadingExpressionKey={uploadingExpressionKey}
                   generatingArtIds={generatingCharacterArtIds}
                   artErrors={characterArtErrors}
+                  portraitCacheBust={portraitCacheBust}
+                  flippingPortraitPath={flippingPortraitPath}
+                  onFlipPortrait={(path) => void flipPortrait(path)}
                   onPreviewPortrait={setPreviewedPortrait}
                   onNameTextChange={setCharacterNameText}
                   onColorChange={(id, color) => updateCharacter(id, { color })}
@@ -1854,8 +1884,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
               <div className="flex h-full w-full items-center justify-center bg-graphite-950 p-10">
                 {previewedPortrait ? (
                   <img
-                    key={previewedPortrait}
-                    src={gameAssetUrl(gameId, previewedPortrait)}
+                    key={`${previewedPortrait}-${portraitCacheBust[previewedPortrait] ?? 0}`}
+                    src={
+                      portraitCacheBust[previewedPortrait]
+                        ? `${gameAssetUrl(gameId, previewedPortrait)}?v=${portraitCacheBust[previewedPortrait]}`
+                        : gameAssetUrl(gameId, previewedPortrait)
+                    }
                     alt=""
                     className="max-h-full max-w-full object-contain"
                   />

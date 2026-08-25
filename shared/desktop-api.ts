@@ -5,6 +5,8 @@ import type { ScriptBreakdown } from './script-breakdown';
 
 export type SceneEditorSaveResult = { ok: true } | { ok: false; error: string };
 export type PortraitSaveResult = { ok: true; path: string } | { ok: false; error: string };
+
+export type PortraitFlipResult = { ok: true } | { ok: false; error: string };
 export type BackgroundSaveResult = { ok: true; path: string } | { ok: false; error: string };
 export type ScriptBreakdownGenerateResult =
   | { ok: true; breakdown: ScriptBreakdown }
@@ -91,6 +93,11 @@ export type DesktopApi = {
     expressionKey: string | null,
     referenceImagePath: string | null,
   ) => Promise<PortraitSaveResult>;
+  /** Ningún proveedor de imagen probado acierta siempre la orientación —
+   * espeja horizontalmente el archivo YA guardado en `relativePath` (ej.
+   * "portraits/adrian-cross.png"), en el mismo lugar. No genera de nuevo,
+   * no consume crédito de ningún proveedor. */
+  flipCharacterPortrait: (gameId: string, relativePath: string) => Promise<PortraitFlipResult>;
   /** Lista las voces disponibles en la cuenta de ElevenLabs (premade +
    * propias) — usa la key ya guardada en Integraciones IA. No es por juego:
    * la cuenta de ElevenLabs es una sola para toda la plataforma. */

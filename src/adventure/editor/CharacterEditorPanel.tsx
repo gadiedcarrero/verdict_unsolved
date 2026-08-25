@@ -269,10 +269,15 @@ const PORTRAIT_LOAD_MAX_RETRIES = 3;
 function PortraitPreview({
   gameId,
   portrait,
+  cacheBust,
   onPreview,
 }: {
   gameId: string;
   portrait: string | null;
+  /** Se suma a la URL para forzar recarga cuando el archivo se reescribe
+   * en el MISMO path (ej. al voltearlo) — sin esto el navegador sigue
+   * mostrando la versión vieja cacheada. */
+  cacheBust?: number | undefined;
   /** Si está presente, hace click-to-preview (ver panel grande a la
    * derecha del editor) — ausente en contextos donde no aplica. */
   onPreview?: (path: string) => void;
@@ -307,10 +312,13 @@ function PortraitPreview({
     );
   }
   const src = gameAssetUrl(gameId, portrait);
+  const query = [retry > 0 ? `retry=${retry}` : null, cacheBust ? `v=${cacheBust}` : null]
+    .filter((v): v is string => v !== null)
+    .join('&');
   return (
     <img
-      key={`${portrait}-${retry}`}
-      src={retry > 0 ? `${src}?retry=${retry}` : src}
+      key={`${portrait}-${retry}-${cacheBust ?? 0}`}
+      src={query ? `${src}?${query}` : src}
       alt=""
       onError={handleError}
       onClick={onPreview ? () => onPreview(portrait) : undefined}
@@ -334,6 +342,9 @@ function EmotionsFields({
   uploadingKey,
   generatingArtIds,
   artErrors,
+  portraitCacheBust,
+  flippingPortraitPath,
+  onFlipPortrait,
   onPreviewPortrait,
   onUploadExpression,
   onRemoveExpression,
@@ -344,6 +355,9 @@ function EmotionsFields({
   uploadingKey: string | null;
   generatingArtIds: string[];
   artErrors: Record<string, string>;
+  portraitCacheBust: Record<string, number>;
+  flippingPortraitPath: string | null;
+  onFlipPortrait: (relativePath: string) => void;
   onPreviewPortrait: (path: string) => void;
   onUploadExpression: (expressionKey: string, file: File) => void;
   onRemoveExpression: (expressionKey: string) => void;
@@ -373,7 +387,12 @@ function EmotionsFields({
         return (
           <div key={code} className="mb-1 rounded border border-graphite-800 bg-graphite-950/60 p-1.5">
             <div className="mb-1 flex items-center gap-2">
-              <PortraitPreview gameId={gameId} portrait={expression?.path ?? null} onPreview={onPreviewPortrait} />
+              <PortraitPreview
+                gameId={gameId}
+                portrait={expression?.path ?? null}
+                cacheBust={expression?.path ? portraitCacheBust[expression.path] : undefined}
+                onPreview={onPreviewPortrait}
+              />
               <p className="flex-1 text-[9px] text-graphite-300">{label}</p>
               {expression?.path && (
                 <button
@@ -394,6 +413,17 @@ function EmotionsFields({
               >
                 {generating ? 'Generando...' : expression?.path ? 'Regenerar con IA' : 'Generar con IA'}
               </button>
+              {expression?.path && (
+                <button
+                  type="button"
+                  onClick={() => onFlipPortrait(expression.path as string)}
+                  disabled={flippingPortraitPath === expression.path}
+                  title="Espejar horizontalmente — para cuando sale mirando para el lado equivocado"
+                  className="shrink-0 rounded border border-graphite-700 px-2 py-1 text-[8px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {flippingPortraitPath === expression.path ? '...' : 'Voltear'}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => fileInputRefs.current[code]?.click()}
@@ -541,6 +571,9 @@ function CharacterFields({
   onUploadExpression,
   onRemoveExpression,
   onGenerateEmotion,
+  portraitCacheBust,
+  flippingPortraitPath,
+  onFlipPortrait,
   voices,
   onVoiceChange,
   onRemoveVoice,
@@ -563,6 +596,9 @@ function CharacterFields({
   onUploadExpression: (expressionKey: string, file: File) => void;
   onRemoveExpression: (expressionKey: string) => void;
   onGenerateEmotion: (emotionCode: string) => void;
+  portraitCacheBust: Record<string, number>;
+  flippingPortraitPath: string | null;
+  onFlipPortrait: (relativePath: string) => void;
   voices: ElevenLabsVoice[] | null;
   onVoiceChange: (language: string, voiceId: string) => void;
   onRemoveVoice: (language: string) => void;
@@ -581,7 +617,12 @@ function CharacterFields({
 
   return (
     <div className="mb-2 flex gap-2 border-b border-graphite-800 pb-2">
-      <PortraitPreview gameId={gameId} portrait={character.portrait} onPreview={onPreviewPortrait} />
+      <PortraitPreview
+        gameId={gameId}
+        portrait={character.portrait}
+        cacheBust={character.portrait ? portraitCacheBust[character.portrait] : undefined}
+        onPreview={onPreviewPortrait}
+      />
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex items-center justify-between gap-2">
           <p className="truncate text-graphite-100">{character.id}</p>
@@ -635,6 +676,17 @@ function CharacterFields({
           >
             {generatingPortrait ? 'Generando...' : character.portrait ? 'Regenerar con IA' : 'Generar con IA'}
           </button>
+          {character.portrait && (
+            <button
+              type="button"
+              onClick={() => onFlipPortrait(character.portrait as string)}
+              disabled={flippingPortraitPath === character.portrait}
+              title="Espejar horizontalmente — para cuando sale mirando para el lado equivocado"
+              className="rounded border border-graphite-700 px-2 py-1 text-[9px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {flippingPortraitPath === character.portrait ? 'Volteando...' : 'Voltear'}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -652,6 +704,9 @@ function CharacterFields({
           uploadingKey={uploadingExpressionKey}
           generatingArtIds={generatingArtIds}
           artErrors={artErrors}
+          portraitCacheBust={portraitCacheBust}
+          flippingPortraitPath={flippingPortraitPath}
+          onFlipPortrait={onFlipPortrait}
           onPreviewPortrait={onPreviewPortrait}
           onUploadExpression={onUploadExpression}
           onRemoveExpression={onRemoveExpression}
@@ -739,6 +794,9 @@ export function CharacterEditorPanel({
   onCreateCharacter,
   onRemoveCharacter,
   onCreateVariant,
+  portraitCacheBust,
+  flippingPortraitPath,
+  onFlipPortrait,
   voices,
   voicesLoading,
   voicesError,
@@ -778,6 +836,12 @@ export function CharacterEditorPanel({
     description: string,
     color: string,
   ) => Promise<{ ok: boolean; error?: string }>;
+  /** Clave = path relativo del retrato (ej. "portraits/adrian.png") →
+   * contador de cache-bust, ver flipPortrait en AdventureRuntime.tsx. */
+  portraitCacheBust: Record<string, number>;
+  /** Path relativo del retrato que se está volteando ahora, o null. */
+  flippingPortraitPath: string | null;
+  onFlipPortrait: (relativePath: string) => void;
   /** null = todavía no se pidieron a la cuenta de ElevenLabs (ver botón
    * "Cargar voces" abajo). */
   voices: ElevenLabsVoice[] | null;
@@ -835,6 +899,9 @@ export function CharacterEditorPanel({
           onUploadExpression={(expressionKey, file) => onUploadExpression(character.id, expressionKey, file)}
           onRemoveExpression={(expressionKey) => onRemoveExpression(character.id, expressionKey)}
           onGenerateEmotion={(emotionCode) => onGenerateEmotion(character.id, emotionCode)}
+          portraitCacheBust={portraitCacheBust}
+          flippingPortraitPath={flippingPortraitPath}
+          onFlipPortrait={onFlipPortrait}
           voices={voices}
           onVoiceChange={(language, voiceId) => onVoiceChange(character.id, language, voiceId)}
           onRemoveVoice={(language) => onRemoveVoice(character.id, language)}
