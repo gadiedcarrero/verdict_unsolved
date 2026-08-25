@@ -20,8 +20,13 @@ function portraitsDir(gameId: string): string {
 // Ver memoria "busto 3/4, fondo transparente" — mismo criterio que
 // DialogueOverlay.tsx (el retrato se dibuja sin recorte, sobresaliendo de
 // un aro decorativo, así que necesita fondo transparente para verse bien).
+// El retrato siempre se dibuja pegado al borde IZQUIERDO del cuadro de
+// diálogo, con el texto a la derecha (ver DialogueOverlay.tsx) — así que el
+// personaje tiene que estar girado hacia la derecha de la imagen, como
+// mirando hacia el texto/la conversación, nunca hacia la izquierda ni de
+// frente a cámara.
 const PORTRAIT_STYLE_PROMPT =
-  'Bust portrait, 3/4 angle, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Fully transparent background — no scenery, no backdrop, no ground. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No text, no watermark, no border or frame.';
+  'Bust portrait, 3/4 angle, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. The character\'s head and body are turned toward the RIGHT side of the frame — face and gaze angled screen-right, as if looking toward someone standing to their right — never facing left and never straight-on at the viewer. Fully transparent background — no scenery, no backdrop, no ground. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No text, no watermark, no border or frame.';
 
 async function requestImageBytes(
   apiKey: string,
