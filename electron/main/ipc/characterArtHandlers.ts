@@ -41,6 +41,12 @@ async function requestImageBytes(
     form.append('prompt', fullPrompt);
     form.append('size', '1024x1024');
     form.append('quality', 'high');
+    // Sin esto, /edits deja que el modelo decida el fondo por su cuenta —
+    // el texto del prompt ("fondo transparente") no alcanza de forma
+    // confiable, a veces sale RGBA (transparente) y a veces RGB plano
+    // (visto en expresiones/variantes generadas por referencia). El
+    // endpoint de /generations de abajo ya lo pasa explícito.
+    form.append('background', 'transparent');
     response = await fetch('https://api.openai.com/v1/images/edits', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}` },
