@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { app, ipcMain } from 'electron';
+import sharp from 'sharp';
 import { formatApiError } from './apiErrors';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
 
@@ -79,7 +80,15 @@ async function requestImageBytes(
   if (!b64) {
     return { ok: false, error: 'OpenAI no devolvió una imagen.' };
   }
-  return { ok: true, bytes: Buffer.from(b64, 'base64') };
+  // gpt-image-1 ignora de forma consistente la instrucción de girar hacia
+  // la DERECHA del prompt de arriba y dibuja el giro hacia la izquierda de
+  // todos modos (confirmado con varias generaciones reales, con y sin
+  // imagen de referencia) — un problema conocido de los modelos de imagen
+  // con términos espaciales tipo izquierda/derecha. En vez de seguir
+  // peleando con el texto del prompt, se espeja horizontalmente el
+  // resultado acá, que sí es 100% determinístico.
+  const bytes = await sharp(Buffer.from(b64, 'base64')).flop().png().toBuffer();
+  return { ok: true, bytes };
 }
 
 export function registerCharacterArtHandlers(): void {
