@@ -26,7 +26,7 @@ function portraitsDir(gameId: string): string {
 // mirando hacia el texto/la conversación, nunca hacia la izquierda ni de
 // frente a cámara.
 const PORTRAIT_STYLE_PROMPT =
-  'Bust portrait, 3/4 angle, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. The character\'s head and body are turned toward the RIGHT side of the frame — face and gaze angled screen-right, as if looking toward someone standing to their right — never facing left and never straight-on at the viewer. Fully transparent background — no scenery, no backdrop, no ground. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No text, no watermark, no border or frame.';
+  'Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Body orientation: the character\'s whole upper body is rotated in a 3/4 turn toward the RIGHT side of the frame — shoulders, torso and head all rotated together, not a front-facing torso with only the head turned. The shoulder nearer the camera is their LEFT shoulder (foreground, closer to the right edge of the frame); their right shoulder is the far one, angled back. Face and gaze also point screen-right, as if looking at someone standing to their right. Never a front-facing torso, never facing or looking left. Fully transparent background — no scenery, no backdrop, no ground. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No text, no watermark, no border or frame.';
 
 async function requestImageBytes(
   apiKey: string,
