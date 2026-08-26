@@ -6,85 +6,75 @@
     {
       "id": "bg-1",
       "assetPath": "backgrounds/prologo-acheron-bg-1.png"
+    },
+    {
+      "id": "bg-2",
+      "assetPath": "backgrounds/prologo-acheron-bg-2.png"
+    },
+    {
+      "id": "bg-3",
+      "assetPath": "backgrounds/prologo-acheron-bg-3.png"
+    },
+    {
+      "id": "bg-4",
+      "assetPath": "backgrounds/prologo-acheron-bg-4.png"
     }
   ],
   "layers": [],
-  "hotspots": [
+  "hotspots": [],
+  "onEnter": [
     {
-      "id": "fotografia-de-unidad-cero",
-      "label": "hotspot.prologo-acheron.fotografia-de-unidad-cero",
-      "area": {
-        "x": 6,
-        "y": 28,
-        "width": 17,
-        "height": 26
-      },
-      "shape": "rect",
-      "onInteract": [
-        {
-          "type": "dialogue",
-          "nodeId": "dialogue.prologo-acheron.fotografia-de-unidad-cero.interact"
-        }
-      ],
-      "repeatable": true,
-      "interactable": true,
-      "actionMenuEnabled": true,
-      "onExamine": [
-        {
-          "type": "dialogue",
-          "nodeId": "dialogue.prologo-acheron.fotografia-de-unidad-cero.examine"
-        }
-      ],
-      "interactWithTargets": []
-    },
-    {
-      "id": "terminales-de-june",
-      "label": "hotspot.prologo-acheron.terminales-de-june",
-      "area": {
-        "x": 35,
-        "y": 48,
-        "width": 48,
-        "height": 22
-      },
-      "shape": "rect",
-      "onInteract": [
-        {
-          "type": "dialogue",
-          "nodeId": "dialogue.prologo-acheron.terminales-de-june.interact"
-        }
-      ],
-      "repeatable": true,
-      "interactable": true,
-      "actionMenuEnabled": true,
-      "onExamine": [
-        {
-          "type": "dialogue",
-          "nodeId": "dialogue.prologo-acheron.terminales-de-june.examine"
-        }
-      ],
-      "interactWithTargets": []
+      "type": "dialogue",
+      "nodeId": "dialogue.prologo-acheron.panel-1"
     }
   ],
   "dialogueNodes": {
-    "dialogue.prologo-acheron.fotografia-de-unidad-cero.examine": {
-      "id": "dialogue.prologo-acheron.fotografia-de-unidad-cero.examine",
+    "dialogue.prologo-acheron.panel-1": {
+      "id": "dialogue.prologo-acheron.panel-1",
       "speaker": "sistema",
-      "line": "Cinco jóvenes en un patio, con Voss al fondo. En el reverso: \"UNIDAD CERO — QUE NADIE QUEDE ATRÁS.\""
+      "line": "Tres terminales encendidos, líneas de código y barras de progreso. June conecta módulos y fragmenta archivos.",
+      "onShow": [
+        {
+          "type": "setBackground",
+          "backgroundId": "bg-1"
+        }
+      ],
+      "next": "dialogue.prologo-acheron.panel-2"
     },
-    "dialogue.prologo-acheron.fotografia-de-unidad-cero.interact": {
-      "id": "dialogue.prologo-acheron.fotografia-de-unidad-cero.interact",
+    "dialogue.prologo-acheron.panel-2": {
+      "id": "dialogue.prologo-acheron.panel-2",
       "speaker": "sistema",
-      "line": "Se puede girar la foto y ver la inscripción."
+      "line": "Cinco jóvenes en un patio, con Voss al fondo. En el reverso: \"UNIDAD CERO — QUE NADIE QUEDE ATRÁS.\"",
+      "onShow": [
+        {
+          "type": "setBackground",
+          "backgroundId": "bg-2"
+        }
+      ],
+      "next": "dialogue.prologo-acheron.panel-3"
     },
-    "dialogue.prologo-acheron.terminales-de-june.examine": {
-      "id": "dialogue.prologo-acheron.terminales-de-june.examine",
+    "dialogue.prologo-acheron.panel-3": {
+      "id": "dialogue.prologo-acheron.panel-3",
       "speaker": "sistema",
-      "line": "Tres terminales encendidos, líneas de código y barras de progreso. June conecta módulos y fragmenta archivos."
+      "line": "Descubren que el sistema los ha estado estudiando y que la operación es una trampa.",
+      "onShow": [
+        {
+          "type": "setBackground",
+          "backgroundId": "bg-3"
+        }
+      ],
+      "next": "dialogue.prologo-acheron.panel-4"
     },
-    "dialogue.prologo-acheron.terminales-de-june.interact": {
-      "id": "dialogue.prologo-acheron.terminales-de-june.interact",
+    "dialogue.prologo-acheron.panel-4": {
+      "id": "dialogue.prologo-acheron.panel-4",
       "speaker": "sistema",
-      "line": "Se puede intentar acelerar o sabotear la copia de JANUS."
+      "line": "Una serie de explosiones destruye el piso, separando al equipo y provocando la aparente muerte de todos.",
+      "onShow": [
+        {
+          "type": "setBackground",
+          "backgroundId": "bg-4"
+        }
+      ]
     }
   },
   "introSkippable": true,

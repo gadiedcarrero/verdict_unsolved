@@ -48,6 +48,12 @@ const OUTCOME_ACTION_VARIANTS = [
    * defecto = backgrounds[0]), el primer click pasa al que no sea el
    * default. */
   z.object({ type: z.literal('toggleBackground'), backgroundIdA: z.string(), backgroundIdB: z.string() }),
+  /** Pone un fondo puntual como activo, sin importar cuál esté ahora — a
+   * diferencia de `toggleBackground` (pensado para un interruptor de 2
+   * estados), esto sirve para avanzar un panel a la vez en una escena tipo
+   * "secuencia cinemática" (ver `onShow` de DialogueNode): cada nodo de la
+   * secuencia pone el fondo del panel que le corresponde al mostrarse. */
+  z.object({ type: z.literal('setBackground'), backgroundId: z.string() }),
 ] as const;
 
 export const MinigameOutcomeActionSchema = z.discriminatedUnion('type', OUTCOME_ACTION_VARIANTS);

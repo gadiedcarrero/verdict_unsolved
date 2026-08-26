@@ -81,6 +81,7 @@ type AdventureRuntimeState = {
   /** Alterna `activeBackgroundId` entre dos ids — si ninguno está activo
    * todavía (fondo por defecto), pasa al que no sea `scene.backgrounds[0]`. */
   toggleBackground: (backgroundIdA: string, backgroundIdB: string) => void;
+  setBackground: (backgroundId: string) => void;
   /** Corre `onSuccess` o `onFail` del minijuego activo según `success`, y lo
    * cierra. Cancelar el minijuego (p. ej. "Salir") cuenta como fracaso. */
   completeMinigame: (success: boolean) => void;
@@ -214,6 +215,10 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
     set({ activeBackgroundId: effective === backgroundIdA ? backgroundIdB : backgroundIdA });
   },
 
+  setBackground: (backgroundId) => {
+    set({ activeBackgroundId: backgroundId });
+  },
+
   completeMinigame: (success) => {
     const minigame = get().activeMinigame;
     set({ activeMinigame: null });
@@ -287,6 +292,9 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
           break;
         case 'toggleBackground':
           get().toggleBackground(action.backgroundIdA, action.backgroundIdB);
+          break;
+        case 'setBackground':
+          get().setBackground(action.backgroundId);
           break;
         case 'openMinigame':
           set({
