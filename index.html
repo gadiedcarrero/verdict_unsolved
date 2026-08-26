@@ -4,8 +4,14 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; media-src 'self' https://storage.googleapis.com https://*.elevenlabs.io"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; media-src 'self' https://storage.googleapis.com https://*.elevenlabs.io"
     />
+    <!-- img-src blob: — URL.createObjectURL(file) para previsualizar una
+         imagen de referencia recién pegada/soltada en el panel de edición
+         (ver imageEditReferences en AdventureRuntime.tsx), antes de que
+         exista ningún path real en assets/. Sin esto el <img> quedaba roto
+         con un error de CSP silencioso, igual que pasaba con las muestras
+         de audio de ElevenLabs (ver media-src abajo). -->
     <!-- media-src: ahí sirve ElevenLabs las muestras de audio de sus voces
          (preview_url) — ver VoiceRow en CharacterEditorPanel.tsx. El
          preview_url "general" de un voice vive en storage.googleapis.com,
