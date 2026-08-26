@@ -133,10 +133,13 @@ function BackgroundThumb({
   backgroundColor,
   imageWidthPercent,
   showIntroFields,
+  cacheBust,
+  isEditing,
   onRemove,
   onDurationChange,
   onBackgroundColorChange,
   onImageWidthChange,
+  onEditWithAi,
 }: {
   gameId: string;
   assetPath: string;
@@ -145,12 +148,20 @@ function BackgroundThumb({
   backgroundColor: string | undefined;
   imageWidthPercent: number | undefined;
   showIntroFields: boolean;
+  /** Se suma a la URL para forzar recarga después de editar esta imagen con
+   * IA (ver editingBackgroundPath en AdventureRuntime.tsx) — el path no
+   * cambia, así que sin esto el navegador seguiría mostrando la versión
+   * vieja cacheada. */
+  cacheBust: number | undefined;
+  isEditing: boolean;
   onRemove: () => void;
   onDurationChange: (durationMs: number) => void;
   onBackgroundColorChange: (color: string | undefined) => void;
   onImageWidthChange: (widthPercent: number | undefined) => void;
+  onEditWithAi: () => void;
 }): JSX.Element {
   const [failed, setFailed] = useState(false);
+  const src = gameAssetUrl(gameId, assetPath);
   return (
     <div className="w-24 shrink-0">
       <div className="relative">
@@ -159,18 +170,24 @@ function BackgroundThumb({
             sin imagen
           </div>
         ) : (
-          <div
-            className="flex h-14 w-24 items-center justify-center overflow-hidden rounded border border-graphite-700"
+          <button
+            type="button"
+            onClick={onEditWithAi}
+            title="Editar esta imagen con IA (describir qué cambiar)"
+            className={`flex h-14 w-24 items-center justify-center overflow-hidden rounded border ${
+              isEditing ? 'border-amber-accent' : 'border-graphite-700 hover:border-amber-accent'
+            }`}
             style={{ backgroundColor: backgroundColor || undefined }}
           >
             <img
-              src={gameAssetUrl(gameId, assetPath)}
+              key={cacheBust ?? 0}
+              src={cacheBust ? `${src}?v=${cacheBust}` : src}
               alt=""
               onError={() => setFailed(true)}
               className={imageWidthPercent ? 'max-h-full' : 'h-14 w-24 object-cover'}
               style={imageWidthPercent ? { width: `${imageWidthPercent}%` } : undefined}
             />
-          </div>
+          </button>
         )}
         <span className="absolute top-0.5 left-0.5 rounded bg-graphite-950/80 px-1 text-[8px] tracking-widest text-amber-accent uppercase">
           {label}
@@ -238,20 +255,26 @@ function BackgroundsSection({
   gameId,
   scene,
   uploading,
+  backgroundCacheBust,
+  editingBackgroundPath,
   onAddBackground,
   onRemoveBackground,
   onDurationChange,
   onBackgroundColorChange,
   onImageWidthChange,
+  onEditBackgroundWithAi,
 }: {
   gameId: string;
   scene: Scene;
   uploading: boolean;
+  backgroundCacheBust: Record<string, number>;
+  editingBackgroundPath: string | null;
   onAddBackground: (file: File) => void;
   onRemoveBackground: (bgId: string) => void;
   onDurationChange: (bgId: string, durationMs: number) => void;
   onBackgroundColorChange: (bgId: string, color: string | undefined) => void;
   onImageWidthChange: (bgId: string, widthPercent: number | undefined) => void;
+  onEditBackgroundWithAi: (assetPath: string) => void;
 }): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isIntro = scene.kind === 'intro';
@@ -281,10 +304,13 @@ function BackgroundsSection({
             backgroundColor={bg.backgroundColor}
             imageWidthPercent={bg.imageWidthPercent}
             showIntroFields={isIntro}
+            cacheBust={backgroundCacheBust[bg.assetPath]}
+            isEditing={editingBackgroundPath === bg.assetPath}
             onRemove={() => onRemoveBackground(bg.id)}
             onDurationChange={(durationMs) => onDurationChange(bg.id, durationMs)}
             onBackgroundColorChange={(color) => onBackgroundColorChange(bg.id, color)}
             onImageWidthChange={(widthPercent) => onImageWidthChange(bg.id, widthPercent)}
+            onEditWithAi={() => onEditBackgroundWithAi(bg.assetPath)}
           />
         ))}
       </div>
@@ -1436,6 +1462,9 @@ export function SceneEditorPanel({
   onBackgroundDurationChange,
   onBackgroundColorChange,
   onBackgroundImageWidthChange,
+  backgroundCacheBust,
+  editingBackgroundPath,
+  onEditBackgroundWithAi,
   onChangeKind,
   onChangeIntroSkippable,
   onChangeIntroCompleteTarget,
@@ -1482,6 +1511,12 @@ export function SceneEditorPanel({
   onBackgroundDurationChange: (bgId: string, durationMs: number) => void;
   onBackgroundColorChange: (bgId: string, color: string | undefined) => void;
   onBackgroundImageWidthChange: (bgId: string, widthPercent: number | undefined) => void;
+  /** Clave = assetPath del fondo → contador de cache-bust, ver
+   * editingImagePath/editImage en AdventureRuntime.tsx. */
+  backgroundCacheBust: Record<string, number>;
+  /** assetPath del fondo con el panel de edición por IA abierto, o null. */
+  editingBackgroundPath: string | null;
+  onEditBackgroundWithAi: (assetPath: string) => void;
   onChangeKind: (kind: SceneKind) => void;
   onChangeIntroSkippable: (skippable: boolean) => void;
   onChangeIntroCompleteTarget: (sceneId: string) => void;
@@ -1552,6 +1587,9 @@ export function SceneEditorPanel({
             onDurationChange={onBackgroundDurationChange}
             onBackgroundColorChange={onBackgroundColorChange}
             onImageWidthChange={onBackgroundImageWidthChange}
+            backgroundCacheBust={backgroundCacheBust}
+            editingBackgroundPath={editingBackgroundPath}
+            onEditBackgroundWithAi={onEditBackgroundWithAi}
           />
 
           {scene.kind === 'intro' ? (

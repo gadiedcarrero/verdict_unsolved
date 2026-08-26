@@ -7,6 +7,7 @@ export type SceneEditorSaveResult = { ok: true } | { ok: false; error: string };
 export type PortraitSaveResult = { ok: true; path: string } | { ok: false; error: string };
 
 export type PortraitFlipResult = { ok: true } | { ok: false; error: string };
+export type ImageEditResult = { ok: true } | { ok: false; error: string };
 export type BackgroundSaveResult = { ok: true; path: string } | { ok: false; error: string };
 export type ScriptBreakdownGenerateResult =
   | { ok: true; breakdown: ScriptBreakdown }
@@ -98,6 +99,12 @@ export type DesktopApi = {
    * "portraits/adrian-cross.png"), en el mismo lugar. No genera de nuevo,
    * no consume crédito de ningún proveedor. */
   flipCharacterPortrait: (gameId: string, relativePath: string) => Promise<PortraitFlipResult>;
+  /** Corrección puntual en texto libre sobre CUALQUIER imagen ya generada
+   * del juego (fondo de escena, retrato, lo que sea) — ej. "esa foto de la
+   * pared se ve realista, no debe ser" o "hay un personaje duplicado, sacá
+   * uno". Redibuja partiendo de la imagen actual en `relativePath` y la
+   * reescribe en el mismo lugar. */
+  editImage: (gameId: string, relativePath: string, instruction: string) => Promise<ImageEditResult>;
   /** Lista las voces disponibles en la cuenta de ElevenLabs (premade +
    * propias) — usa la key ya guardada en Integraciones IA. No es por juego:
    * la cuenta de ElevenLabs es una sola para toda la plataforma. */

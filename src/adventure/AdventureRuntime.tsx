@@ -229,6 +229,17 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const [portraitCacheBust, setPortraitCacheBust] = useState<Record<string, number>>({});
   const [flippingPortraitPath, setFlippingPortraitPath] = useState<string | null>(null);
 
+  // Ningún proveedor de imagen genera perfecto a la primera — en vez de que
+  // cada corrección puntual necesite pedírmela por chat, esto deja
+  // corregir CUALQUIER imagen ya generada (fondo de escena, retrato) en
+  // texto libre directo desde el editor. `editingImagePath` no null = hay
+  // un panel de edición abierto para ese path relativo (reemplaza el
+  // visor normal de la escena mientras está abierto).
+  const [editingImagePath, setEditingImagePath] = useState<string | null>(null);
+  const [imageEditPrompt, setImageEditPrompt] = useState('');
+  const [imageEditGenerating, setImageEditGenerating] = useState(false);
+  const [imageEditError, setImageEditError] = useState<string | null>(null);
+
   const [editedSiteSettings, setEditedSiteSettings] = useState<SiteSettings | null>(null);
   const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
   const [siteSettingsSaveMessage, setSiteSettingsSaveMessage] = useState<string | null>(null);
@@ -1277,6 +1288,30 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     }
   }
 
+  // Corrección puntual en texto libre sobre la imagen abierta en el panel
+  // de edición (ver editingImagePath) — reescribe el mismo archivo. No
+  // limpia editingImagePath al terminar: el panel se queda abierto con el
+  // resultado nuevo para poder seguir iterando ("ahora sacale el reflejo
+  // también") sin tener que volver a abrirlo.
+  async function submitImageEdit(): Promise<void> {
+    if (!editingImagePath || !imageEditPrompt.trim()) return;
+    setImageEditGenerating(true);
+    setImageEditError(null);
+    try {
+      const result = await window.api.editImage(gameId, editingImagePath, imageEditPrompt.trim());
+      if (result.ok) {
+        setPortraitCacheBust((prev) => ({ ...prev, [editingImagePath]: (prev[editingImagePath] ?? 0) + 1 }));
+        setImageEditPrompt('');
+      } else {
+        setImageEditError(result.error);
+      }
+    } catch (error) {
+      setImageEditError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setImageEditGenerating(false);
+    }
+  }
+
   // Genera una expresión emocional (vocabulario fijo, ver shared/emotions.ts)
   // usando SIEMPRE el retrato por defecto del personaje como referencia
   // visual (/images/edits) — así la cara se mantiene reconocible entre
@@ -1716,6 +1751,13 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onRemoveBackground={removeBackground}
                   onBackgroundDurationChange={updateBackgroundDuration}
                   onBackgroundColorChange={updateBackgroundColor}
+                  backgroundCacheBust={portraitCacheBust}
+                  editingBackgroundPath={editingImagePath}
+                  onEditBackgroundWithAi={(assetPath) => {
+                    setEditingImagePath(assetPath);
+                    setImageEditPrompt('');
+                    setImageEditError(null);
+                  }}
                   onBackgroundImageWidthChange={updateBackgroundImageWidth}
                   onChangeKind={updateSceneKind}
                   onChangeIntroSkippable={updateIntroSkippable}
@@ -1898,6 +1940,57 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                     Hacé click en un retrato de la lista para verlo más grande acá
                   </p>
                 )}
+              </div>
+            ) : editorTab === 'scene' && editingImagePath ? (
+              <div className="flex h-full w-full flex-col bg-graphite-950 p-6">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-[10px] tracking-widest text-graphite-500 uppercase">
+                    Editando {editingImagePath}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingImagePath(null);
+                      setImageEditPrompt('');
+                      setImageEditError(null);
+                    }}
+                    className="rounded border border-graphite-700 px-2 py-1 text-[9px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+                <div className="flex min-h-0 flex-1 items-center justify-center">
+                  <img
+                    key={`${editingImagePath}-${portraitCacheBust[editingImagePath] ?? 0}`}
+                    src={
+                      portraitCacheBust[editingImagePath]
+                        ? `${gameAssetUrl(gameId, editingImagePath)}?v=${portraitCacheBust[editingImagePath]}`
+                        : gameAssetUrl(gameId, editingImagePath)
+                    }
+                    alt=""
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
+                <div className="mt-3 shrink-0">
+                  <textarea
+                    value={imageEditPrompt}
+                    onChange={(event) => setImageEditPrompt(event.target.value)}
+                    rows={2}
+                    placeholder='Qué cambiar de esta imagen (ej. "esa foto de la pared se ve realista, redibujala en el mismo estilo ilustrado que el resto")...'
+                    className="w-full rounded border border-graphite-700 bg-graphite-900 px-2 py-1.5 text-[11px] text-graphite-100"
+                  />
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void submitImageEdit()}
+                      disabled={!imageEditPrompt.trim() || imageEditGenerating}
+                      className="rounded border border-sky-400/40 px-3 py-1.5 text-[10px] tracking-widest text-sky-300 uppercase transition-colors hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {imageEditGenerating ? 'Aplicando...' : 'Aplicar cambio'}
+                    </button>
+                    {imageEditError && <p className="text-[10px] text-red-300">{imageEditError}</p>}
+                  </div>
+                </div>
               </div>
             ) : displayScene ? (
               <SceneViewer
