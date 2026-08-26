@@ -112,6 +112,11 @@ export type DesktopApi = {
     instruction: string,
     referenceImages: Uint8Array[],
   ) => Promise<ImageEditResult>;
+  /** Un solo paso atrás sobre el último editImage aplicado a `relativePath`
+   * — no hay un botón de "deshacer" que valga nada si la corrección
+   * termina peor que el original. Falla con un error legible si no hay
+   * nada para deshacer todavía. */
+  undoImageEdit: (gameId: string, relativePath: string) => Promise<ImageEditResult>;
   /** Lista las voces disponibles en la cuenta de ElevenLabs (premade +
    * propias) — usa la key ya guardada en Integraciones IA. No es por juego:
    * la cuenta de ElevenLabs es una sola para toda la plataforma. */

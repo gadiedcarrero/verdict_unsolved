@@ -10,3 +10,8 @@ coverage/
 # Carpeta de trabajo con arte fuente sin procesar (mismo criterio que
 # Downloads): las copias en uso viven en assets/games/<gameId>/.../
 Imagenes/
+
+# Backup de "deshacer" del panel de edición de imágenes con IA (ver
+# electron/main/ipc/imageEditHandlers.ts) — un paso atrás nada más,
+# efímero, no un historial real que valga la pena versionar.
+.*.undo-backup

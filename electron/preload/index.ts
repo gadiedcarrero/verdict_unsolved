@@ -28,6 +28,7 @@ const api: DesktopApi = {
     ipcRenderer.invoke('ai:flip-character-portrait', gameId, relativePath),
   editImage: (gameId, relativePath, instruction, referenceImages) =>
     ipcRenderer.invoke('ai:edit-image', gameId, relativePath, instruction, referenceImages),
+  undoImageEdit: (gameId, relativePath) => ipcRenderer.invoke('ai:undo-image-edit', gameId, relativePath),
   listElevenLabsVoices: () => ipcRenderer.invoke('ai:list-elevenlabs-voices'),
 };
 

@@ -1382,6 +1382,28 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     }
   }
 
+  // Un paso atrás sobre el último editImage aplicado a esta imagen —
+  // ver undoImageEdit en imageEditHandlers.ts. Reusa imageEditGenerating
+  // para deshabilitar los botones mientras corre: es la misma imagen, no
+  // tiene sentido poder aplicar Y deshacer al mismo tiempo.
+  async function undoLastImageEdit(): Promise<void> {
+    if (!editingImagePath) return;
+    setImageEditGenerating(true);
+    setImageEditError(null);
+    try {
+      const result = await window.api.undoImageEdit(gameId, editingImagePath);
+      if (result.ok) {
+        setPortraitCacheBust((prev) => ({ ...prev, [editingImagePath]: (prev[editingImagePath] ?? 0) + 1 }));
+      } else {
+        setImageEditError(result.error);
+      }
+    } catch (error) {
+      setImageEditError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setImageEditGenerating(false);
+    }
+  }
+
   // Genera una expresión emocional (vocabulario fijo, ver shared/emotions.ts)
   // usando SIEMPRE el retrato por defecto del personaje como referencia
   // visual (/images/edits) — así la cara se mantiene reconocible entre
@@ -2094,6 +2116,15 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                       className="rounded border border-sky-400/40 px-3 py-1.5 text-[10px] tracking-widest text-sky-300 uppercase transition-colors hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {imageEditGenerating ? 'Aplicando...' : 'Aplicar cambio'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void undoLastImageEdit()}
+                      disabled={imageEditGenerating}
+                      title="Volver a como estaba antes del último cambio aplicado a esta imagen"
+                      className="rounded border border-graphite-700 px-3 py-1.5 text-[10px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Deshacer
                     </button>
                     <button
                       type="button"
