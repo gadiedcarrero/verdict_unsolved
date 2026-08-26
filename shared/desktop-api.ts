@@ -103,8 +103,15 @@ export type DesktopApi = {
    * del juego (fondo de escena, retrato, lo que sea) — ej. "esa foto de la
    * pared se ve realista, no debe ser" o "hay un personaje duplicado, sacá
    * uno". Redibuja partiendo de la imagen actual en `relativePath` y la
-   * reescribe en el mismo lugar. */
-  editImage: (gameId: string, relativePath: string, instruction: string) => Promise<ImageEditResult>;
+   * reescribe en el mismo lugar. `referenceImages`: imágenes sueltas
+   * subidas por el usuario desde su computadora (no assets del juego) para
+   * guiar el cambio — "usá esta pose", "el estilo de esta referencia". */
+  editImage: (
+    gameId: string,
+    relativePath: string,
+    instruction: string,
+    referenceImages: Uint8Array[],
+  ) => Promise<ImageEditResult>;
   /** Lista las voces disponibles en la cuenta de ElevenLabs (premade +
    * propias) — usa la key ya guardada en Integraciones IA. No es por juego:
    * la cuenta de ElevenLabs es una sola para toda la plataforma. */

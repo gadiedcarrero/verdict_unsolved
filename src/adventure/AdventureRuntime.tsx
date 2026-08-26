@@ -239,6 +239,14 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const [imageEditPrompt, setImageEditPrompt] = useState('');
   const [imageEditGenerating, setImageEditGenerating] = useState(false);
   const [imageEditError, setImageEditError] = useState<string | null>(null);
+  // Imágenes sueltas subidas desde la computadora del usuario (no assets
+  // del juego) para guiar la corrección puntual — "usá esta pose", "el
+  // estilo de esta referencia" — se mandan junto con la instrucción, no
+  // reemplazan a la imagen que se está editando.
+  const [imageEditReferences, setImageEditReferences] = useState<
+    { name: string; bytes: Uint8Array; previewUrl: string }[]
+  >([]);
+  const imageEditReferenceInputRef = useRef<HTMLInputElement>(null);
 
   const [editedSiteSettings, setEditedSiteSettings] = useState<SiteSettings | null>(null);
   const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
@@ -1288,6 +1296,32 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     }
   }
 
+  async function addImageEditReferences(files: FileList): Promise<void> {
+    const added = await Promise.all(
+      Array.from(files).map(async (file) => ({
+        name: file.name,
+        bytes: new Uint8Array(await file.arrayBuffer()),
+        previewUrl: URL.createObjectURL(file),
+      })),
+    );
+    setImageEditReferences((prev) => [...prev, ...added]);
+  }
+
+  function removeImageEditReference(index: number): void {
+    setImageEditReferences((prev) => {
+      const removed = prev[index];
+      if (removed) URL.revokeObjectURL(removed.previewUrl);
+      return prev.filter((_, i) => i !== index);
+    });
+  }
+
+  function clearImageEditReferences(): void {
+    setImageEditReferences((prev) => {
+      for (const ref of prev) URL.revokeObjectURL(ref.previewUrl);
+      return [];
+    });
+  }
+
   // Corrección puntual en texto libre sobre la imagen abierta en el panel
   // de edición (ver editingImagePath) — reescribe el mismo archivo. No
   // limpia editingImagePath al terminar: el panel se queda abierto con el
@@ -1298,10 +1332,16 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setImageEditGenerating(true);
     setImageEditError(null);
     try {
-      const result = await window.api.editImage(gameId, editingImagePath, imageEditPrompt.trim());
+      const result = await window.api.editImage(
+        gameId,
+        editingImagePath,
+        imageEditPrompt.trim(),
+        imageEditReferences.map((r) => r.bytes),
+      );
       if (result.ok) {
         setPortraitCacheBust((prev) => ({ ...prev, [editingImagePath]: (prev[editingImagePath] ?? 0) + 1 }));
         setImageEditPrompt('');
+        clearImageEditReferences();
       } else {
         setImageEditError(result.error);
       }
@@ -1953,6 +1993,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                       setEditingImagePath(null);
                       setImageEditPrompt('');
                       setImageEditError(null);
+                      clearImageEditReferences();
                     }}
                     className="rounded border border-graphite-700 px-2 py-1 text-[9px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
                   >
@@ -1979,6 +2020,27 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                     placeholder='Qué cambiar de esta imagen (ej. "esa foto de la pared se ve realista, redibujala en el mismo estilo ilustrado que el resto")...'
                     className="w-full rounded border border-graphite-700 bg-graphite-900 px-2 py-1.5 text-[11px] text-graphite-100"
                   />
+                  {imageEditReferences.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {imageEditReferences.map((ref, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={ref.previewUrl}
+                            alt={ref.name}
+                            title={ref.name}
+                            className="h-12 w-12 rounded border border-graphite-700 object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImageEditReference(index)}
+                            className="absolute -top-1 -right-1 rounded-full bg-graphite-950 px-1 text-[9px] text-graphite-300 hover:text-amber-accent"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div className="mt-2 flex items-center gap-2">
                     <button
                       type="button"
@@ -1988,6 +2050,24 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                     >
                       {imageEditGenerating ? 'Aplicando...' : 'Aplicar cambio'}
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => imageEditReferenceInputRef.current?.click()}
+                      className="rounded border border-graphite-700 px-3 py-1.5 text-[10px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
+                    >
+                      + Referencia
+                    </button>
+                    <input
+                      ref={imageEditReferenceInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(event) => {
+                        if (event.target.files) void addImageEditReferences(event.target.files);
+                        event.target.value = '';
+                      }}
+                      className="hidden"
+                    />
                     {imageEditError && <p className="text-[10px] text-red-300">{imageEditError}</p>}
                   </div>
                 </div>
