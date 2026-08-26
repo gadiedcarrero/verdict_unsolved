@@ -2,6 +2,7 @@ import { useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { translate } from '../../i18n/translate';
 import type {
   Character,
+  CinematicTransition,
   DialogueNode,
   FontFamily,
   HotspotShape,
@@ -92,6 +93,7 @@ function SceneSwitcher({
               <option value="standard">Estándar (point-and-click)</option>
               <option value="intro">Intro (secuencia de fondos por tiempo)</option>
               <option value="menu">Menú (fondo con botones)</option>
+              <option value="cinematica">Cinemática (secuencia con texto)</option>
             </select>
           </label>
           <div className="flex gap-1">
@@ -125,6 +127,13 @@ function SceneSwitcher({
   );
 }
 
+/** "none" = escena estándar, sin campos extra por fondo (duración, color de
+ * fondo, etc. no aplican fuera de "intro"/"cinematica"). "intro" = duración +
+ * color + ancho, para logos/splash. "cinematica" = duración + texto
+ * acompañante del panel, sin color/ancho (esos son para logos que no
+ * ocupan toda la pantalla, no aplica acá). */
+type BackgroundFieldsVariant = 'none' | 'intro' | 'cinematica';
+
 function BackgroundThumb({
   gameId,
   assetPath,
@@ -132,13 +141,15 @@ function BackgroundThumb({
   durationMs,
   backgroundColor,
   imageWidthPercent,
-  showIntroFields,
+  caption,
+  fieldsVariant,
   cacheBust,
   isEditing,
   onRemove,
   onDurationChange,
   onBackgroundColorChange,
   onImageWidthChange,
+  onCaptionChange,
   onEditWithAi,
 }: {
   gameId: string;
@@ -147,7 +158,8 @@ function BackgroundThumb({
   durationMs: number | undefined;
   backgroundColor: string | undefined;
   imageWidthPercent: number | undefined;
-  showIntroFields: boolean;
+  caption: string | undefined;
+  fieldsVariant: BackgroundFieldsVariant;
   /** Se suma a la URL para forzar recarga después de editar esta imagen con
    * IA (ver editingBackgroundPath en AdventureRuntime.tsx) — el path no
    * cambia, así que sin esto el navegador seguiría mostrando la versión
@@ -158,6 +170,7 @@ function BackgroundThumb({
   onDurationChange: (durationMs: number) => void;
   onBackgroundColorChange: (color: string | undefined) => void;
   onImageWidthChange: (widthPercent: number | undefined) => void;
+  onCaptionChange: (caption: string) => void;
   onEditWithAi: () => void;
 }): JSX.Element {
   const [failed, setFailed] = useState(false);
@@ -200,7 +213,7 @@ function BackgroundThumb({
           ✕
         </button>
       </div>
-      {showIntroFields && (
+      {fieldsVariant !== 'none' && (
         <div className="mt-1 flex flex-col gap-1">
           <label className="flex items-center gap-1">
             <input
@@ -213,38 +226,51 @@ function BackgroundThumb({
             />
             <span className="text-[8px] text-graphite-500">ms</span>
           </label>
-          <label className="flex items-center gap-1">
-            <input
-              type="color"
-              value={backgroundColor ?? '#0b0f14'}
-              onChange={(event) => onBackgroundColorChange(event.target.value)}
-              className="h-4 w-6 cursor-pointer rounded border border-graphite-700 bg-graphite-900"
+          {fieldsVariant === 'intro' && (
+            <>
+              <label className="flex items-center gap-1">
+                <input
+                  type="color"
+                  value={backgroundColor ?? '#0b0f14'}
+                  onChange={(event) => onBackgroundColorChange(event.target.value)}
+                  className="h-4 w-6 cursor-pointer rounded border border-graphite-700 bg-graphite-900"
+                />
+                <span className="text-[8px] text-graphite-500">fondo</span>
+                {backgroundColor && (
+                  <button
+                    type="button"
+                    onClick={() => onBackgroundColorChange(undefined)}
+                    className="text-[8px] text-graphite-500 hover:text-amber-accent"
+                  >
+                    ✕
+                  </button>
+                )}
+              </label>
+              <label className="flex items-center gap-1">
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  placeholder="100"
+                  value={imageWidthPercent ?? ''}
+                  onChange={(event) =>
+                    onImageWidthChange(event.target.value === '' ? undefined : Number(event.target.value))
+                  }
+                  className="w-14 rounded border border-graphite-700 bg-graphite-900 px-1 py-0.5 text-[9px] text-graphite-100"
+                />
+                <span className="text-[8px] text-graphite-500">% tamaño</span>
+              </label>
+            </>
+          )}
+          {fieldsVariant === 'cinematica' && (
+            <textarea
+              value={caption ?? ''}
+              onChange={(event) => onCaptionChange(event.target.value)}
+              rows={3}
+              placeholder="Texto de este panel..."
+              className="w-full resize-none rounded border border-graphite-700 bg-graphite-900 px-1 py-0.5 text-[9px] text-graphite-100"
             />
-            <span className="text-[8px] text-graphite-500">fondo</span>
-            {backgroundColor && (
-              <button
-                type="button"
-                onClick={() => onBackgroundColorChange(undefined)}
-                className="text-[8px] text-graphite-500 hover:text-amber-accent"
-              >
-                ✕
-              </button>
-            )}
-          </label>
-          <label className="flex items-center gap-1">
-            <input
-              type="number"
-              min={1}
-              max={100}
-              placeholder="100"
-              value={imageWidthPercent ?? ''}
-              onChange={(event) =>
-                onImageWidthChange(event.target.value === '' ? undefined : Number(event.target.value))
-              }
-              className="w-14 rounded border border-graphite-700 bg-graphite-900 px-1 py-0.5 text-[9px] text-graphite-100"
-            />
-            <span className="text-[8px] text-graphite-500">% tamaño</span>
-          </label>
+          )}
         </div>
       )}
     </div>
@@ -262,6 +288,7 @@ function BackgroundsSection({
   onDurationChange,
   onBackgroundColorChange,
   onImageWidthChange,
+  onCaptionChange,
   onEditBackgroundWithAi,
 }: {
   gameId: string;
@@ -274,10 +301,12 @@ function BackgroundsSection({
   onDurationChange: (bgId: string, durationMs: number) => void;
   onBackgroundColorChange: (bgId: string, color: string | undefined) => void;
   onImageWidthChange: (bgId: string, widthPercent: number | undefined) => void;
+  onCaptionChange: (bgId: string, caption: string) => void;
   onEditBackgroundWithAi: (assetPath: string) => void;
 }): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const isIntro = scene.kind === 'intro';
+  const fieldsVariant: BackgroundFieldsVariant =
+    scene.kind === 'intro' ? 'intro' : scene.kind === 'cinematica' ? 'cinematica' : 'none';
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
@@ -289,9 +318,11 @@ function BackgroundsSection({
     <div className="mb-3 border-b border-graphite-800 pb-3">
       <p className="mb-2 text-[10px] font-semibold tracking-widest text-graphite-300 uppercase">Fondos</p>
       <p className="mb-2 text-[9px] text-graphite-500">
-        {isIntro
+        {fieldsVariant === 'intro'
           ? 'Se muestran en este orden, cada uno durante lo que diga su duración, y después pasa solo al siguiente. Para un logo: dejale un % de tamaño y un color de fondo en vez de que ocupe toda la pantalla.'
-          : 'El primero (BG 1) es el que se ve por defecto. Vincular cada fondo a un objeto/estado se hace más adelante.'}
+          : fieldsVariant === 'cinematica'
+            ? 'Cada panel se muestra con su texto durante lo que diga su duración, y pasa solo al siguiente.'
+            : 'El primero (BG 1) es el que se ve por defecto. Vincular cada fondo a un objeto/estado se hace más adelante.'}
       </p>
       <div className="mb-2 flex flex-wrap gap-2">
         {scene.backgrounds.map((bg, index) => (
@@ -303,13 +334,15 @@ function BackgroundsSection({
             durationMs={bg.durationMs}
             backgroundColor={bg.backgroundColor}
             imageWidthPercent={bg.imageWidthPercent}
-            showIntroFields={isIntro}
+            caption={bg.caption}
+            fieldsVariant={fieldsVariant}
             cacheBust={backgroundCacheBust[bg.assetPath]}
             isEditing={editingBackgroundPath === bg.assetPath}
             onRemove={() => onRemoveBackground(bg.id)}
             onDurationChange={(durationMs) => onDurationChange(bg.id, durationMs)}
             onBackgroundColorChange={(color) => onBackgroundColorChange(bg.id, color)}
             onImageWidthChange={(widthPercent) => onImageWidthChange(bg.id, widthPercent)}
+            onCaptionChange={(caption) => onCaptionChange(bg.id, caption)}
             onEditWithAi={() => onEditBackgroundWithAi(bg.assetPath)}
           />
         ))}
@@ -357,6 +390,73 @@ function IntroSettings({
         <select
           value={targetSceneId}
           onChange={(event) => onChangeIntroCompleteTarget(event.target.value)}
+          className={inputClassName}
+        >
+          <option value="">(sin definir)</option>
+          {sceneOptions
+            .filter((option) => option.id !== scene.id)
+            .map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.id}
+              </option>
+            ))}
+        </select>
+      </label>
+    </div>
+  );
+}
+
+const CINEMATIC_TRANSITION_LABEL: Record<CinematicTransition, string> = {
+  fade: 'Fade (desvanecido)',
+  comic: 'Comic (viñetas) — pendiente de definir',
+};
+
+function CinematicSettings({
+  scene,
+  sceneOptions,
+  onChangeIntroSkippable,
+  onChangeCinematicTransition,
+  onChangeCinematicCompleteTarget,
+}: {
+  scene: Scene;
+  sceneOptions: { id: string; act: number }[];
+  onChangeIntroSkippable: (skippable: boolean) => void;
+  onChangeCinematicTransition: (transition: CinematicTransition) => void;
+  onChangeCinematicCompleteTarget: (sceneId: string) => void;
+}): JSX.Element {
+  const targetSceneId =
+    scene.onCinematicComplete?.find((action) => action.type === 'transitionTo')?.sceneId ?? '';
+
+  return (
+    <div className="mb-3 border-b border-graphite-800 pb-3">
+      <p className="mb-2 text-[10px] font-semibold tracking-widest text-graphite-300 uppercase">Cinemática</p>
+      <label className="mb-2 flex items-center gap-1 text-[9px] text-graphite-400">
+        <input
+          type="checkbox"
+          checked={scene.introSkippable}
+          onChange={(event) => onChangeIntroSkippable(event.target.checked)}
+        />
+        Mostrar botón &quot;Saltar&quot;
+      </label>
+      <label className="mb-2 flex flex-col">
+        <span className="text-[9px] text-graphite-500 uppercase">Tipo de transición entre paneles</span>
+        <select
+          value={scene.cinematicTransition}
+          onChange={(event) => onChangeCinematicTransition(event.target.value as CinematicTransition)}
+          className={inputClassName}
+        >
+          {(Object.keys(CINEMATIC_TRANSITION_LABEL) as CinematicTransition[]).map((transition) => (
+            <option key={transition} value={transition}>
+              {CINEMATIC_TRANSITION_LABEL[transition]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="flex flex-col">
+        <span className="text-[9px] text-graphite-500 uppercase">Al terminar, ir a</span>
+        <select
+          value={targetSceneId}
+          onChange={(event) => onChangeCinematicCompleteTarget(event.target.value)}
           className={inputClassName}
         >
           <option value="">(sin definir)</option>
@@ -1462,12 +1562,15 @@ export function SceneEditorPanel({
   onBackgroundDurationChange,
   onBackgroundColorChange,
   onBackgroundImageWidthChange,
+  onBackgroundCaptionChange,
   backgroundCacheBust,
   editingBackgroundPath,
   onEditBackgroundWithAi,
   onChangeKind,
   onChangeIntroSkippable,
   onChangeIntroCompleteTarget,
+  onChangeCinematicTransition,
+  onChangeCinematicCompleteTarget,
   onChangeMenuAppearance,
   onSetMenuTitleEnabled,
   onMenuTitleTextChange,
@@ -1511,6 +1614,7 @@ export function SceneEditorPanel({
   onBackgroundDurationChange: (bgId: string, durationMs: number) => void;
   onBackgroundColorChange: (bgId: string, color: string | undefined) => void;
   onBackgroundImageWidthChange: (bgId: string, widthPercent: number | undefined) => void;
+  onBackgroundCaptionChange: (bgId: string, caption: string) => void;
   /** Clave = assetPath del fondo → contador de cache-bust, ver
    * editingImagePath/editImage en AdventureRuntime.tsx. */
   backgroundCacheBust: Record<string, number>;
@@ -1520,6 +1624,8 @@ export function SceneEditorPanel({
   onChangeKind: (kind: SceneKind) => void;
   onChangeIntroSkippable: (skippable: boolean) => void;
   onChangeIntroCompleteTarget: (sceneId: string) => void;
+  onChangeCinematicTransition: (transition: CinematicTransition) => void;
+  onChangeCinematicCompleteTarget: (sceneId: string) => void;
   onChangeMenuAppearance: (patch: Partial<MenuAppearance>) => void;
   onSetMenuTitleEnabled: (enabled: boolean) => void;
   onMenuTitleTextChange: (labelKey: string, text: string) => void;
@@ -1575,6 +1681,7 @@ export function SceneEditorPanel({
               <option value="standard">Estándar (point-and-click)</option>
               <option value="intro">Intro (secuencia de fondos por tiempo)</option>
               <option value="menu">Menú (fondo con botones)</option>
+              <option value="cinematica">Cinemática (secuencia con texto)</option>
             </select>
           </label>
 
@@ -1587,6 +1694,7 @@ export function SceneEditorPanel({
             onDurationChange={onBackgroundDurationChange}
             onBackgroundColorChange={onBackgroundColorChange}
             onImageWidthChange={onBackgroundImageWidthChange}
+            onCaptionChange={onBackgroundCaptionChange}
             backgroundCacheBust={backgroundCacheBust}
             editingBackgroundPath={editingBackgroundPath}
             onEditBackgroundWithAi={onEditBackgroundWithAi}
@@ -1598,6 +1706,14 @@ export function SceneEditorPanel({
               sceneOptions={sceneOptions}
               onChangeIntroSkippable={onChangeIntroSkippable}
               onChangeIntroCompleteTarget={onChangeIntroCompleteTarget}
+            />
+          ) : scene.kind === 'cinematica' ? (
+            <CinematicSettings
+              scene={scene}
+              sceneOptions={sceneOptions}
+              onChangeIntroSkippable={onChangeIntroSkippable}
+              onChangeCinematicTransition={onChangeCinematicTransition}
+              onChangeCinematicCompleteTarget={onChangeCinematicCompleteTarget}
             />
           ) : scene.kind === 'menu' ? (
             <MenuSettings

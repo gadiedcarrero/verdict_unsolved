@@ -17,6 +17,7 @@ import { slugify, uniqueId } from './editor/slug';
 import { getGameProject } from '../game-engine/scene-engine/gameProjects';
 import type {
   Character,
+  CinematicTransition,
   DialogueNode,
   Hotspot,
   HotspotShape,
@@ -35,6 +36,7 @@ import { useSaveStore } from '../game-engine/save-system/save.store';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
 import { DialogueOverlay } from './DialogueOverlay';
 import { InterfaceHost } from './interfaces/InterfaceHost';
+import { CinematicScene } from './CinematicScene';
 import { IntroScene } from './IntroScene';
 import { MENU_BUTTON_ACTION_CONTINUE, MENU_BUTTON_ACTION_QUIT } from './menuButtonActions';
 import { MenuScene } from './MenuScene';
@@ -965,6 +967,34 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
   }
 
+  // "cinematica": secuencia de paneles (fondo + texto) por tiempo, sin
+  // capas/hotspots — ver CinematicScene.tsx. Mismo patrón que "intro"
+  // arriba, con su propio campo de destino (onCinematicComplete) para no
+  // mezclar el "al terminar, ir a" de una cinemática con el de un intro.
+  function updateBackgroundCaption(bgId: string, caption: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      backgrounds: base.backgrounds.map((bg) => (bg.id === bgId ? { ...bg, caption } : bg)),
+    });
+  }
+
+  function updateCinematicTransition(cinematicTransition: CinematicTransition): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({ ...base, cinematicTransition });
+  }
+
+  function updateCinematicCompleteTarget(sceneId: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      onCinematicComplete: sceneId ? [{ type: 'transitionTo', sceneId, fade: 'fade' }] : [],
+    });
+  }
+
   // "menu": fondo + botones, sin capas/hotspots — ver MenuScene.tsx.
   function updateMenuAppearance(patch: Partial<MenuAppearance>): void {
     const base = editedScene ?? baseScene;
@@ -1045,6 +1075,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       hotspots: [],
       dialogueNodes: {},
       introSkippable: true,
+      cinematicTransition: 'fade',
       menuTitle: null,
       menuButtons: [],
       menuAppearance: DEFAULT_MENU_APPEARANCE,
@@ -1851,9 +1882,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                     setImageEditError(null);
                   }}
                   onBackgroundImageWidthChange={updateBackgroundImageWidth}
+                  onBackgroundCaptionChange={updateBackgroundCaption}
                   onChangeKind={updateSceneKind}
                   onChangeIntroSkippable={updateIntroSkippable}
                   onChangeIntroCompleteTarget={updateIntroCompleteTarget}
+                  onChangeCinematicTransition={updateCinematicTransition}
+                  onChangeCinematicCompleteTarget={updateCinematicCompleteTarget}
                   onChangeMenuAppearance={updateMenuAppearance}
                   onSetMenuTitleEnabled={setMenuTitleEnabled}
                   onMenuTitleTextChange={setLabelText}
@@ -2172,6 +2206,13 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         </div>
       ) : displayScene?.kind === 'intro' ? (
         <IntroScene key={displayScene.id} gameId={gameId} scene={displayScene} siteSettings={displaySiteSettings} />
+      ) : displayScene?.kind === 'cinematica' ? (
+        <CinematicScene
+          key={displayScene.id}
+          gameId={gameId}
+          scene={displayScene}
+          siteSettings={displaySiteSettings}
+        />
       ) : displayScene?.kind === 'menu' ? (
         <MenuScene
           key={displayScene.id}

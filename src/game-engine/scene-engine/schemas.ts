@@ -238,9 +238,24 @@ export const SceneBackgroundSchema = z.object({
    * sin recortar (útil para logos). Si no está, la imagen cubre toda la
    * pantalla como un fondo de escena normal. */
   imageWidthPercent: z.number().optional(),
+  /** Solo `kind: "cinematica"`: texto que acompaña a este panel puntual
+   * mientras se muestra — literal, no clave de traducción (mismo criterio
+   * que DialogueNode.line/DialogueChoice.text: esto se escribe a mano por
+   * escena, no se arma con el compositor de acciones). Más adelante puede
+   * sumarse un audio narrado en vez de/además de esto (ver memoria
+   * project_dialogue_audio_elevenlabs) — el campo queda aparte a propósito
+   * para no tener que migrar nada cuando eso se construya. */
+  caption: z.string().optional(),
 });
 
-export const SceneKindSchema = z.enum(['standard', 'intro', 'menu']);
+export const SceneKindSchema = z.enum(['standard', 'intro', 'menu', 'cinematica']);
+
+/** Solo `kind: "cinematica"`. "fade" ya está implementado (cross-fade
+ * simple entre paneles). "comic" queda como opción seleccionable pero sin
+ * comportamiento propio todavía (usa el mismo fade por ahora) — el
+ * usuario todavía tiene que definir cómo se ve esa transición tipo viñeta
+ * de cómic antes de construirla. */
+export const CinematicTransitionSchema = z.enum(['fade', 'comic']);
 
 export const MenuButtonSchema = z.object({
   /** Auto-generado al crearlo en el editor. */
@@ -280,7 +295,11 @@ export const SceneSchema = z.object({
   /** "intro" es una escena especial de solo fondos (logos, splash) que pasa
    * de uno a otro por tiempo y termina disparando `onIntroComplete` — sin
    * capas, hotspots ni diálogo. "menu" es un fondo con botones (título,
-   * menú de inicio). Cualquier otra escena es "standard" (point-and-click). */
+   * menú de inicio). "cinematica" es una secuencia de paneles (fondo +
+   * texto acompañante) que se reproduce sola y dispara
+   * `onCinematicComplete` al terminar — para momentos tipo "5 escenas
+   * pasando una detrás de otra" que no son ni un cuarto explorable ni un
+   * splash mudo. Cualquier otra escena es "standard" (point-and-click). */
   kind: SceneKindSchema.default('standard'),
   /** Una escena puede tener varios fondos (luz prendida/apagada, flashes de
    * relámpago, etc.) — el primero de la lista es el que se ve por defecto.
@@ -299,12 +318,23 @@ export const SceneSchema = z.object({
   dialogueNodes: z.record(z.string(), DialogueNodeSchema).default({}),
   /** Acciones que corren automáticamente al entrar a la escena (p. ej. abrir un diálogo). */
   onEnter: z.array(SceneActionSchema).optional(),
-  /** Solo `kind: "intro"`: si se puede saltar la secuencia con un botón
-   * "Comenzar" en vez de esperar a que termine sola. */
+  /** `kind: "intro"` o `"cinematica"`: si se puede saltar la secuencia con
+   * un botón en vez de esperar a que termine sola. El nombre quedó de
+   * cuando solo existía "intro" — se reutiliza tal cual para "cinematica"
+   * en vez de duplicar un campo idéntico. */
   introSkippable: z.boolean().default(true),
   /** Solo `kind: "intro"`: acciones al terminar la secuencia (por tiempo) o
    * al saltarla con el botón — típicamente un `transitionTo` al menú. */
   onIntroComplete: z.array(SceneActionSchema).optional(),
+  /** Solo `kind: "cinematica"`: qué tipo de transición usar entre paneles
+   * — ver CinematicTransitionSchema. */
+  cinematicTransition: CinematicTransitionSchema.default('fade'),
+  /** Solo `kind: "cinematica"`: acciones al terminar la secuencia (por
+   * tiempo) o al saltarla — típicamente un `transitionTo` a la escena que
+   * sigue narrativamente. Campo aparte de `onIntroComplete` a propósito,
+   * aunque el patrón sea el mismo: nombrarlo "intro" en una cinemática
+   * sería confuso al leer el JSON/el editor. */
+  onCinematicComplete: z.array(SceneActionSchema).optional(),
   /** Solo `kind: "menu"`: título mostrado arriba de los botones, alineado
    * con `menuAppearance.position`. `null`/ausente = sin título. */
   menuTitle: MenuTitleSchema.nullable().default(null),
@@ -455,6 +485,7 @@ export type CursorSettings = z.infer<typeof CursorSettingsSchema>;
 export type ActionMenuSettings = z.infer<typeof ActionMenuSettingsSchema>;
 export type SceneBackground = z.infer<typeof SceneBackgroundSchema>;
 export type SceneKind = z.infer<typeof SceneKindSchema>;
+export type CinematicTransition = z.infer<typeof CinematicTransitionSchema>;
 export type MenuButton = z.infer<typeof MenuButtonSchema>;
 export type MenuPosition = z.infer<typeof MenuPositionSchema>;
 export type MenuButtonStyle = z.infer<typeof MenuButtonStyleSchema>;
