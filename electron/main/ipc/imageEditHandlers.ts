@@ -41,6 +41,31 @@ function toDataUri(bytes: Buffer): string {
   return `data:${sniffImageMimeType(bytes)};base64,${bytes.toString('base64')}`;
 }
 
+const FETCH_RETRY_ATTEMPTS = 3;
+
+// "fetch failed" (undici tirando la promesa en vez de una respuesta HTTP)
+// aparece de vez en cuando con requests grandes — este handler manda la
+// imagen actual MÁS todas las de referencia en un solo POST, que con 4-5
+// referencias puede pasar los 10MB. Reintentar acá es genuinamente
+// necesario: a diferencia de un !response.ok (la API respondió que no),
+// esto es la conexión cortándose antes de llegar, y suele funcionar al
+// segundo intento. No reintenta sobre respuestas HTTP de error — esas ya
+// son una respuesta real de la API, reintentar no cambia nada.
+async function fetchWithRetry(url: string, init?: RequestInit): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= FETCH_RETRY_ATTEMPTS; attempt++) {
+    try {
+      return await fetch(url, init);
+    } catch (error) {
+      lastError = error;
+      if (attempt < FETCH_RETRY_ATTEMPTS) {
+        await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
+      }
+    }
+  }
+  throw lastError;
+}
+
 // Ningún proveedor de imagen genera perfecto a la primera (ver
 // characterArtHandlers.ts — orientación, personajes duplicados, etc.) — en
 // vez de que cada corrección puntual necesite que alguien escriba un script
@@ -102,7 +127,7 @@ export function registerImageEditHandlers(): void {
               "above (e.g. a pose, a style, a detail to copy) — they are NOT part of the scene and shouldn't be " +
               'inserted into it wholesale, use them only the way the instruction describes.'
             : '');
-        const response = await fetch('https://fal.run/fal-ai/nano-banana/edit', {
+        const response = await fetchWithRetry('https://fal.run/fal-ai/nano-banana/edit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Key ${config.falApiKey}` },
           body: JSON.stringify({ prompt, image_urls: [toDataUri(currentBytes), ...referenceDataUris] }),
@@ -115,7 +140,7 @@ export function registerImageEditHandlers(): void {
         if (!url) {
           return { ok: false, error: 'fal.ai (Nano Banana) no devolvió una imagen.' };
         }
-        const imageResponse = await fetch(url);
+        const imageResponse = await fetchWithRetry(url);
         if (!imageResponse.ok) {
           return { ok: false, error: `No se pudo descargar el resultado (${imageResponse.status}).` };
         }
@@ -126,7 +151,12 @@ export function registerImageEditHandlers(): void {
         await writeFile(filePath, bytes);
         return { ok: true };
       } catch (error) {
-        return { ok: false, error: error instanceof Error ? error.message : String(error) };
+        const message = error instanceof Error ? error.message : String(error);
+        const hint =
+          message.includes('fetch failed')
+            ? ' — probablemente la conexión se cortó subiendo la imagen (más pesado con varias referencias adjuntas). Probá de nuevo.'
+            : '';
+        return { ok: false, error: `${message}${hint}` };
       }
     },
   );
