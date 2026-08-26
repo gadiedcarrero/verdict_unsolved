@@ -1,4 +1,12 @@
-import { useEffect, useRef, useState, type JSX, type MouseEvent as ReactMouseEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ClipboardEvent as ReactClipboardEvent,
+  type DragEvent as ReactDragEvent,
+  type JSX,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import { CharacterEditorPanel } from './editor/CharacterEditorPanel';
 import { gameAssetUrl } from './gameAssetUrl';
 import type { EditableRect } from './editor/EditableBox';
@@ -247,6 +255,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     { name: string; bytes: Uint8Array; previewUrl: string }[]
   >([]);
   const imageEditReferenceInputRef = useRef<HTMLInputElement>(null);
+  const [draggingImageReference, setDraggingImageReference] = useState(false);
 
   const [editedSiteSettings, setEditedSiteSettings] = useState<SiteSettings | null>(null);
   const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
@@ -1296,15 +1305,36 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     }
   }
 
-  async function addImageEditReferences(files: FileList): Promise<void> {
+  // Acepta File[] en vez de FileList a propósito — el selector de archivos
+  // da un FileList, pero arrastrar-y-soltar (event.dataTransfer.files) y
+  // pegar del portapapeles (los items de tipo imagen de un
+  // ClipboardEvent, ver onPasteImageReference) dan array-likes distintos;
+  // así los tres caminos llegan acá ya normalizados.
+  async function addImageEditReferences(files: File[]): Promise<void> {
+    const images = files.filter((file) => file.type.startsWith('image/'));
     const added = await Promise.all(
-      Array.from(files).map(async (file) => ({
-        name: file.name,
+      images.map(async (file) => ({
+        name: file.name || 'imagen pegada',
         bytes: new Uint8Array(await file.arrayBuffer()),
         previewUrl: URL.createObjectURL(file),
       })),
     );
     setImageEditReferences((prev) => [...prev, ...added]);
+  }
+
+  function onPasteImageReference(event: ReactClipboardEvent): void {
+    const files = Array.from(event.clipboardData.items)
+      .filter((item) => item.kind === 'file' && item.type.startsWith('image/'))
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => file !== null);
+    if (files.length === 0) return;
+    event.preventDefault();
+    void addImageEditReferences(files);
+  }
+
+  function onDropImageReference(event: ReactDragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer.files.length > 0) void addImageEditReferences(Array.from(event.dataTransfer.files));
   }
 
   function removeImageEditReference(index: number): void {
@@ -1982,10 +2012,24 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 )}
               </div>
             ) : editorTab === 'scene' && editingImagePath ? (
-              <div className="flex h-full w-full flex-col bg-graphite-950 p-6">
+              <div
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setDraggingImageReference(true);
+                }}
+                onDragLeave={() => setDraggingImageReference(false)}
+                onDrop={(event) => {
+                  setDraggingImageReference(false);
+                  onDropImageReference(event);
+                }}
+                className={`flex h-full w-full flex-col bg-graphite-950 p-6 ${
+                  draggingImageReference ? 'ring-2 ring-inset ring-amber-accent' : ''
+                }`}
+              >
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-[10px] tracking-widest text-graphite-500 uppercase">
-                    Editando {editingImagePath}
+                    Editando {editingImagePath} — arrastrá una imagen de referencia acá, o pegala (Cmd/Ctrl+V) en el
+                    cuadro de texto
                   </p>
                   <button
                     type="button"
@@ -2016,6 +2060,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   <textarea
                     value={imageEditPrompt}
                     onChange={(event) => setImageEditPrompt(event.target.value)}
+                    onPaste={onPasteImageReference}
                     rows={2}
                     placeholder='Qué cambiar de esta imagen (ej. "esa foto de la pared se ve realista, redibujala en el mismo estilo ilustrado que el resto")...'
                     className="w-full rounded border border-graphite-700 bg-graphite-900 px-2 py-1.5 text-[11px] text-graphite-100"
@@ -2063,7 +2108,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                       accept="image/*"
                       multiple
                       onChange={(event) => {
-                        if (event.target.files) void addImageEditReferences(event.target.files);
+                        if (event.target.files) void addImageEditReferences(Array.from(event.target.files));
                         event.target.value = '';
                       }}
                       className="hidden"
