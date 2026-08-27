@@ -56,10 +56,66 @@ export type ScriptBreakdownMinigameSuggestion = {
 
 export type ScriptBreakdownReviewStatus = 'pending' | 'approved' | 'cut';
 
+/** Por qué existe este panel puntual — ayuda tanto a la revisión humana
+ * como, más adelante, al prompt de generación de imagen (una revelación
+ * pide un plano distinto que una acción). */
+export type NarrativePurpose =
+  | 'establishing'
+  | 'character_intro'
+  | 'dialogue'
+  | 'revelation'
+  | 'action'
+  | 'reaction'
+  | 'transition'
+  | 'cliffhanger';
+
+/**
+ * Un fotograma fijo de una escena "cinemática" (ver Scene.kind en
+ * schemas.ts) — la unidad real de "qué genera una imagen" dentro de una
+ * escena narrativa. Separado en estos campos (en vez de un solo bloque de
+ * imagen+texto) para que el generador de imagen tenga de dónde sacar
+ * continuidad real entre paneles — personajes presentes, ubicación,
+ * estado de la escena (luces, posiciones) — no un texto plano reinventado
+ * desde cero en cada panel. Ver conversación de diseño del usuario para
+ * las reglas de cuándo cortar un panel nuevo.
+ */
+export type ScriptBreakdownPanel = {
+  id: string;
+  /** En inglés, concreto y filmable — se manda tal cual al generador de
+   * imágenes. Nunca representa información abstracta ("sus vidas
+   * convertidas en cifras") sin traducirla a una composición visual real. */
+  imageDescription: string;
+  /** Literal, en español — el texto que se muestra debajo del panel al
+   * jugador (mismo criterio que DialogueNode.line: no es una clave de
+   * traducción). */
+  displayText: string;
+  narrativePurpose: NarrativePurpose;
+  /** Nombres de personajes visiblemente presentes en ESTE panel puntual —
+   * no todos los de la escena, solo los de este fotograma. Se resuelven a
+   * sus retratos ya generados al generar la imagen (mismo mecanismo que
+   * "Generar fondo con IA" en el editor de escenas). */
+  characters: string[];
+  location: string;
+  /** Datos libres de continuidad (iluminación, posiciones, objetos en
+   * escena) que el panel siguiente/anterior puede necesitar para verse
+   * consistente — claves libres, las define la IA según lo que aplique. */
+  continuity: Record<string, string>;
+};
+
 export type ScriptBreakdownScene = {
   id: string;
   title: string;
   summary: string;
+  /** Texto original del guion correspondiente a esta escena, tal cual —
+   * `summary` es la versión condensada para la revisión rápida; esto es lo
+   * que se usa como entrada real para generar `panels` (un resumen pierde
+   * demasiado detalle para un buen desglose panel por panel). Vacío si la
+   * escena se generó antes de que este campo existiera. */
+  sourceText: string;
+  /** Desglose en paneles cinemáticos de `sourceText` — vacío hasta que se
+   * corre ese paso (ver generateScenePanels en scriptBreakdownHandlers.ts).
+   * No se genera ninguna imagen todavía acá, es puro texto revisable. */
+  panels: ScriptBreakdownPanel[];
   /** Línea corta (típicamente de MIRROR, en tono de bloque de terminal —
    * ver `DialogueNode.terminalBlock` en schemas.ts) que conecta el final de
    * la escena anterior con esta: salto de tiempo, quién llegó, qué cambió.
@@ -108,6 +164,34 @@ function isScriptBreakdownObject(value: unknown): value is ScriptBreakdownObject
   );
 }
 
+const NARRATIVE_PURPOSES: NarrativePurpose[] = [
+  'establishing',
+  'character_intro',
+  'dialogue',
+  'revelation',
+  'action',
+  'reaction',
+  'transition',
+  'cliffhanger',
+];
+
+function isScriptBreakdownPanel(value: unknown): value is ScriptBreakdownPanel {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v['id'] === 'string' &&
+    typeof v['imageDescription'] === 'string' &&
+    typeof v['displayText'] === 'string' &&
+    NARRATIVE_PURPOSES.includes(v['narrativePurpose'] as NarrativePurpose) &&
+    Array.isArray(v['characters']) &&
+    v['characters'].every((c) => typeof c === 'string') &&
+    typeof v['location'] === 'string' &&
+    typeof v['continuity'] === 'object' &&
+    v['continuity'] !== null &&
+    Object.values(v['continuity'] as Record<string, unknown>).every((c) => typeof c === 'string')
+  );
+}
+
 function isScriptBreakdownMinigameSuggestion(value: unknown): value is ScriptBreakdownMinigameSuggestion {
   if (typeof value !== 'object' || value === null) return false;
   const v = value as Record<string, unknown>;
@@ -121,6 +205,9 @@ function isScriptBreakdownScene(value: unknown): value is ScriptBreakdownScene {
     typeof v['id'] === 'string' &&
     typeof v['title'] === 'string' &&
     typeof v['summary'] === 'string' &&
+    typeof v['sourceText'] === 'string' &&
+    Array.isArray(v['panels']) &&
+    v['panels'].every(isScriptBreakdownPanel) &&
     (typeof v['bridgeFromPrevious'] === 'string' || v['bridgeFromPrevious'] === null) &&
     Array.isArray(v['characterIds']) &&
     v['characterIds'].every((id) => typeof id === 'string') &&

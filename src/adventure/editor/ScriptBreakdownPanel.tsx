@@ -1,10 +1,23 @@
 import { useRef, useState, type ChangeEvent, type JSX } from 'react';
 import type {
+  NarrativePurpose,
   ScriptBreakdown,
   ScriptBreakdownCharacter,
+  ScriptBreakdownPanel as ScriptBreakdownPanelData,
   ScriptBreakdownReviewStatus,
   ScriptBreakdownScene,
 } from '../../../shared/script-breakdown';
+
+const NARRATIVE_PURPOSE_LABEL: Record<NarrativePurpose, string> = {
+  establishing: 'Establishing',
+  character_intro: 'Presentación',
+  dialogue: 'Diálogo',
+  revelation: 'Revelación',
+  action: 'Acción',
+  reaction: 'Reacción',
+  transition: 'Transición',
+  cliffhanger: 'Cliffhanger',
+};
 
 const inputClassName =
   'w-full rounded border border-graphite-700 bg-graphite-900 px-1.5 py-1 text-[10px] text-graphite-100';
@@ -38,17 +51,59 @@ function ErrorText({ message }: { message: string }): JSX.Element {
   );
 }
 
+function PanelCard({
+  panel,
+  onDisplayTextChange,
+  onImageDescriptionChange,
+}: {
+  panel: ScriptBreakdownPanelData;
+  onDisplayTextChange: (text: string) => void;
+  onImageDescriptionChange: (text: string) => void;
+}): JSX.Element {
+  return (
+    <div className="mb-1 rounded border border-graphite-800 bg-graphite-950/60 p-1.5">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="rounded border border-sky-400/40 px-1 text-[8px] tracking-widest text-sky-300 uppercase">
+          {NARRATIVE_PURPOSE_LABEL[panel.narrativePurpose]}
+        </span>
+        {panel.characters.length > 0 && (
+          <span className="truncate text-[8px] text-graphite-500">{panel.characters.join(', ')}</span>
+        )}
+      </div>
+      <textarea
+        value={panel.displayText}
+        onChange={(event) => onDisplayTextChange(event.target.value)}
+        rows={2}
+        className={`${inputClassName} mb-1`}
+        placeholder="Texto debajo del panel..."
+      />
+      <textarea
+        value={panel.imageDescription}
+        onChange={(event) => onImageDescriptionChange(event.target.value)}
+        rows={2}
+        className={`${inputClassName} text-graphite-400`}
+        placeholder="Descripción visual (en inglés, para el generador de imagen)..."
+      />
+    </div>
+  );
+}
+
 function SceneCard({
   scene,
   characters,
   onSummaryChange,
   onStatusChange,
+  onPanelDisplayTextChange,
+  onPanelImageDescriptionChange,
 }: {
   scene: ScriptBreakdownScene;
   characters: ScriptBreakdownCharacter[];
   onSummaryChange: (summary: string) => void;
   onStatusChange: (status: ScriptBreakdownReviewStatus) => void;
+  onPanelDisplayTextChange: (panelId: string, text: string) => void;
+  onPanelImageDescriptionChange: (panelId: string, text: string) => void;
 }): JSX.Element {
+  const [panelsOpen, setPanelsOpen] = useState(false);
   const sceneCharacters = scene.characterIds
     .map((id) => characters.find((c) => c.id === id)?.name ?? id)
     .join(', ');
@@ -117,9 +172,36 @@ function SceneCard({
       )}
 
       {scene.minigame && (
-        <div className="rounded border border-sky-400/40 bg-graphite-950 p-1">
+        <div className="mb-1 rounded border border-sky-400/40 bg-graphite-950 p-1">
           <p className="text-[9px] text-sky-300">Minijuego sugerido: {scene.minigame.template}</p>
           <p className="text-[9px] text-graphite-500">{scene.minigame.reason}</p>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => setPanelsOpen((v) => !v)}
+        className="w-full rounded border border-graphite-700 px-1.5 py-1 text-left text-[9px] tracking-widest text-graphite-400 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
+      >
+        {panelsOpen ? '▾' : '▸'} Paneles cinemáticos ({scene.panels.length})
+      </button>
+      {panelsOpen && (
+        <div className="mt-1">
+          {scene.panels.length === 0 ? (
+            <p className="text-[9px] text-graphite-600">
+              Sin paneles todavía — esta escena no tiene texto original guardado, o el desglose en paneles falló al
+              generar (ver aviso arriba).
+            </p>
+          ) : (
+            scene.panels.map((panel) => (
+              <PanelCard
+                key={panel.id}
+                panel={panel}
+                onDisplayTextChange={(text) => onPanelDisplayTextChange(panel.id, text)}
+                onImageDescriptionChange={(text) => onPanelImageDescriptionChange(panel.id, text)}
+              />
+            ))
+          )}
         </div>
       )}
     </div>
@@ -131,17 +213,27 @@ export function ScriptBreakdownPanel({
   generating,
   error,
   mergeNote,
+  warnings,
   onGenerate,
   onSceneSummaryChange,
   onSceneStatusChange,
+  onPanelDisplayTextChange,
+  onPanelImageDescriptionChange,
 }: {
   breakdown: ScriptBreakdown | null;
   generating: boolean;
   error: string | null;
   mergeNote: string | null;
+  /** Escenas cuyo desglose en paneles falló al analizar — no se pudo
+   * generar TODO en un solo llamado sin arriesgar calidad (ver
+   * scriptBreakdownHandlers.ts), así que una escena puntual puede fallar
+   * sin tirar abajo el análisis entero. */
+  warnings: string[];
   onGenerate: (scriptText: string) => void;
   onSceneSummaryChange: (sceneId: string, summary: string) => void;
   onSceneStatusChange: (sceneId: string, status: ScriptBreakdownReviewStatus) => void;
+  onPanelDisplayTextChange: (sceneId: string, panelId: string, text: string) => void;
+  onPanelImageDescriptionChange: (sceneId: string, panelId: string, text: string) => void;
 }): JSX.Element {
   const [scriptText, setScriptText] = useState('');
   const [loadedFileName, setLoadedFileName] = useState<string | null>(null);
@@ -170,7 +262,9 @@ export function ScriptBreakdownPanel({
     <div className="text-xs text-graphite-200">
       <p className="mb-3 text-[10px] text-graphite-400">
         Pegá el guion completo o cargá un documento (.txt, .md). La IA arma un desglose legible por escena (objetos,
-        y si corresponde, un minijuego sugerido) y revisás acá — aprobar, cortar o ajustar el resumen. Los
+        y si corresponde, un minijuego sugerido) y, dentro de cada escena, un desglose en paneles cinemáticos
+        (imagen + texto por panel — abrí &quot;Paneles cinemáticos&quot; en cada escena para verlos). Revisás todo
+        acá — aprobar/cortar escenas, ajustar texto de cada panel — sin generar ninguna imagen todavía. Los
         personajes que encuentra aparecen directo en la pestaña &quot;Personajes&quot; (con su descripción cargada,
         listos para generar retrato) — esta pestaña es solo para escenas.
       </p>
@@ -221,7 +315,11 @@ export function ScriptBreakdownPanel({
         disabled={generating || scriptText.trim().length < 20}
         className="mb-3 w-full rounded border border-amber-accent px-2 py-1.5 text-[10px] font-semibold tracking-widest text-amber-accent uppercase transition-colors hover:bg-amber-accent hover:text-graphite-950 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-amber-accent"
       >
-        {generating ? 'Generando (puede tardar un minuto)...' : breakdown ? 'Generar de nuevo' : 'Generar desglose con IA'}
+        {generating
+          ? 'Generando (escenas + paneles, puede tardar varios minutos con un guion largo)...'
+          : breakdown
+            ? 'Generar de nuevo'
+            : 'Generar desglose con IA'}
       </button>
 
       {mergeNote && (
@@ -230,6 +328,18 @@ export function ScriptBreakdownPanel({
         </p>
       )}
       {error && <ErrorText message={error} />}
+      {warnings.length > 0 && (
+        <div className="mb-3 rounded border border-amber-accent/40 bg-graphite-900/60 p-2">
+          <p className="mb-1 text-[9px] font-semibold tracking-widest text-amber-accent uppercase">
+            {warnings.length} escena{warnings.length === 1 ? '' : 's'} sin paneles (falló el desglose)
+          </p>
+          {warnings.map((warning, index) => (
+            <p key={index} className="text-[9px] text-graphite-400">
+              {warning}
+            </p>
+          ))}
+        </div>
+      )}
 
       {breakdown && (
         <>
@@ -243,6 +353,10 @@ export function ScriptBreakdownPanel({
               characters={breakdown.characters}
               onSummaryChange={(summary) => onSceneSummaryChange(scene.id, summary)}
               onStatusChange={(status) => onSceneStatusChange(scene.id, status)}
+              onPanelDisplayTextChange={(panelId, text) => onPanelDisplayTextChange(scene.id, panelId, text)}
+              onPanelImageDescriptionChange={(panelId, text) =>
+                onPanelImageDescriptionChange(scene.id, panelId, text)
+              }
             />
           ))}
         </>

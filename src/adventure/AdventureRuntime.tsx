@@ -278,6 +278,10 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const [scriptBreakdownGenerating, setScriptBreakdownGenerating] = useState(false);
   const [scriptBreakdownError, setScriptBreakdownError] = useState<string | null>(null);
   const [scriptBreakdownMergeNote, setScriptBreakdownMergeNote] = useState<string | null>(null);
+  // Escenas cuyo desglose en paneles falló (ver generateScenePanels en
+  // scriptBreakdownHandlers.ts) — no aborta el análisis entero, pero el
+  // usuario tiene que saber cuáles quedaron sin paneles para reintentar.
+  const [scriptBreakdownWarnings, setScriptBreakdownWarnings] = useState<string[]>([]);
 
   // Voces de ElevenLabs disponibles en la cuenta — se piden a mano (botón
   // "Cargar voces" en Personajes), no en cada apertura del editor, mismo
@@ -1619,9 +1623,11 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setScriptBreakdownGenerating(true);
     setScriptBreakdownError(null);
     setScriptBreakdownMergeNote(null);
+    setScriptBreakdownWarnings([]);
     try {
       const result = await window.api.generateScriptBreakdown(scriptText);
       if (result.ok) {
+        setScriptBreakdownWarnings(result.warnings);
         // Regenerar corre la IA de nuevo sobre el guion entero — el corte en
         // escenas puede cambiar, así que no alcanza con pisar el desglose
         // viejo: se matchea por título para no perder el trabajo de revisión
@@ -1659,6 +1665,30 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     persistScriptBreakdown({
       ...scriptBreakdown,
       scenes: scriptBreakdown.scenes.map((s) => (s.id === sceneId ? { ...s, reviewStatus } : s)),
+    });
+  }
+
+  function updateScriptBreakdownPanelDisplayText(sceneId: string, panelId: string, displayText: string): void {
+    if (!scriptBreakdown) return;
+    persistScriptBreakdown({
+      ...scriptBreakdown,
+      scenes: scriptBreakdown.scenes.map((s) =>
+        s.id === sceneId
+          ? { ...s, panels: s.panels.map((p) => (p.id === panelId ? { ...p, displayText } : p)) }
+          : s,
+      ),
+    });
+  }
+
+  function updateScriptBreakdownPanelImageDescription(sceneId: string, panelId: string, imageDescription: string): void {
+    if (!scriptBreakdown) return;
+    persistScriptBreakdown({
+      ...scriptBreakdown,
+      scenes: scriptBreakdown.scenes.map((s) =>
+        s.id === sceneId
+          ? { ...s, panels: s.panels.map((p) => (p.id === panelId ? { ...p, imageDescription } : p)) }
+          : s,
+      ),
     });
   }
 
@@ -2008,9 +2038,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   generating={scriptBreakdownGenerating}
                   error={scriptBreakdownError}
                   mergeNote={scriptBreakdownMergeNote}
+                  warnings={scriptBreakdownWarnings}
                   onGenerate={(scriptText) => void generateScriptBreakdown(scriptText)}
                   onSceneSummaryChange={updateScriptBreakdownSceneSummary}
                   onSceneStatusChange={updateScriptBreakdownSceneStatus}
+                  onPanelDisplayTextChange={updateScriptBreakdownPanelDisplayText}
+                  onPanelImageDescriptionChange={updateScriptBreakdownPanelImageDescription}
                 />
               )}
             </div>

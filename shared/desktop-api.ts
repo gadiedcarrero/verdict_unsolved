@@ -10,7 +10,7 @@ export type PortraitFlipResult = { ok: true } | { ok: false; error: string };
 export type ImageEditResult = { ok: true } | { ok: false; error: string };
 export type BackgroundSaveResult = { ok: true; path: string } | { ok: false; error: string };
 export type ScriptBreakdownGenerateResult =
-  | { ok: true; breakdown: ScriptBreakdown }
+  | { ok: true; breakdown: ScriptBreakdown; warnings: string[] }
   | { ok: false; error: string };
 export type ScriptBreakdownReadResult = { ok: true; breakdown: ScriptBreakdown | null } | { ok: false; error: string };
 
