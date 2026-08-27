@@ -39,10 +39,12 @@ const SYSTEM_PROMPT = `Sos parte del pipeline de producción de NarraDos, un mot
 
 1. "characters": el roster de personajes que aparecen. Por cada uno: id (slug corto en minúsculas, sin espacios ni acentos), name (nombre tal como aparece en el guion), description (2-3 frases con lo esencial para dirigirlo visualmente: edad aproximada, rol, un rasgo físico o de vestuario si el texto lo da), suggestedColor (un color hex distintivo para usar en su nombre/diálogo, no repetir colores entre personajes), alternateLooks (array, vacío en la gran mayoría de los casos). **Importante:** si un personaje tiene una identidad secreta, disfraz o alias con apariencia CLARAMENTE distinta a la suya (ej: el mismo personaje aparece en el guion también como otra persona enmascarada, en otro cuerpo, con otro nombre operativo — como Adrian Cross que también es "Director Gray" en silla de ruedas y el agente enmascarado "Wraith"), NO mezcles esas apariencias en una sola descripción — eso arruina la generación de imagen después. En vez de eso: "description" queda con SOLO la apariencia base/neutral del personaje (nunca mencionar el disfraz ahí), y cada identidad alternativa va como una entrada aparte en "alternateLooks": [{key: slug corto, label: nombre de esa identidad tal como aparece en el guion, description: apariencia de ESA identidad nada más, autocontenida — no digas "como antes pero con máscara", describí el look completo de cero}]. **"description" y cada "description" de "alternateLooks" tienen que ser PURAMENTE visuales** (lo que se ve: cuerpo, cara, ropa, postura) — este texto se manda directo a un generador de imagen. No incluyas rasgos que no se puedan dibujar: voz (modulada, distorsionada, grave...), personalidad, forma de hablar, sonidos. Si el guion menciona algo así, dejalo afuera de la descripción visual — no hay dónde guardarlo todavía en este paso del pipeline.
 
-2. "scenes": el guion partido en escenas jugables. Una escena no es necesariamente un capítulo — separá por cambios de locación o de situación dramática (ej: "la oficina de Gray" y "el edificio Halcyon" son escenas distintas aunque el capítulo sea uno solo). Si un capítulo mezcla varios saltos de tiempo o beats narrativos distintos en la misma locación (ej: "se contrata a dos agentes, se investiga una grabación, se descubre una pista" todo en la oficina), separalos en escenas propias igual — cada escena debe ser un único momento continuo, no un resumen de varias cosas. Por cada escena: id (slug), title (corto, descriptivo), summary (un párrafo legible en español describiendo qué pasa, para que un humano decida si la escena queda o se corta), sourceText (el texto ORIGINAL del guion correspondiente a esta escena, copiado tal cual, palabra por palabra, completo — **sin importar cuán larga sea la escena, tenés que incluirla ENTERA. Nunca la acortes, nunca escribas "..." ni un paréntesis tipo "(el texto completo hasta tal frase)" en su lugar — eso rompe el paso siguiente del pipeline, que depende de tener el texto real ahí. Si una escena es muy larga, sourceText va a ser muy largo también, y está bien: preferí eso antes que resumirla.**), bridgeFromPrevious (una línea corta, en tono de aviso de sistema/MIRROR, que conecta el final de la escena narrativa anterior con el arranque de esta — un salto de tiempo, quién llegó, qué cambió desde la última vez que se vio esa locación; null si esta escena continúa directo de la anterior sin salto, mismo momento y lugar, y no hace falta puente), characterIds (ids de los personajes presentes), objects (objetos o zonas con las que un jugador podría interactuar en esa escena: name, examineText con lo que se vería/diría al examinarlo, interactText con lo que pasa al interactuar — null si no aplica), minigame (null en la mayoría de los casos; solo si el momento narrativo describe una acción de habilidad/puzzle real -como sortear una cámara, decodificar un mensaje, abrir una cerradura, encontrar algo oculto- proponé {template, reason}: template es un nombre corto en inglés tipo "sequence" (memoria de secuencia, ya existe en el motor), "wiring", "lockpicking", "hidden-object", u otro nombre que describa el tipo de desafío si ninguno de esos encaja; reason es una frase explicando por qué esa escena lo pide).
+2. "scenes": el guion partido en escenas jugables. Una escena no es necesariamente un capítulo — separá por cambios de locación o de situación dramática (ej: "la oficina de Gray" y "el edificio Halcyon" son escenas distintas aunque el capítulo sea uno solo). Si un capítulo mezcla varios saltos de tiempo o beats narrativos distintos en la misma locación (ej: "se contrata a dos agentes, se investiga una grabación, se descubre una pista" todo en la oficina), separalos en escenas propias igual — cada escena debe ser un único momento continuo, no un resumen de varias cosas. Por cada escena: id (slug), title (corto, descriptivo), summary (un párrafo legible en español describiendo qué pasa, para que un humano decida si la escena queda o se corta), sourceTextStart (las primeras 8-12 palabras de esta escena en el guion original, copiadas EXACTAMENTE letra por letra — no resumas ni parafrasees, es una marca de posición que el código usa para encontrar dónde empieza esta escena en el texto que te pasaron), sourceTextEnd (las últimas 8-12 palabras de esta escena, copiadas EXACTAMENTE igual, marca de dónde termina), bridgeFromPrevious (una línea corta, en tono de aviso de sistema/MIRROR, que conecta el final de la escena narrativa anterior con el arranque de esta — un salto de tiempo, quién llegó, qué cambió desde la última vez que se vio esa locación; null si esta escena continúa directo de la anterior sin salto, mismo momento y lugar, y no hace falta puente), characterIds (ids de los personajes presentes), objects (objetos o zonas con las que un jugador podría interactuar en esa escena: name, examineText con lo que se vería/diría al examinarlo, interactText con lo que pasa al interactuar — null si no aplica), minigame (null en la mayoría de los casos; solo si el momento narrativo describe una acción de habilidad/puzzle real -como sortear una cámara, decodificar un mensaje, abrir una cerradura, encontrar algo oculto- proponé {template, reason}: template es un nombre corto en inglés tipo "sequence" (memoria de secuencia, ya existe en el motor), "wiring", "lockpicking", "hidden-object", u otro nombre que describa el tipo de desafío si ninguno de esos encaja; reason es una frase explicando por qué esa escena lo pide).
+
+**Importante sobre sourceTextStart/sourceTextEnd:** NO copies el texto completo de la escena en ningún campo — solo esos dos fragmentos cortos (8-12 palabras cada uno), letra por letra, sin cambiar comillas, guiones ni puntuación. El código arma el texto completo de cada escena buscando esas dos marcas en el guion original, así que si no coinciden exactamente con el texto real, esa escena se queda sin desglose en paneles después.
 
 Devolvé ÚNICAMENTE un objeto JSON válido con esta forma exacta, sin texto antes ni después, sin markdown:
-{"characters": [{"id": "...", "name": "...", "description": "...", "suggestedColor": "#rrggbb", "alternateLooks": [{"key": "...", "label": "...", "description": "..."}]}], "scenes": [{"id": "...", "title": "...", "summary": "...", "sourceText": "...", "bridgeFromPrevious": "..." , "characterIds": ["..."], "objects": [{"name": "...", "examineText": "..." , "interactText": "..."}], "minigame": {"template": "...", "reason": "..."} }]}`;
+{"characters": [{"id": "...", "name": "...", "description": "...", "suggestedColor": "#rrggbb", "alternateLooks": [{"key": "...", "label": "...", "description": "..."}]}], "scenes": [{"id": "...", "title": "...", "summary": "...", "sourceTextStart": "...", "sourceTextEnd": "...", "bridgeFromPrevious": "..." , "characterIds": ["..."], "objects": [{"name": "...", "examineText": "..." , "interactText": "..."}], "minigame": {"template": "...", "reason": "..."} }]}`;
 
 // Segundo paso, uno por escena (no en la misma llamada que arriba — el
 // texto de UNA escena entera cabe cómodo en una sola llamada enfocada;
@@ -189,6 +191,42 @@ function coercePanels(value: unknown): ScriptBreakdownPanel[] {
   });
 }
 
+function extractSourceTextMarkers(value: unknown): { start: string; end: string }[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((entry) => {
+    const s = entry && typeof entry === 'object' ? (entry as Record<string, unknown>) : {};
+    return {
+      start: typeof s['sourceTextStart'] === 'string' ? s['sourceTextStart'].trim() : '',
+      end: typeof s['sourceTextEnd'] === 'string' ? s['sourceTextEnd'].trim() : '',
+    };
+  });
+}
+
+/** El paso 1 ya no copia el texto completo de cada escena adentro de su
+ * propia respuesta — eso era lo que inflaba la salida al tamaño del guion
+ * entero (o más, con el overhead de JSON) en un guion largo, y el modelo
+ * la cortaba a mitad de camino sin avisar (solo aparecían 2-3 escenas en
+ * vez de todas). Ahora pide solo un fragmento corto de inicio y otro de
+ * fin por escena, y acá se recorta el guion original ENTRE esos dos
+ * puntos con `indexOf` — el cursor avanza escena por escena para no
+ * engancharse con una repetición anterior del mismo fragmento. Si algún
+ * marcador no aparece tal cual en el guion (el modelo lo parafraseó), esa
+ * escena queda con sourceText vacío y `looksLikeIncompleteSourceText` más
+ * abajo la agarra igual que el caso viejo del placeholder. */
+function resolveSourceTexts(scriptText: string, markers: { start: string; end: string }[]): string[] {
+  let cursor = 0;
+  return markers.map(({ start, end }) => {
+    if (!start || !end) return '';
+    const startIndex = scriptText.indexOf(start, cursor);
+    if (startIndex === -1) return '';
+    const endMatchIndex = scriptText.indexOf(end, startIndex + start.length);
+    if (endMatchIndex === -1) return '';
+    const endIndex = endMatchIndex + end.length;
+    cursor = endIndex;
+    return scriptText.slice(startIndex, endIndex);
+  });
+}
+
 const MIN_SOURCE_TEXT_LENGTH = 300;
 
 /** Heurística barata contra el caso visto en producción: el paso 1 abrevia
@@ -297,7 +335,17 @@ export function registerScriptBreakdownHandlers(): void {
         return { ok: false, error: 'OpenAI no devolvió contenido.' };
       }
       const parsed: unknown = JSON.parse(content);
+      const parsedObj = parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+      const sourceTextMarkers = extractSourceTextMarkers(parsedObj['scenes']);
       const breakdown = coerceScriptBreakdown(parsed);
+      // Recortar el texto real de cada escena del guion original acá, en
+      // código — ver comentario de resolveSourceTexts. `breakdown.scenes`
+      // conserva el mismo orden/cantidad que `parsedObj['scenes']` porque
+      // coerceScenes solo mapea, nunca filtra.
+      const resolvedSourceTexts = resolveSourceTexts(scriptText, sourceTextMarkers);
+      breakdown.scenes.forEach((scene, index) => {
+        scene.sourceText = resolvedSourceTexts[index] ?? '';
+      });
 
       // Segundo paso: un llamado de IA por escena para desglosarla en
       // paneles cinemáticos (ver PANEL_SYSTEM_PROMPT/generateScenePanels
