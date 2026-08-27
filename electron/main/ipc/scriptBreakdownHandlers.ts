@@ -43,6 +43,8 @@ const SYSTEM_PROMPT = `Sos parte del pipeline de producción de NarraDos, un mot
 
 **Importante sobre sourceTextStart/sourceTextEnd:** NO copies el texto completo de la escena en ningún campo — solo esos dos fragmentos cortos (8-12 palabras cada uno), letra por letra, sin cambiar comillas, guiones ni puntuación. El código arma el texto completo de cada escena buscando esas dos marcas en el guion original, así que si no coinciden exactamente con el texto real, esa escena se queda sin desglose en paneles después.
 
+**Importante sobre cobertura completa:** el guion que te paso puede ser largo — varios capítulos pegados uno atrás del otro. Tenés que procesarlo ENTERO, de la primera palabra a la última, sin importar cuántas escenas hagan falta. Nunca pares de generar escenas antes de llegar al final del texto que te dieron, ni resumas los capítulos finales en una sola escena para terminar rápido — cada escena real del guion tiene que tener la suya, hasta la última línea del documento. Como ahora solo copiás fragmentos cortos por escena (no el texto completo), cubrir un guion largo entero no debería quedarse sin espacio de respuesta.
+
 Devolvé ÚNICAMENTE un objeto JSON válido con esta forma exacta, sin texto antes ni después, sin markdown:
 {"characters": [{"id": "...", "name": "...", "description": "...", "suggestedColor": "#rrggbb", "alternateLooks": [{"key": "...", "label": "...", "description": "..."}]}], "scenes": [{"id": "...", "title": "...", "summary": "...", "sourceTextStart": "...", "sourceTextEnd": "...", "bridgeFromPrevious": "..." , "characterIds": ["..."], "objects": [{"name": "...", "examineText": "..." , "interactText": "..."}], "minigame": {"template": "...", "reason": "..."} }]}`;
 
@@ -213,9 +215,12 @@ function extractSourceTextMarkers(value: unknown): { start: string; end: string 
  * marcador no aparece tal cual en el guion (el modelo lo parafraseó), esa
  * escena queda con sourceText vacío y `looksLikeIncompleteSourceText` más
  * abajo la agarra igual que el caso viejo del placeholder. */
-function resolveSourceTexts(scriptText: string, markers: { start: string; end: string }[]): string[] {
+function resolveSourceTexts(
+  scriptText: string,
+  markers: { start: string; end: string }[],
+): { texts: string[]; finalCursor: number } {
   let cursor = 0;
-  return markers.map(({ start, end }) => {
+  const texts = markers.map(({ start, end }) => {
     if (!start || !end) return '';
     const startIndex = scriptText.indexOf(start, cursor);
     if (startIndex === -1) return '';
@@ -225,6 +230,7 @@ function resolveSourceTexts(scriptText: string, markers: { start: string; end: s
     cursor = endIndex;
     return scriptText.slice(startIndex, endIndex);
   });
+  return { texts, finalCursor: cursor };
 }
 
 const MIN_SOURCE_TEXT_LENGTH = 300;
@@ -319,6 +325,7 @@ export function registerScriptBreakdownHandlers(): void {
         body: JSON.stringify({
           model: 'gpt-4.1',
           temperature: 0.4,
+          max_tokens: 16384,
           response_format: { type: 'json_object' },
           messages: [
             { role: 'system', content: SYSTEM_PROMPT },
@@ -329,7 +336,9 @@ export function registerScriptBreakdownHandlers(): void {
       if (!response.ok) {
         return { ok: false, error: await formatApiError('OpenAI', response) };
       }
-      const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
+      const data = (await response.json()) as {
+        choices?: { message?: { content?: string }; finish_reason?: string }[];
+      };
       const content = data.choices?.[0]?.message?.content;
       if (!content) {
         return { ok: false, error: 'OpenAI no devolvió contenido.' };
@@ -342,10 +351,34 @@ export function registerScriptBreakdownHandlers(): void {
       // código — ver comentario de resolveSourceTexts. `breakdown.scenes`
       // conserva el mismo orden/cantidad que `parsedObj['scenes']` porque
       // coerceScenes solo mapea, nunca filtra.
-      const resolvedSourceTexts = resolveSourceTexts(scriptText, sourceTextMarkers);
+      const { texts: resolvedSourceTexts, finalCursor } = resolveSourceTexts(scriptText, sourceTextMarkers);
       breakdown.scenes.forEach((scene, index) => {
         scene.sourceText = resolvedSourceTexts[index] ?? '';
       });
+
+      const warnings: string[] = [];
+      // Visto en producción con un guion largo (varios capítulos pegados en
+      // un solo texto): el modelo a veces devuelve un JSON válido y bien
+      // formado, pero deja de leer a mitad del guion y arma escenas solo con
+      // la primera parte, como si el resto no existiera — no es un error de
+      // formato, así que no hay excepción que atrapar. La única forma
+      // barata de detectarlo es comparar hasta dónde llegó el texto de la
+      // última escena reconocida contra el largo real del guion pegado.
+      const finishReason = data.choices?.[0]?.finish_reason;
+      const coverageRatio = scriptText.length > 0 ? finalCursor / scriptText.length : 1;
+      if (finishReason === 'length') {
+        warnings.push(
+          'El guion es tan largo que la respuesta de la IA se cortó antes de terminar de leerlo — probá partirlo ' +
+            'en dos o más mitades y analizar cada una por separado.',
+        );
+      } else if (coverageRatio < 0.85) {
+        const coveredPct = Math.round(coverageRatio * 100);
+        warnings.push(
+          `El análisis solo llegó a cubrir aproximadamente el ${coveredPct}% del guion pegado (se reconocieron ` +
+            `${breakdown.scenes.length} escena(s), pero parece quedar texto sin procesar al final) — probá pegar ` +
+            'el resto por separado, o partir el guion en mitades más cortas y analizar cada una.',
+        );
+      }
 
       // Segundo paso: un llamado de IA por escena para desglosarla en
       // paneles cinemáticos (ver PANEL_SYSTEM_PROMPT/generateScenePanels
@@ -353,7 +386,6 @@ export function registerScriptBreakdownHandlers(): void {
       // rate limits con un guion de muchas escenas. Una escena que falla
       // no aborta el análisis entero: queda con panels: [] y su motivo se
       // junta en `warnings` para que el usuario sepa cuál reintentar.
-      const warnings: string[] = [];
       for (const scene of breakdown.scenes) {
         // Visto en producción: en una escena larga/compleja el primer paso
         // a veces "hace trampa" y en vez de copiar el texto entero escribe
