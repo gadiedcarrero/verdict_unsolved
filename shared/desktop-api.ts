@@ -56,6 +56,19 @@ export type DesktopApi = {
     ext: string,
     data: Uint8Array,
   ) => Promise<BackgroundSaveResult>;
+  /** Genera un fondo de escena con IA a partir de una narración libre —
+   * a diferencia de dejar que la IA adivine qué personajes van solos (no
+   * funcionaba bien), `characters` es la lista elegida a mano en el editor;
+   * cada uno manda su propio retrato ya generado como referencia visual,
+   * así el modelo usa la cara real del personaje en vez de reinventarla
+   * desde una descripción de texto. Guarda en
+   * assets/games/<gameId>/backgrounds/<fileId>.png. */
+  generateBackground: (
+    gameId: string,
+    fileId: string,
+    prompt: string,
+    characters: { name: string; description: string; portraitPath: string }[],
+  ) => Promise<BackgroundSaveResult>;
   /** Solo funciona en `pnpm dev` — sube una imagen de cursor a
    * assets/games/<gameId>/cursors/ y devuelve la ruta relativa. */
   saveCursorImage: (gameId: string, fileId: string, ext: string, data: Uint8Array) => Promise<BackgroundSaveResult>;

@@ -277,13 +277,114 @@ function BackgroundThumb({
   );
 }
 
+/** Antes la IA elegía sola qué personajes meter en un fondo (a partir del
+ * desglose de guion) y salía mal — caras genéricas, gente de más/de menos.
+ * Este formulario deja elegirlos a mano: cada uno manda su propio retrato
+ * ya generado como referencia visual, así el modelo usa la cara real del
+ * personaje en la escena en vez de reinventarla desde su descripción. */
+function GenerateBackgroundForm({
+  characters,
+  strings,
+  generating,
+  error,
+  onGenerate,
+}: {
+  characters: Character[];
+  strings: Record<string, string>;
+  generating: boolean;
+  error: string | null;
+  onGenerate: (prompt: string, characterIds: string[]) => void;
+}): JSX.Element {
+  const [open, setOpen] = useState(false);
+  const [prompt, setPrompt] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  function toggleCharacter(id: string): void {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mb-2 w-full rounded border border-dashed border-graphite-700 px-2 py-1.5 text-[10px] tracking-widest text-graphite-400 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
+      >
+        + Generar fondo con IA
+      </button>
+    );
+  }
+
+  return (
+    <div className="mb-2 rounded border border-dashed border-graphite-700 p-2">
+      <textarea
+        value={prompt}
+        onChange={(event) => setPrompt(event.target.value)}
+        rows={3}
+        placeholder='Narrá la escena (ej. "Pepe y Juan sentados de espaldas en un banco de un parque, de noche")...'
+        className={`${inputClassName} mb-2`}
+      />
+      {characters.length > 0 && (
+        <div className="mb-2">
+          <p className="mb-1 text-[8px] tracking-widest text-graphite-500 uppercase">
+            Personajes que aparecen (usan su propio retrato como referencia)
+          </p>
+          <div className="flex max-h-32 flex-wrap gap-1 overflow-y-auto">
+            {characters.map((character) => (
+              <label
+                key={character.id}
+                className={`flex items-center gap-1 rounded border px-1.5 py-1 text-[9px] ${
+                  selectedIds.includes(character.id)
+                    ? 'border-amber-accent text-amber-accent'
+                    : 'border-graphite-700 text-graphite-300'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(character.id)}
+                  onChange={() => toggleCharacter(character.id)}
+                  className="hidden"
+                />
+                {translate(strings, character.name)}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onGenerate(prompt.trim(), selectedIds)}
+          disabled={!prompt.trim() || generating}
+          className="flex-1 rounded border border-sky-400/40 px-2 py-1.5 text-[10px] tracking-widest text-sky-300 uppercase transition-colors hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {generating ? 'Generando...' : 'Generar'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="shrink-0 text-[9px] text-graphite-500 uppercase hover:text-graphite-300"
+        >
+          cancelar
+        </button>
+      </div>
+      {error && <p className="mt-1 text-[9px] text-red-300">{error}</p>}
+    </div>
+  );
+}
+
 function BackgroundsSection({
   gameId,
   scene,
+  characters,
+  strings,
   uploading,
+  generatingBackground,
+  backgroundGenError,
   backgroundCacheBust,
   editingBackgroundPath,
   onAddBackground,
+  onGenerateBackground,
   onRemoveBackground,
   onDurationChange,
   onBackgroundColorChange,
@@ -293,10 +394,15 @@ function BackgroundsSection({
 }: {
   gameId: string;
   scene: Scene;
+  characters: Character[];
+  strings: Record<string, string>;
   uploading: boolean;
+  generatingBackground: boolean;
+  backgroundGenError: string | null;
   backgroundCacheBust: Record<string, number>;
   editingBackgroundPath: string | null;
   onAddBackground: (file: File) => void;
+  onGenerateBackground: (prompt: string, characterIds: string[]) => void;
   onRemoveBackground: (bgId: string) => void;
   onDurationChange: (bgId: string, durationMs: number) => void;
   onBackgroundColorChange: (bgId: string, color: string | undefined) => void;
@@ -351,11 +457,18 @@ function BackgroundsSection({
         type="button"
         onClick={() => fileInputRef.current?.click()}
         disabled={uploading}
-        className="w-full rounded border border-graphite-700 px-2 py-1.5 text-[10px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:opacity-40"
+        className="mb-2 w-full rounded border border-graphite-700 px-2 py-1.5 text-[10px] tracking-widest text-graphite-300 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:opacity-40"
       >
         {uploading ? 'Subiendo...' : '+ Agregar fondo'}
       </button>
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+      <GenerateBackgroundForm
+        characters={characters}
+        strings={strings}
+        generating={generatingBackground}
+        error={backgroundGenError}
+        onGenerate={onGenerateBackground}
+      />
     </div>
   );
 }
@@ -1555,9 +1668,12 @@ export function SceneEditorPanel({
   activeSceneId,
   creatingScene,
   uploadingBackground,
+  generatingBackground,
+  backgroundGenError,
   onSwitchScene,
   onCreateScene,
   onAddBackground,
+  onGenerateBackground,
   onRemoveBackground,
   onBackgroundDurationChange,
   onBackgroundColorChange,
@@ -1607,9 +1723,12 @@ export function SceneEditorPanel({
   activeSceneId: string;
   creatingScene: boolean;
   uploadingBackground: boolean;
+  generatingBackground: boolean;
+  backgroundGenError: string | null;
   onSwitchScene: (sceneId: string) => void;
   onCreateScene: (name: string, act: number, kind: SceneKind) => void;
   onAddBackground: (file: File) => void;
+  onGenerateBackground: (prompt: string, characterIds: string[]) => void;
   onRemoveBackground: (bgId: string) => void;
   onBackgroundDurationChange: (bgId: string, durationMs: number) => void;
   onBackgroundColorChange: (bgId: string, color: string | undefined) => void;
@@ -1688,8 +1807,13 @@ export function SceneEditorPanel({
           <BackgroundsSection
             gameId={gameId}
             scene={scene}
+            characters={characters}
+            strings={strings}
             uploading={uploadingBackground}
+            generatingBackground={generatingBackground}
+            backgroundGenError={backgroundGenError}
             onAddBackground={onAddBackground}
+            onGenerateBackground={onGenerateBackground}
             onRemoveBackground={onRemoveBackground}
             onDurationChange={onBackgroundDurationChange}
             onBackgroundColorChange={onBackgroundColorChange}

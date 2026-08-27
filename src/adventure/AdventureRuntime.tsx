@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { CharacterEditorPanel } from './editor/CharacterEditorPanel';
 import { gameAssetUrl } from './gameAssetUrl';
+import { translate } from '../i18n/translate';
 import type { EditableRect } from './editor/EditableBox';
 import { boundingBoxOfPoints } from './editor/polygonUtils';
 import { SceneEditorPanel, type ActionComposerValue } from './editor/SceneEditorPanel';
@@ -207,6 +208,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [uploadingBackground, setUploadingBackground] = useState(false);
+  const [generatingBackground, setGeneratingBackground] = useState(false);
+  const [backgroundGenError, setBackgroundGenError] = useState<string | null>(null);
   const [creatingScene, setCreatingScene] = useState(false);
 
   const [editedCharacters, setEditedCharacters] = useState<Character[] | null>(null);
@@ -881,19 +884,24 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   // relámpago...), numerados automáticamente. El primero de la lista es el
   // que se ve por defecto — a cuál se pasa según qué objeto todavía no está
   // resuelto, queda para más adelante.
+  function nextBackgroundId(base: Scene): string {
+    const takenBgIds = new Set(base.backgrounds.map((bg) => bg.id));
+    let n = base.backgrounds.length + 1;
+    let bgId = `bg-${n}`;
+    while (takenBgIds.has(bgId)) {
+      n += 1;
+      bgId = `bg-${n}`;
+    }
+    return bgId;
+  }
+
   async function addBackground(file: File): Promise<void> {
     const base = editedScene ?? baseScene;
     if (!base) return;
     setUploadingBackground(true);
     setSaveMessage(null);
     try {
-      const takenBgIds = new Set(base.backgrounds.map((bg) => bg.id));
-      let n = base.backgrounds.length + 1;
-      let bgId = `bg-${n}`;
-      while (takenBgIds.has(bgId)) {
-        n += 1;
-        bgId = `bg-${n}`;
-      }
+      const bgId = nextBackgroundId(base);
       const ext = file.name.split('.').pop() || 'png';
       const buffer = new Uint8Array(await file.arrayBuffer());
       const result = await window.api.saveSceneBackground(gameId, `${base.id}-${bgId}`, ext, buffer);
@@ -906,6 +914,35 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       setSaveMessage(`Error subiendo fondo: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setUploadingBackground(false);
+    }
+  }
+
+  // Antes la IA elegía sola qué personajes meter en un fondo (a partir del
+  // desglose de guion) y salía mal — caras genéricas, gente de más. Ahora
+  // el usuario los elige a mano en el editor y cada uno manda su propio
+  // retrato ya generado como referencia, para que el modelo use la cara
+  // real en vez de reinventarla desde la descripción de texto.
+  async function generateBackgroundWithAi(prompt: string, characterIds: string[]): Promise<void> {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setGeneratingBackground(true);
+    setBackgroundGenError(null);
+    try {
+      const characterRefs = characterIds
+        .map((id) => displayCharacters.find((c) => c.id === id))
+        .filter((c): c is Character => Boolean(c?.portrait))
+        .map((c) => ({ name: translate(strings, c.name), description: c.description, portraitPath: c.portrait! }));
+      const bgId = nextBackgroundId(base);
+      const result = await window.api.generateBackground(gameId, `${base.id}-${bgId}`, prompt, characterRefs);
+      if (result.ok) {
+        setEditedScene({ ...base, backgrounds: [...base.backgrounds, { id: bgId, assetPath: result.path }] });
+      } else {
+        setBackgroundGenError(result.error);
+      }
+    } catch (error) {
+      setBackgroundGenError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setGeneratingBackground(false);
     }
   }
 
@@ -1868,9 +1905,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   activeSceneId={activeEditorSceneId}
                   creatingScene={creatingScene}
                   uploadingBackground={uploadingBackground}
+                  generatingBackground={generatingBackground}
+                  backgroundGenError={backgroundGenError}
                   onSwitchScene={switchEditorScene}
                   onCreateScene={(name, act, kind) => void createScene(name, act, kind)}
                   onAddBackground={(file) => void addBackground(file)}
+                  onGenerateBackground={(prompt, characterIds) => void generateBackgroundWithAi(prompt, characterIds)}
                   onRemoveBackground={removeBackground}
                   onBackgroundDurationChange={updateBackgroundDuration}
                   onBackgroundColorChange={updateBackgroundColor}

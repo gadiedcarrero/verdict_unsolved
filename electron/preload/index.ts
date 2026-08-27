@@ -13,6 +13,8 @@ const api: DesktopApi = {
     ipcRenderer.invoke('scene-editor:save-portrait', gameId, characterId, ext, data, expressionKey),
   saveSceneBackground: (gameId, fileId, ext, data) =>
     ipcRenderer.invoke('scene-editor:save-background', gameId, fileId, ext, data),
+  generateBackground: (gameId, fileId, prompt, characters) =>
+    ipcRenderer.invoke('ai:generate-background', gameId, fileId, prompt, characters),
   saveCursorImage: (gameId, fileId, ext, data) =>
     ipcRenderer.invoke('scene-editor:save-cursor', gameId, fileId, ext, data),
   saveActionMenuImage: (gameId, fileId, ext, data) =>
