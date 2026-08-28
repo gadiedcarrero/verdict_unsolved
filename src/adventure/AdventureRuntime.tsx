@@ -1244,10 +1244,14 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       setEditorTab('scene');
       return;
     }
+    // Si el guion pegado usaba el formato con etiquetas [Escena N: tipo],
+    // scriptKind ya viene resuelto en el desglose — "interactiva" crea una
+    // escena estándar (point-and-click) en vez de cinemática por default.
+    const breakdownScene = scriptBreakdown?.scenes.find((s) => s.id === breakdownSceneId);
     const newScene: Scene = {
       id: breakdownSceneId,
       act: 1,
-      kind: 'cinematica',
+      kind: breakdownScene?.scriptKind === 'interactiva' ? 'standard' : 'cinematica',
       backgrounds: [],
       layers: [],
       hotspots: [],

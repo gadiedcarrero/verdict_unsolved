@@ -56,6 +56,15 @@ export type ScriptBreakdownMinigameSuggestion = {
 
 export type ScriptBreakdownReviewStatus = 'pending' | 'approved' | 'cut';
 
+/** Solo se completa cuando el guion pegado usa el formato con etiquetas
+ * `[Escena N: tipo]`...`[Fin Escena N]` — el guionista marca a mano si esa
+ * escena es una secuencia cinemática o un cuarto jugable, y eso decide qué
+ * `kind` de escena real crea "Crear escena de juego" (ver
+ * createSceneFromBreakdown en AdventureRuntime.tsx). `null` = guion viejo
+ * sin etiquetas, o etiqueta sin tipo — se sigue asumiendo cinemática por
+ * default, mismo comportamiento que antes de que existiera este campo. */
+export type ScriptSceneKindTag = 'cinematica' | 'interactiva';
+
 /** Por qué existe este panel puntual — ayuda tanto a la revisión humana
  * como, más adelante, al prompt de generación de imagen (una revelación
  * pide un plano distinto que una acción). */
@@ -127,6 +136,7 @@ export type ScriptBreakdownScene = {
   objects: ScriptBreakdownObject[];
   minigame: ScriptBreakdownMinigameSuggestion | null;
   reviewStatus: ScriptBreakdownReviewStatus;
+  scriptKind: ScriptSceneKindTag | null;
 };
 
 export type ScriptBreakdown = {
@@ -214,7 +224,8 @@ function isScriptBreakdownScene(value: unknown): value is ScriptBreakdownScene {
     Array.isArray(v['objects']) &&
     v['objects'].every(isScriptBreakdownObject) &&
     (v['minigame'] === null || isScriptBreakdownMinigameSuggestion(v['minigame'])) &&
-    (v['reviewStatus'] === 'pending' || v['reviewStatus'] === 'approved' || v['reviewStatus'] === 'cut')
+    (v['reviewStatus'] === 'pending' || v['reviewStatus'] === 'approved' || v['reviewStatus'] === 'cut') &&
+    (v['scriptKind'] === 'cinematica' || v['scriptKind'] === 'interactiva' || v['scriptKind'] === null)
   );
 }
 

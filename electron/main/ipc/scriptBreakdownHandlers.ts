@@ -9,6 +9,7 @@ import type {
   ScriptBreakdownObject,
   ScriptBreakdownPanel,
   ScriptBreakdownScene,
+  ScriptSceneKindTag,
 } from '../../../shared/script-breakdown';
 import { formatApiError } from './apiErrors';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
@@ -143,6 +144,8 @@ function coerceScenes(value: unknown, usedIds: Set<string>): ScriptBreakdownScen
         : null;
     const reviewStatus =
       s['reviewStatus'] === 'approved' || s['reviewStatus'] === 'cut' ? s['reviewStatus'] : 'pending';
+    const scriptKind: ScriptSceneKindTag | null =
+      s['scriptKind'] === 'cinematica' || s['scriptKind'] === 'interactiva' ? s['scriptKind'] : null;
     return {
       id,
       title,
@@ -154,6 +157,7 @@ function coerceScenes(value: unknown, usedIds: Set<string>): ScriptBreakdownScen
       objects: coerceObjects(s['objects']),
       minigame,
       reviewStatus,
+      scriptKind,
     };
   });
 }
@@ -310,6 +314,322 @@ async function generateScenePanels(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Formato con etiquetas [Escena N: tipo]...[Fin Escena N] / [Personajes]...
+// [Fin Personajes] — el guionista marca a mano dónde empieza y termina cada
+// escena y quiénes son los personajes, en vez de que la IA tenga que
+// inferirlo (y arriesgar el tipo de error de "no encontré el marcador" que
+// venía pasando con guiones en prosa corrida). Si el guion pegado usa este
+// formato, se detecta acá y se usa un pipeline distinto — ver
+// generateTaggedScriptBreakdown más abajo — que nunca necesita que la IA
+// reproduzca texto del guion para ubicar nada: el corte en escenas y el
+// bloque de personajes se leen directo con una expresión regular.
+
+type TaggedSceneBlock = { index: number; kind: string | null; body: string };
+
+function parseTaggedScenes(scriptText: string): TaggedSceneBlock[] {
+  const sceneRegex = /\[Escena\s+(\d+)(?:\s*:\s*([^\]]+))?\]([\s\S]*?)\[Fin Escena\s+\1\]/gi;
+  const scenes: TaggedSceneBlock[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = sceneRegex.exec(scriptText))) {
+    scenes.push({
+      index: Number(match[1]),
+      kind: match[2] ? match[2].trim().toLowerCase() : null,
+      body: (match[3] ?? '').trim(),
+    });
+  }
+  return scenes;
+}
+
+type TaggedCharacterBlock = { heading: string; description: string };
+
+/** Cada `### encabezado` dentro de [Personajes]...[Fin Personajes] es una
+ * entrada — no se intenta fusionar variantes (young/adult, alias secretos)
+ * como antes hacía `alternateLooks`: el guionista ya las separó a mano en
+ * encabezados propios, así que cada una se promueve directo a su propio
+ * personaje del roster. */
+function parseCharactersBlock(scriptText: string): TaggedCharacterBlock[] {
+  const charMatch = /\[Personajes\]([\s\S]*?)\[Fin Personajes\]/i.exec(scriptText);
+  if (!charMatch) return [];
+  const block = (charMatch[1] ?? '').trim();
+  const parts = block
+    .split(/\n(?=#{1,6}\s)/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return parts.map((part) => {
+    const lines = part.split('\n');
+    const heading = (lines[0] ?? '').replace(/^#+\s*/, '').trim();
+    const description = lines.slice(1).join('\n').trim();
+    return { heading, description };
+  });
+}
+
+/** Paleta fija en vez de pedirle un color a la IA — determinístico, sin
+ * riesgo de que repita colores entre personajes cercanos en la lista. */
+const CHARACTER_COLOR_PALETTE = [
+  '#e0a636',
+  '#5fb3d9',
+  '#c96a6a',
+  '#7fbf7f',
+  '#b78fd6',
+  '#d98f5c',
+  '#5fd9b3',
+  '#d95f9e',
+  '#8fa3c9',
+  '#d9d15f',
+  '#a3d95f',
+  '#d95f5f',
+  '#5f8fd9',
+  '#d9a35f',
+  '#9e5fd9',
+  '#5fd95f',
+];
+
+function colorForIndex(index: number): string {
+  return CHARACTER_COLOR_PALETTE[index % CHARACTER_COLOR_PALETTE.length] ?? '#8fa3c9';
+}
+
+/** Tarea chica y acotada a propósito: el encabezado que escribe el
+ * guionista ("ADRIAN CROSS — ADULTO / DIRECTOR GRAY", "MARA VEGA / GHOST")
+ * mezcla el nombre real con la variante/alias, pero en el texto narrativo
+ * ese personaje puede aparecer bajo un nombre corto distinto ("Director
+ * Gray", "Ghost") — esto le pide a la IA que ELIJA cuál de las partes del
+ * encabezado es ese nombre corto, nunca que invente ni redacte nada nuevo,
+ * para mantener el riesgo de alucinación lo más bajo posible. */
+const CHARACTER_NAME_SYSTEM_PROMPT = `Sos parte del pipeline de NarraDos. Te doy una lista numerada de encabezados de personajes tal como los escribió el guionista (formato "NOMBRE — calificador" o "NOMBRE / ALIAS"), uno por variante visual. Tu única tarea: para cada uno, devolver el nombre corto que efectivamente se usaría para referirse a ESE personaje/variante puntual dentro del texto narrativo del guion (diálogos, narración) — el mismo nombre que reconocería un lector, no el encabezado completo.
+
+Reglas:
+- Si el encabezado tiene un alias operativo después de "/" (ej: "MARA VEGA / GHOST"), y ese alias es el que se usa en la narración, devolvé el alias ("Ghost"), no el nombre real.
+- Si el encabezado marca una identidad secreta distinta con su propio nombre (ej: "ADRIAN CROSS — ADULTO / DIRECTOR GRAY"), devolvé el nombre de ESA identidad tal como aparece en el guion ("Director Gray"), no el nombre base.
+- Si el calificador es solo una etapa de vida o rol sin alias propio (ej: "ELIAS VOSS — INSTRUCTOR", "ADRIAN CROSS — JOVEN / UNIDAD CERO"), devolvé el nombre de pila ("Elias Voss", "Adrian Cross") — la etapa/rol no es un nombre.
+- Si el encabezado es un solo nombre o alias sin calificador (ej: "WRAITH", "THEO KADE", "MIRROR"), devolvé tal cual, con mayúscula inicial si estaba todo en mayúsculas.
+- **Cuidado con confundir un alias de PERSONA con el nombre de una organización, facción, proyecto o concepto.** Un alias de persona es algo por lo que alguien LLAMARÍA a ese personaje ("Ghost", "Director Gray", "Wraith"). Si la palabra después de la barra o el guion nombra una entidad más grande de la que el personaje forma parte (ej: "JUNE SATO — ADULTA / CONTINUIDAD", donde Continuidad es la organización que la mantiene cautiva, no su alias — en el guion sigue llamándose "June" o "June Sato"), NO la uses como nombre — devolvé el nombre de pila del personaje en su lugar. Fijate en la descripción que acompaña al encabezado si no es obvio con el encabezado solo.
+
+Devolvé ÚNICAMENTE un objeto JSON: {"names": [{"index": 0, "name": "..."}]}`;
+
+async function resolveCharacterNames(
+  apiKey: string,
+  entries: TaggedCharacterBlock[],
+): Promise<{ names: string[] } | { error: string }> {
+  const headings = entries.map((e) => e.heading);
+  if (headings.length === 0) return { names: [] };
+  try {
+    // La descripción viaja junto al encabezado — la regla de "no confundas
+    // un alias de persona con el nombre de una organización" necesita ese
+    // contexto para casos como "JUNE SATO — ADULTA / CONTINUIDAD" (donde
+    // Continuidad es quien la tiene cautiva, no un alias suyo).
+    const userContent = entries
+      .map((e, i) => `${i}. ${e.heading}\nDescripción: ${e.description.slice(0, 400)}`)
+      .join('\n\n');
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-4.1',
+        temperature: 0.2,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: CHARACTER_NAME_SYSTEM_PROMPT },
+          { role: 'user', content: userContent },
+        ],
+      }),
+    });
+    if (!response.ok) return { error: await formatApiError('OpenAI', response) };
+    const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) return { error: 'OpenAI no devolvió contenido al resolver nombres de personajes.' };
+    const parsed = JSON.parse(content) as { names?: { index?: number; name?: string }[] };
+    const names = headings.map((heading, i) => {
+      const match = Array.isArray(parsed.names) ? parsed.names.find((n) => n.index === i) : undefined;
+      return typeof match?.name === 'string' && match.name.trim() ? match.name.trim() : heading;
+    });
+    return { names };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/** Un solo llamado para TODAS las escenas — a diferencia del paso de
+ * paneles (que sí va uno por escena), acá el texto de cada escena ya se
+ * conoce (viene del parseo determinístico), así que no hace falta que la
+ * IA lo reproduzca ni en fragmentos: la salida se limita a título/resumen/
+ * personajes/objetos/minijuego/puente por escena, chica sin importar cuán
+ * largo sea el guion de entrada. */
+const SCENE_METADATA_SYSTEM_PROMPT = `Sos parte del pipeline de NarraDos. Te doy una lista numerada de escenas de un guion (ya divididas, con su texto completo) y el roster de personajes disponible. Para cada escena, devolvé:
+- "title": corto, descriptivo.
+- "summary": un párrafo legible en español describiendo qué pasa, para que un humano decida si la escena queda o se corta.
+- "characterNames": array con los nombres del roster (tal cual te los di, ninguno inventado) que aparecen en ESTA escena.
+- "objects": objetos o zonas con las que un jugador podría interactuar en esa escena: {name, examineText, interactText} — array vacío si no aplica.
+- "minigame": null en la mayoría de los casos; solo si el momento narrativo describe una acción de habilidad/puzzle real (sortear una cámara, decodificar un mensaje, abrir una cerradura, encontrar algo oculto), proponé {template, reason} — template un nombre corto en inglés (ej. "sequence", "wiring", "lockpicking", "hidden-object", u otro si ninguno encaja).
+- "bridgeFromPrevious": una línea corta, en tono de aviso de sistema/MIRROR, que conecta el final de la escena narrativa anterior con el arranque de esta — salto de tiempo, quién llegó, qué cambió; null si esta escena continúa directo de la anterior sin salto y no hace falta puente.
+
+No te saltees ninguna escena de la lista ni cambies el orden ni el índice. No reproduzcas el texto de la escena en tu respuesta — ya lo tengo, solo necesito estos campos.
+
+Devolvé ÚNICAMENTE un objeto JSON: {"scenes": [{"index": 0, "title": "...", "summary": "...", "characterNames": ["..."], "objects": [{"name": "...", "examineText": "...", "interactText": "..."}], "minigame": {"template": "...", "reason": "..."}, "bridgeFromPrevious": "..."}]}`;
+
+async function generateSceneMetadata(
+  apiKey: string,
+  scenes: TaggedSceneBlock[],
+  characterNames: string[],
+): Promise<{ metadata: Map<number, Record<string, unknown>> } | { error: string }> {
+  try {
+    const userContent = JSON.stringify({
+      characters: characterNames,
+      scenes: scenes.map((s, i) => ({ index: i, body: s.body })),
+    });
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-4.1',
+        temperature: 0.4,
+        max_tokens: 16384,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: SCENE_METADATA_SYSTEM_PROMPT },
+          { role: 'user', content: userContent },
+        ],
+      }),
+    });
+    if (!response.ok) return { error: await formatApiError('OpenAI', response) };
+    const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) return { error: 'OpenAI no devolvió contenido al generar la metadata de escenas.' };
+    const parsed = JSON.parse(content) as { scenes?: unknown };
+    const metadata = new Map<number, Record<string, unknown>>();
+    if (Array.isArray(parsed.scenes)) {
+      for (const entry of parsed.scenes) {
+        if (entry && typeof entry === 'object' && typeof (entry as Record<string, unknown>)['index'] === 'number') {
+          metadata.set((entry as Record<string, unknown>)['index'] as number, entry as Record<string, unknown>);
+        }
+      }
+    }
+    return { metadata };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/** Pipeline completo para el formato con etiquetas — reemplaza tanto la
+ * IA-adivina-dónde-empieza-cada-escena (parseTaggedScenes ya lo sabe) como
+ * el roster de personajes inferido de la prosa (parseCharactersBlock ya lo
+ * sabe). Solo quedan dos llamados de IA de verdad: nombres cortos de
+ * personajes (chico) y metadata de escenas (uno para todas, salida chica),
+ * más el ya existente de paneles por escena. */
+async function generateTaggedScriptBreakdown(
+  apiKey: string,
+  taggedScenes: TaggedSceneBlock[],
+  rawCharacters: TaggedCharacterBlock[],
+): Promise<{ ok: true; breakdown: ScriptBreakdown; warnings: string[] } | { ok: false; error: string }> {
+  const warnings: string[] = [];
+
+  const usedCharacterIds = new Set<string>();
+  let characters: ScriptBreakdownCharacter[] = [];
+  if (rawCharacters.length > 0) {
+    const nameResult = await resolveCharacterNames(apiKey, rawCharacters);
+    const names = 'names' in nameResult ? nameResult.names : rawCharacters.map((c) => c.heading);
+    if ('error' in nameResult) {
+      warnings.push(
+        `No se pudieron resolver los nombres cortos de personajes (${nameResult.error}) — se usó el encabezado completo como nombre.`,
+      );
+    }
+    characters = rawCharacters.map((c, i) => {
+      const name = names[i] ?? c.heading;
+      let id = slugify(name);
+      while (usedCharacterIds.has(id)) id = `${id}-2`;
+      usedCharacterIds.add(id);
+      return { id, name, description: c.description, suggestedColor: colorForIndex(i), alternateLooks: [] };
+    });
+    // Caso real detectado en pruebas: dos variantes de un mismo personaje
+    // (joven/adulta) que el guion sigue llamando igual de las dos formas
+    // (ej: "June" en ambas etapas, sin alias propio para la adulta) — acá
+    // no hay forma de diferenciarlas por nombre, así que el resto del
+    // pipeline (matcheo de characterIds por nombre) siempre va a elegir la
+    // PRIMERA variante con ese nombre. Mejor avisarlo que fallar en
+    // silencio con la cara equivocada de referencia en alguna escena.
+    const nameCounts = new Map<string, number>();
+    for (const c of characters) nameCounts.set(c.name, (nameCounts.get(c.name) ?? 0) + 1);
+    for (const [name, count] of nameCounts) {
+      if (count > 1) {
+        warnings.push(
+          `Hay ${count} personajes distintos que el guion llama igual ("${name}") — el sistema no puede diferenciarlos ` +
+            'por escena automáticamente y siempre va a usar el primero como referencia visual. Revisá a mano los ' +
+            'characterIds de las escenas donde corresponde la otra variante, en la pestaña Personajes.',
+        );
+      }
+    }
+  } else {
+    warnings.push('No se encontró un bloque [Personajes]...[Fin Personajes] — no se cargó ningún personaje automáticamente.');
+  }
+
+  const metaResult = await generateSceneMetadata(
+    apiKey,
+    taggedScenes,
+    characters.map((c) => c.name),
+  );
+  if ('error' in metaResult) {
+    return { ok: false, error: `Error generando metadata de escenas: ${metaResult.error}` };
+  }
+
+  const usedSceneIds = new Set<string>();
+  const scenes: ScriptBreakdownScene[] = taggedScenes.map((tagged, i) => {
+    const raw = metaResult.metadata.get(i);
+    const title = typeof raw?.['title'] === 'string' && raw['title'] ? raw['title'] : `Escena ${i + 1}`;
+    if (!raw) {
+      warnings.push(`${title}: no se pudo generar metadata para esta escena (índice ${i}) — revisala a mano.`);
+    }
+    let id = slugify(title);
+    while (usedSceneIds.has(id)) id = `${id}-2`;
+    usedSceneIds.add(id);
+    const characterNamesRaw = Array.isArray(raw?.['characterNames'])
+      ? raw['characterNames'].filter((x): x is string => typeof x === 'string')
+      : [];
+    const characterIds = characterNamesRaw
+      .map((name) => characters.find((c) => c.name === name)?.id)
+      .filter((x): x is string => Boolean(x));
+    const minigameRaw = raw?.['minigame'];
+    const minigameObj = minigameRaw && typeof minigameRaw === 'object' ? (minigameRaw as Record<string, unknown>) : null;
+    const minigame =
+      minigameObj && typeof minigameObj['template'] === 'string' && typeof minigameObj['reason'] === 'string'
+        ? { template: minigameObj['template'], reason: minigameObj['reason'] }
+        : null;
+    const scriptKind: ScriptSceneKindTag | null =
+      tagged.kind === 'cinematica' || tagged.kind === 'interactiva' ? tagged.kind : null;
+    return {
+      id,
+      title,
+      summary: typeof raw?.['summary'] === 'string' ? raw['summary'] : '',
+      sourceText: tagged.body,
+      panels: [],
+      bridgeFromPrevious:
+        typeof raw?.['bridgeFromPrevious'] === 'string' && raw['bridgeFromPrevious'] ? raw['bridgeFromPrevious'] : null,
+      characterIds,
+      objects: coerceObjects(raw?.['objects']),
+      minigame,
+      reviewStatus: 'pending',
+      scriptKind,
+    };
+  });
+
+  // Paneles por escena — mismo paso que en el pipeline viejo, ahora sin
+  // ningún riesgo de "no se pudo ubicar el texto": sourceText ya viene del
+  // parseo determinístico, nunca está vacío ni truncado.
+  for (const scene of scenes) {
+    const result = await generateScenePanels(apiKey, scene.id, scene.title, scene.sourceText);
+    if ('error' in result) {
+      warnings.push(result.error);
+    } else {
+      scene.panels = result.panels;
+    }
+  }
+
+  return {
+    ok: true,
+    breakdown: { generatedAt: new Date().toISOString(), characters, scenes },
+    warnings,
+  };
+}
+
 /** La API de OpenAI no garantiza que respete los nombres de campo pedidos en
  * el prompt al pie de la letra — se corrigen acá defaults/formas raras en vez
  * de rechazar toda la respuesta y perder el trabajo de la llamada. */
@@ -332,6 +652,15 @@ export function registerScriptBreakdownHandlers(): void {
     const config = await getStoredAiIntegrationsConfig();
     if (!config.openaiApiKey) {
       return { ok: false, error: 'Falta la API key de OpenAI en Ajustes → Integraciones IA.' };
+    }
+    // Formato con etiquetas [Escena N]...[Fin Escena N] — ver comentario
+    // arriba de generateTaggedScriptBreakdown. Si el guion pegado las trae,
+    // se usa ese pipeline entero (más confiable, sin marcadores adivinados
+    // por la IA) en vez del viejo basado en prosa corrida.
+    const taggedScenes = parseTaggedScenes(scriptText);
+    if (taggedScenes.length > 0) {
+      const rawCharacters = parseCharactersBlock(scriptText);
+      return generateTaggedScriptBreakdown(config.openaiApiKey, taggedScenes, rawCharacters);
     }
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
