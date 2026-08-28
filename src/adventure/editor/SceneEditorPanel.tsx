@@ -134,6 +134,21 @@ function SceneSwitcher({
  * ocupan toda la pantalla, no aplica acá). */
 type BackgroundFieldsVariant = 'none' | 'intro' | 'cinematica';
 
+/** Próximo panel sin fondo generado, si esta escena vino del desglose de
+ * guion — ver pendingBreakdownPanel en AdventureRuntime.tsx. location y
+ * continuity no son solo para mostrar: AdventureRuntime los suma al prompt
+ * real que recibe el generador de imágenes (ver appendPanelContinuity) para
+ * mantener la misma locación/iluminación/posiciones entre paneles. */
+type PendingBreakdownPanel = {
+  imageDescription: string;
+  displayText: string;
+  location: string;
+  continuity: Record<string, string>;
+  previousContinuity: Record<string, string> | null;
+  index: number;
+  total: number;
+};
+
 function BackgroundThumb({
   gameId,
   assetPath,
@@ -379,9 +394,27 @@ function GenerateBackgroundForm({
  * IA (imageDescription/displayText del panel), editables antes de generar.
  * `key={index}` en el llamador fuerza que este componente se remonte con
  * estado fresco cuando el panel pendiente cambia (avanza la cola). */
+function ContinuityList({ continuity }: { continuity: Record<string, string> }): JSX.Element | null {
+  const entries = Object.entries(continuity);
+  if (entries.length === 0) return null;
+  return (
+    <p className="text-[8px] text-graphite-500">
+      {entries.map(([key, value], i) => (
+        <span key={key}>
+          {i > 0 && ' · '}
+          <span className="text-graphite-400">{key}:</span> {value}
+        </span>
+      ))}
+    </p>
+  );
+}
+
 function PendingPanelQueue({
   imageDescription,
   displayText,
+  location,
+  continuity,
+  previousContinuity,
   index,
   total,
   generating,
@@ -390,6 +423,9 @@ function PendingPanelQueue({
 }: {
   imageDescription: string;
   displayText: string;
+  location: string;
+  continuity: Record<string, string>;
+  previousContinuity: Record<string, string> | null;
   index: number;
   total: number;
   generating: boolean;
@@ -417,6 +453,21 @@ function PendingPanelQueue({
         placeholder="Texto debajo del panel..."
         className={`${inputClassName} mb-1`}
       />
+      {(location || Object.keys(continuity).length > 0 || previousContinuity) && (
+        <div className="mb-1 rounded border border-graphite-800 bg-graphite-900/60 p-1.5">
+          <p className="mb-0.5 text-[8px] tracking-widest text-graphite-500 uppercase">
+            Continuidad que se suma automáticamente al generar
+          </p>
+          {location && <p className="text-[8px] text-graphite-500">Locación: {location}</p>}
+          <ContinuityList continuity={continuity} />
+          {previousContinuity && (
+            <>
+              <p className="mt-1 text-[8px] text-graphite-600 uppercase">Del panel anterior</p>
+              <ContinuityList continuity={previousContinuity} />
+            </>
+          )}
+        </div>
+      )}
       {error && <p className="mb-1 text-[9px] text-red-300">{error}</p>}
       <button
         type="button"
@@ -460,9 +511,7 @@ function BackgroundsSection({
   backgroundGenError: string | null;
   backgroundCacheBust: Record<string, number>;
   editingBackgroundPath: string | null;
-  /** Próximo panel sin fondo generado, si esta escena vino del desglose de
-   * guion — ver pendingBreakdownPanel en AdventureRuntime.tsx. */
-  pendingPanel: { imageDescription: string; displayText: string; index: number; total: number } | null;
+  pendingPanel: PendingBreakdownPanel | null;
   onAddBackground: (file: File) => void;
   onGenerateBackground: (prompt: string, characterIds: string[]) => void;
   onGeneratePendingPanel: (prompt: string, caption: string) => void;
@@ -530,6 +579,9 @@ function BackgroundsSection({
           key={pendingPanel.index}
           imageDescription={pendingPanel.imageDescription}
           displayText={pendingPanel.displayText}
+          location={pendingPanel.location}
+          continuity={pendingPanel.continuity}
+          previousContinuity={pendingPanel.previousContinuity}
           index={pendingPanel.index}
           total={pendingPanel.total}
           generating={generatingBackground}
@@ -1806,7 +1858,7 @@ export function SceneEditorPanel({
   onCreateScene: (name: string, act: number, kind: SceneKind) => void;
   onAddBackground: (file: File) => void;
   onGenerateBackground: (prompt: string, characterIds: string[]) => void;
-  pendingPanel: { imageDescription: string; displayText: string; index: number; total: number } | null;
+  pendingPanel: PendingBreakdownPanel | null;
   onGeneratePendingPanel: (prompt: string, caption: string) => void;
   onRemoveBackground: (bgId: string) => void;
   onBackgroundDurationChange: (bgId: string, durationMs: number) => void;

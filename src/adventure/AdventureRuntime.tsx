@@ -113,6 +113,36 @@ function resolvePanelCharacterIds(names: string[], breakdownCharacters: ScriptBr
   return ids;
 }
 
+/** El desglose en paneles no solo trae imageDescription/displayText — trae
+ * location y continuity (qué luz hay, dónde está parado cada personaje,
+ * qué objetos hay en escena) pensados específicamente para que el
+ * generador de fondos mantenga el mismo cuarto/iluminación/posiciones de
+ * un panel al siguiente, no que cada imagen se invente el entorno de cero.
+ * Sin esto, esos campos quedaban guardados pero nunca llegaban al prompt
+ * real que recibe el generador de imágenes. */
+function appendPanelContinuity(
+  prompt: string,
+  location: string,
+  continuity: Record<string, string>,
+  previousContinuity: Record<string, string> | null,
+): string {
+  const parts = [prompt];
+  if (location.trim()) parts.push(`Location: ${location}.`);
+  const continuityEntries = Object.entries(continuity);
+  if (continuityEntries.length > 0) {
+    parts.push(`Continuity details for this panel: ${continuityEntries.map(([k, v]) => `${k} = ${v}`).join('; ')}.`);
+  }
+  if (previousContinuity && Object.keys(previousContinuity).length > 0) {
+    parts.push(
+      `Keep visual continuity with the previous panel in this same sequence (same room/characters/props unless the ` +
+        `description above says otherwise): ${Object.entries(previousContinuity)
+          .map(([k, v]) => `${k} = ${v}`)
+          .join('; ')}.`,
+    );
+  }
+  return parts.join('\n');
+}
+
 export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: () => void }): JSX.Element {
   const project = getGameProject(gameId);
 
@@ -425,6 +455,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       ? {
           imageDescription: nextPendingPanel.imageDescription,
           displayText: nextPendingPanel.displayText,
+          location: nextPendingPanel.location,
+          continuity: nextPendingPanel.continuity,
+          previousContinuity:
+            displayScene.backgrounds.length > 0
+              ? (breakdownSceneForDisplay.panels[displayScene.backgrounds.length - 1]?.continuity ?? null)
+              : null,
           index: displayScene.backgrounds.length,
           total: breakdownSceneForDisplay.panels.length,
         }
@@ -1000,10 +1036,13 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     const base = editedScene ?? baseScene;
     if (!base || !scriptBreakdown) return;
     const breakdownScene = scriptBreakdown.scenes.find((s) => s.id === base.id);
-    const panel = breakdownScene?.panels[base.backgrounds.length];
+    const index = base.backgrounds.length;
+    const panel = breakdownScene?.panels[index];
     if (!panel) return;
+    const previousContinuity = index > 0 ? (breakdownScene?.panels[index - 1]?.continuity ?? null) : null;
     const characterIds = resolvePanelCharacterIds(panel.characters, scriptBreakdown.characters);
-    await generateBackgroundWithAi(prompt, characterIds, caption);
+    const enrichedPrompt = appendPanelContinuity(prompt, panel.location, panel.continuity, previousContinuity);
+    await generateBackgroundWithAi(enrichedPrompt, characterIds, caption);
   }
 
   function removeBackground(bgId: string): void {

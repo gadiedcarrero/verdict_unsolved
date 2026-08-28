@@ -84,6 +84,21 @@ function PanelCard({
         className={`${inputClassName} text-graphite-400`}
         placeholder="Descripción visual (en inglés, para el generador de imagen)..."
       />
+      {(panel.location || Object.keys(panel.continuity).length > 0) && (
+        <div className="mt-1 rounded border border-graphite-800 bg-black/30 p-1">
+          {panel.location && <p className="text-[8px] text-graphite-500">Locación: {panel.location}</p>}
+          {Object.keys(panel.continuity).length > 0 && (
+            <p className="text-[8px] text-graphite-600">
+              {Object.entries(panel.continuity).map(([key, value], i) => (
+                <span key={key}>
+                  {i > 0 && ' · '}
+                  <span className="text-graphite-500">{key}:</span> {value}
+                </span>
+              ))}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
