@@ -131,21 +131,29 @@ function SceneCard({
   characters,
   retrying,
   retryError,
+  gameSceneExists,
+  creatingScene,
   onSummaryChange,
   onStatusChange,
   onPanelDisplayTextChange,
   onPanelImageDescriptionChange,
   onRetryPanels,
+  onCreateGameScene,
 }: {
   scene: ScriptBreakdownScene;
   characters: ScriptBreakdownCharacter[];
   retrying: boolean;
   retryError: string | null;
+  /** Si ya existe una escena de juego (ESCENA tab) con este mismo id —
+   * cambia el botón de "Crear" a "Abrir" en vez de mostrar los dos. */
+  gameSceneExists: boolean;
+  creatingScene: boolean;
   onSummaryChange: (summary: string) => void;
   onStatusChange: (status: ScriptBreakdownReviewStatus) => void;
   onPanelDisplayTextChange: (panelId: string, text: string) => void;
   onPanelImageDescriptionChange: (panelId: string, text: string) => void;
   onRetryPanels: (sourceText: string) => void;
+  onCreateGameScene: () => void;
 }): JSX.Element {
   const [panelsOpen, setPanelsOpen] = useState(false);
   const sceneCharacters = scene.characterIds
@@ -225,9 +233,24 @@ function SceneCard({
       <button
         type="button"
         onClick={() => setPanelsOpen((v) => !v)}
-        className="w-full rounded border border-graphite-700 px-1.5 py-1 text-left text-[9px] tracking-widest text-graphite-400 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
+        className="mb-1 w-full rounded border border-graphite-700 px-1.5 py-1 text-left text-[9px] tracking-widest text-graphite-400 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
       >
         {panelsOpen ? '▾' : '▸'} Paneles cinemáticos ({scene.panels.length})
+      </button>
+      <button
+        type="button"
+        onClick={onCreateGameScene}
+        disabled={creatingScene || (!gameSceneExists && scene.panels.length === 0)}
+        title={
+          scene.panels.length === 0
+            ? 'Esta escena todavía no tiene paneles generados.'
+            : gameSceneExists
+              ? 'Ya existe — abrirla en la pestaña ESCENA para seguir generando sus fondos.'
+              : 'Crea la escena de juego (tipo cinemática) con la cola de paneles lista para generar sus fondos uno por uno.'
+        }
+        className="w-full rounded border border-amber-accent/60 px-1.5 py-1 text-[9px] tracking-widest text-amber-accent uppercase transition-colors hover:bg-amber-accent hover:text-graphite-950 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-amber-accent"
+      >
+        {creatingScene ? 'Creando...' : gameSceneExists ? 'Abrir escena de juego →' : 'Crear escena de juego →'}
       </button>
       {panelsOpen && (
         <div className="mt-1">
@@ -263,6 +286,9 @@ export function ScriptBreakdownPanel({
   scenePanelsRetrying,
   scenePanelsRetryError,
   onRetryScenePanels,
+  existingSceneIds,
+  creatingScene,
+  onCreateGameScene,
 }: {
   breakdown: ScriptBreakdown | null;
   generating: boolean;
@@ -283,6 +309,11 @@ export function ScriptBreakdownPanel({
   scenePanelsRetrying: Record<string, boolean>;
   scenePanelsRetryError: Record<string, string>;
   onRetryScenePanels: (sceneId: string, sceneTitle: string, sourceText: string) => void;
+  /** Ids de las escenas de juego que ya existen (pestaña ESCENA) — decide si
+   * el botón dice "Crear" o "Abrir" para cada escena del desglose. */
+  existingSceneIds: string[];
+  creatingScene: boolean;
+  onCreateGameScene: (sceneId: string) => void;
 }): JSX.Element {
   const [scriptText, setScriptText] = useState('');
   const [loadedFileName, setLoadedFileName] = useState<string | null>(null);
@@ -402,6 +433,8 @@ export function ScriptBreakdownPanel({
               characters={breakdown.characters}
               retrying={scenePanelsRetrying[scene.id] ?? false}
               retryError={scenePanelsRetryError[scene.id] ?? null}
+              gameSceneExists={existingSceneIds.includes(scene.id)}
+              creatingScene={creatingScene}
               onSummaryChange={(summary) => onSceneSummaryChange(scene.id, summary)}
               onStatusChange={(status) => onSceneStatusChange(scene.id, status)}
               onPanelDisplayTextChange={(panelId, text) => onPanelDisplayTextChange(scene.id, panelId, text)}
@@ -409,6 +442,7 @@ export function ScriptBreakdownPanel({
                 onPanelImageDescriptionChange(scene.id, panelId, text)
               }
               onRetryPanels={(sourceText) => onRetryScenePanels(scene.id, scene.title, sourceText)}
+              onCreateGameScene={() => onCreateGameScene(scene.id)}
             />
           ))}
         </>

@@ -97,6 +97,22 @@ function reloadAfterSave(): void {
   window.setTimeout(() => window.location.reload(), 400);
 }
 
+/** `panel.characters` son nombres (los escribió la IA leyendo el guion, ver
+ * PANEL_SYSTEM_PROMPT), no ids — hay que resolverlos contra el roster del
+ * desglose para poder mandarle el retrato correcto como referencia visual a
+ * `generateBackground`. Coincidencia exacta primero, con fallback laxo por
+ * si el nombre del panel viene abreviado o con un apodo. */
+function resolvePanelCharacterIds(names: string[], breakdownCharacters: ScriptBreakdownCharacter[]): string[] {
+  const ids: string[] = [];
+  for (const name of names) {
+    const match =
+      breakdownCharacters.find((c) => c.name === name) ??
+      breakdownCharacters.find((c) => c.name.includes(name) || name.includes(c.name));
+    if (match && !ids.includes(match.id)) ids.push(match.id);
+  }
+  return ids;
+}
+
 export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: () => void }): JSX.Element {
   const project = getGameProject(gameId);
 
@@ -393,6 +409,26 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const baseScene = editMode ? (allScenes.find((s) => s.id === activeEditorSceneId) ?? null) : getActiveScene();
   const activeNode = getActiveNode();
   const displayScene = editedScene ?? baseScene;
+  // Cola de paneles pendientes para "crear escena de juego" desde el
+  // desglose de guion (ver createSceneFromBreakdown/PendingPanelQueue): se
+  // deriva sola de cuántos fondos ya tiene la escena — el panel N ya está
+  // generado si hay al menos N fondos, así que no hace falta guardar
+  // ningún estado extra ni marcar qué panel corresponde a qué fondo.
+  const breakdownSceneForDisplay =
+    scriptBreakdown?.scenes.find((s) => s.id === displayScene?.id) ?? null;
+  const nextPendingPanel =
+    breakdownSceneForDisplay && displayScene && breakdownSceneForDisplay.panels.length > displayScene.backgrounds.length
+      ? breakdownSceneForDisplay.panels[displayScene.backgrounds.length]
+      : null;
+  const pendingBreakdownPanel =
+    nextPendingPanel && breakdownSceneForDisplay && displayScene
+      ? {
+          imageDescription: nextPendingPanel.imageDescription,
+          displayText: nextPendingPanel.displayText,
+          index: displayScene.backgrounds.length,
+          total: breakdownSceneForDisplay.panels.length,
+        }
+      : null;
   const baseCharacters = bundle.characters;
   const displayCharacters = editedCharacters ?? baseCharacters;
   const baseSiteSettings = bundle.siteSettings;
@@ -931,7 +967,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   // el usuario los elige a mano en el editor y cada uno manda su propio
   // retrato ya generado como referencia, para que el modelo use la cara
   // real en vez de reinventarla desde la descripción de texto.
-  async function generateBackgroundWithAi(prompt: string, characterIds: string[]): Promise<void> {
+  async function generateBackgroundWithAi(prompt: string, characterIds: string[], caption?: string): Promise<void> {
     const base = editedScene ?? baseScene;
     if (!base) return;
     setGeneratingBackground(true);
@@ -944,7 +980,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       const bgId = nextBackgroundId(base);
       const result = await window.api.generateBackground(gameId, `${base.id}-${bgId}`, prompt, characterRefs);
       if (result.ok) {
-        setEditedScene({ ...base, backgrounds: [...base.backgrounds, { id: bgId, assetPath: result.path }] });
+        setEditedScene({ ...base, backgrounds: [...base.backgrounds, { id: bgId, assetPath: result.path, caption }] });
       } else {
         setBackgroundGenError(result.error);
       }
@@ -953,6 +989,21 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     } finally {
       setGeneratingBackground(false);
     }
+  }
+
+  // Genera el fondo del próximo panel pendiente de la cola (ver
+  // pendingBreakdownPanel arriba) — resuelve los personajes de ESE panel
+  // puntual (no todos los de la escena) contra el roster del desglose para
+  // mandar sus retratos como referencia, y precompleta el pie de foto con
+  // el texto del panel.
+  async function generatePendingPanelBackground(prompt: string, caption: string): Promise<void> {
+    const base = editedScene ?? baseScene;
+    if (!base || !scriptBreakdown) return;
+    const breakdownScene = scriptBreakdown.scenes.find((s) => s.id === base.id);
+    const panel = breakdownScene?.panels[base.backgrounds.length];
+    if (!panel) return;
+    const characterIds = resolvePanelCharacterIds(panel.characters, scriptBreakdown.characters);
+    await generateBackgroundWithAi(prompt, characterIds, caption);
   }
 
   function removeBackground(bgId: string): void {
@@ -1131,6 +1182,50 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     try {
       const result = await window.api.saveSceneLayout(gameId, id, newScene, {});
       if (result.ok) {
+        reloadAfterSave();
+        return;
+      }
+      setSaveMessage(`Error creando escena: ${result.error}`);
+    } catch (error) {
+      setSaveMessage(`Error creando escena: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setCreatingScene(false);
+    }
+  }
+
+  // Convierte una escena YA revisada del desglose de guion en la escena de
+  // juego real — vacía de fondos, tipo cinemática, con el mismo id que ya
+  // trae del desglose (ya es un slug único ahí). Si ya existe (se llamó
+  // antes para esta misma escena), no crea una segunda: solo abre la que
+  // ya está, para seguir la cola de paneles donde quedó.
+  async function createSceneFromBreakdown(breakdownSceneId: string): Promise<void> {
+    const taken = new Set(allScenes.map((s) => s.id));
+    if (taken.has(breakdownSceneId)) {
+      setEditorSceneId(breakdownSceneId);
+      setEditorTab('scene');
+      return;
+    }
+    const newScene: Scene = {
+      id: breakdownSceneId,
+      act: 1,
+      kind: 'cinematica',
+      backgrounds: [],
+      layers: [],
+      hotspots: [],
+      dialogueNodes: {},
+      introSkippable: true,
+      cinematicTransition: 'fade',
+      menuTitle: null,
+      menuButtons: [],
+      menuAppearance: DEFAULT_MENU_APPEARANCE,
+    };
+    setCreatingScene(true);
+    setSaveMessage(null);
+    try {
+      const result = await window.api.saveSceneLayout(gameId, breakdownSceneId, newScene, {});
+      if (result.ok) {
+        setEditorSceneId(breakdownSceneId);
+        setEditorTab('scene');
         reloadAfterSave();
         return;
       }
@@ -1976,6 +2071,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onCreateScene={(name, act, kind) => void createScene(name, act, kind)}
                   onAddBackground={(file) => void addBackground(file)}
                   onGenerateBackground={(prompt, characterIds) => void generateBackgroundWithAi(prompt, characterIds)}
+                  pendingPanel={pendingBreakdownPanel}
+                  onGeneratePendingPanel={(prompt, caption) => void generatePendingPanelBackground(prompt, caption)}
                   onRemoveBackground={removeBackground}
                   onBackgroundDurationChange={updateBackgroundDuration}
                   onBackgroundColorChange={updateBackgroundColor}
@@ -2084,6 +2181,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onRetryScenePanels={(sceneId, sceneTitle, sourceText) =>
                     void retryScenePanels(sceneId, sceneTitle, sourceText)
                   }
+                  existingSceneIds={allScenes.map((s) => s.id)}
+                  creatingScene={creatingScene}
+                  onCreateGameScene={(sceneId) => void createSceneFromBreakdown(sceneId)}
                 />
               )}
             </div>

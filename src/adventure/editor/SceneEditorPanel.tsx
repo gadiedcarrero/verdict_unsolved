@@ -373,6 +373,63 @@ function GenerateBackgroundForm({
   );
 }
 
+/** Cola de un solo panel a la vez (el que sigue) para "crear escena de
+ * juego" desde el desglose de guion — ver createSceneFromBreakdown en
+ * AdventureRuntime.tsx. Prompt y pie de foto vienen precompletados por la
+ * IA (imageDescription/displayText del panel), editables antes de generar.
+ * `key={index}` en el llamador fuerza que este componente se remonte con
+ * estado fresco cuando el panel pendiente cambia (avanza la cola). */
+function PendingPanelQueue({
+  imageDescription,
+  displayText,
+  index,
+  total,
+  generating,
+  error,
+  onGenerate,
+}: {
+  imageDescription: string;
+  displayText: string;
+  index: number;
+  total: number;
+  generating: boolean;
+  error: string | null;
+  onGenerate: (prompt: string, caption: string) => void;
+}): JSX.Element {
+  const [prompt, setPrompt] = useState(imageDescription);
+  const [caption, setCaption] = useState(displayText);
+  return (
+    <div className="mb-2 rounded border border-sky-400/40 bg-graphite-950 p-2">
+      <p className="mb-1 text-[9px] tracking-widest text-sky-300 uppercase">
+        Panel pendiente del guion ({index + 1}/{total})
+      </p>
+      <textarea
+        value={prompt}
+        onChange={(event) => setPrompt(event.target.value)}
+        rows={2}
+        placeholder="Descripción visual (en inglés, para el generador de imagen)..."
+        className={`${inputClassName} mb-1`}
+      />
+      <textarea
+        value={caption}
+        onChange={(event) => setCaption(event.target.value)}
+        rows={2}
+        placeholder="Texto debajo del panel..."
+        className={`${inputClassName} mb-1`}
+      />
+      {error && <p className="mb-1 text-[9px] text-red-300">{error}</p>}
+      <button
+        type="button"
+        onClick={() => onGenerate(prompt.trim(), caption)}
+        disabled={generating || !prompt.trim()}
+        className="w-full rounded border border-sky-400/40 px-2 py-1.5 text-[10px] tracking-widest text-sky-300 uppercase transition-colors hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {generating ? 'Generando...' : 'Generar este fondo'}
+      </button>
+    </div>
+  );
+}
+
 function BackgroundsSection({
   gameId,
   scene,
@@ -383,8 +440,10 @@ function BackgroundsSection({
   backgroundGenError,
   backgroundCacheBust,
   editingBackgroundPath,
+  pendingPanel,
   onAddBackground,
   onGenerateBackground,
+  onGeneratePendingPanel,
   onRemoveBackground,
   onDurationChange,
   onBackgroundColorChange,
@@ -401,8 +460,12 @@ function BackgroundsSection({
   backgroundGenError: string | null;
   backgroundCacheBust: Record<string, number>;
   editingBackgroundPath: string | null;
+  /** Próximo panel sin fondo generado, si esta escena vino del desglose de
+   * guion — ver pendingBreakdownPanel en AdventureRuntime.tsx. */
+  pendingPanel: { imageDescription: string; displayText: string; index: number; total: number } | null;
   onAddBackground: (file: File) => void;
   onGenerateBackground: (prompt: string, characterIds: string[]) => void;
+  onGeneratePendingPanel: (prompt: string, caption: string) => void;
   onRemoveBackground: (bgId: string) => void;
   onDurationChange: (bgId: string, durationMs: number) => void;
   onBackgroundColorChange: (bgId: string, color: string | undefined) => void;
@@ -462,6 +525,18 @@ function BackgroundsSection({
         {uploading ? 'Subiendo...' : '+ Agregar fondo'}
       </button>
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+      {pendingPanel && (
+        <PendingPanelQueue
+          key={pendingPanel.index}
+          imageDescription={pendingPanel.imageDescription}
+          displayText={pendingPanel.displayText}
+          index={pendingPanel.index}
+          total={pendingPanel.total}
+          generating={generatingBackground}
+          error={backgroundGenError}
+          onGenerate={onGeneratePendingPanel}
+        />
+      )}
       <GenerateBackgroundForm
         characters={characters}
         strings={strings}
@@ -1674,6 +1749,8 @@ export function SceneEditorPanel({
   onCreateScene,
   onAddBackground,
   onGenerateBackground,
+  pendingPanel,
+  onGeneratePendingPanel,
   onRemoveBackground,
   onBackgroundDurationChange,
   onBackgroundColorChange,
@@ -1729,6 +1806,8 @@ export function SceneEditorPanel({
   onCreateScene: (name: string, act: number, kind: SceneKind) => void;
   onAddBackground: (file: File) => void;
   onGenerateBackground: (prompt: string, characterIds: string[]) => void;
+  pendingPanel: { imageDescription: string; displayText: string; index: number; total: number } | null;
+  onGeneratePendingPanel: (prompt: string, caption: string) => void;
   onRemoveBackground: (bgId: string) => void;
   onBackgroundDurationChange: (bgId: string, durationMs: number) => void;
   onBackgroundColorChange: (bgId: string, color: string | undefined) => void;
@@ -1814,6 +1893,8 @@ export function SceneEditorPanel({
             backgroundGenError={backgroundGenError}
             onAddBackground={onAddBackground}
             onGenerateBackground={onGenerateBackground}
+            pendingPanel={pendingPanel}
+            onGeneratePendingPanel={onGeneratePendingPanel}
             onRemoveBackground={onRemoveBackground}
             onDurationChange={onBackgroundDurationChange}
             onBackgroundColorChange={onBackgroundColorChange}
