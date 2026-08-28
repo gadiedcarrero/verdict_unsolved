@@ -282,6 +282,11 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   // scriptBreakdownHandlers.ts) — no aborta el análisis entero, pero el
   // usuario tiene que saber cuáles quedaron sin paneles para reintentar.
   const [scriptBreakdownWarnings, setScriptBreakdownWarnings] = useState<string[]>([]);
+  // Reintento puntual de paneles para UNA escena (pegando el texto a mano) —
+  // por sceneId, no un solo booleano global, porque el usuario puede tener
+  // varias escenas sin paneles a la vez.
+  const [scenePanelsRetrying, setScenePanelsRetrying] = useState<Record<string, boolean>>({});
+  const [scenePanelsRetryError, setScenePanelsRetryError] = useState<Record<string, string>>({});
 
   // Voces de ElevenLabs disponibles en la cuenta — se piden a mano (botón
   // "Cargar voces" en Personajes), no en cada apertura del editor, mismo
@@ -1692,6 +1697,36 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
   }
 
+  async function retryScenePanels(sceneId: string, sceneTitle: string, sourceText: string): Promise<void> {
+    setScenePanelsRetrying((prev) => ({ ...prev, [sceneId]: true }));
+    setScenePanelsRetryError((prev) => {
+      const next = { ...prev };
+      delete next[sceneId];
+      return next;
+    });
+    try {
+      const result = await window.api.generateScenePanels(sceneId, sceneTitle, sourceText);
+      if (result.ok) {
+        if (!scriptBreakdown) return;
+        persistScriptBreakdown({
+          ...scriptBreakdown,
+          scenes: scriptBreakdown.scenes.map((s) =>
+            s.id === sceneId ? { ...s, sourceText: result.sourceText, panels: result.panels } : s,
+          ),
+        });
+      } else {
+        setScenePanelsRetryError((prev) => ({ ...prev, [sceneId]: result.error }));
+      }
+    } catch (error) {
+      setScenePanelsRetryError((prev) => ({
+        ...prev,
+        [sceneId]: error instanceof Error ? error.message : String(error),
+      }));
+    } finally {
+      setScenePanelsRetrying((prev) => ({ ...prev, [sceneId]: false }));
+    }
+  }
+
   async function handleSaveCharacters(): Promise<void> {
     if (!editedCharacters) return;
     setCharacterSaving(true);
@@ -2044,6 +2079,11 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onSceneStatusChange={updateScriptBreakdownSceneStatus}
                   onPanelDisplayTextChange={updateScriptBreakdownPanelDisplayText}
                   onPanelImageDescriptionChange={updateScriptBreakdownPanelImageDescription}
+                  scenePanelsRetrying={scenePanelsRetrying}
+                  scenePanelsRetryError={scenePanelsRetryError}
+                  onRetryScenePanels={(sceneId, sceneTitle, sourceText) =>
+                    void retryScenePanels(sceneId, sceneTitle, sourceText)
+                  }
                 />
               )}
             </div>

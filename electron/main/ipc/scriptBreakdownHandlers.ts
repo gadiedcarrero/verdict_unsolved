@@ -396,8 +396,9 @@ export function registerScriptBreakdownHandlers(): void {
         // Mejor cortar acá con un aviso claro que apunta al problema real.
         if (looksLikeIncompleteSourceText(scene.sourceText)) {
           warnings.push(
-            `${scene.title}: el texto original de esta escena no se copió completo (salió muy corto o con un ` +
-              'placeholder en vez del texto real) — probá "Generar de nuevo", o pegá el texto de esa escena a mano.',
+            `${scene.title}: no se pudo ubicar el texto original de esta escena en el guion (el fragmento que dio ` +
+              'la IA para encontrarla no coincidió) — abrí "Paneles cinemáticos" en esta escena para pegar el ' +
+              'texto a mano y generar los paneles solo para ella.',
           );
           continue;
         }
@@ -414,6 +415,31 @@ export function registerScriptBreakdownHandlers(): void {
       return { ok: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
+
+  // Reintento puntual para una escena que quedó sin paneles — el usuario
+  // pega el texto de esa escena a mano (ver aviso en el loop de arriba) y
+  // esto corre solo el paso 2 (generateScenePanels) para ella, sin repetir
+  // el análisis del guion entero.
+  ipcMain.handle(
+    'script-breakdown:generate-scene-panels',
+    async (_event, sceneId: unknown, sceneTitle: unknown, sourceText: unknown) => {
+      if (typeof sceneId !== 'string' || typeof sceneTitle !== 'string' || typeof sourceText !== 'string') {
+        return { ok: false, error: 'Datos inválidos.' };
+      }
+      if (!sourceText.trim()) {
+        return { ok: false, error: 'Pegá el texto de la escena antes de generar.' };
+      }
+      const config = await getStoredAiIntegrationsConfig();
+      if (!config.openaiApiKey) {
+        return { ok: false, error: 'Falta la API key de OpenAI en Ajustes → Integraciones IA.' };
+      }
+      const result = await generateScenePanels(config.openaiApiKey, sceneId, sceneTitle, sourceText);
+      if ('error' in result) {
+        return { ok: false, error: result.error };
+      }
+      return { ok: true, sourceText, panels: result.panels };
+    },
+  );
 
   ipcMain.handle('script-breakdown:save', async (_event, gameId: unknown, breakdown: unknown) => {
     if (app.isPackaged) {

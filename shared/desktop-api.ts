@@ -1,7 +1,7 @@
 import type { AiIntegrationsConfig } from './ai-integrations';
 import type { ElevenLabsVoicesResult } from './elevenlabs';
 import type { SaveData } from './save-data';
-import type { ScriptBreakdown } from './script-breakdown';
+import type { ScriptBreakdown, ScriptBreakdownPanel } from './script-breakdown';
 
 export type SceneEditorSaveResult = { ok: true } | { ok: false; error: string };
 export type PortraitSaveResult = { ok: true; path: string } | { ok: false; error: string };
@@ -13,6 +13,9 @@ export type ScriptBreakdownGenerateResult =
   | { ok: true; breakdown: ScriptBreakdown; warnings: string[] }
   | { ok: false; error: string };
 export type ScriptBreakdownReadResult = { ok: true; breakdown: ScriptBreakdown | null } | { ok: false; error: string };
+export type ScriptBreakdownScenePanelsResult =
+  | { ok: true; sourceText: string; panels: ScriptBreakdownPanel[] }
+  | { ok: false; error: string };
 
 export type DesktopApi = {
   /** Un archivo de guardado por juego (save-<gameId>.json en userData). */
@@ -90,6 +93,15 @@ export type DesktopApi = {
    * en src/games/<gameId>/script-breakdown.json. */
   saveScriptBreakdown: (gameId: string, breakdown: ScriptBreakdown) => Promise<SceneEditorSaveResult>;
   readScriptBreakdown: (gameId: string) => Promise<ScriptBreakdownReadResult>;
+  /** Reintento puntual para UNA escena que quedó sin paneles (el texto
+   * original no se pudo ubicar en el guion) — el usuario pega el texto de
+   * esa escena a mano acá y esto corre solo el paso 2 del pipeline para
+   * ella, sin repetir el análisis del guion entero. */
+  generateScenePanels: (
+    sceneId: string,
+    sceneTitle: string,
+    sourceText: string,
+  ) => Promise<ScriptBreakdownScenePanelsResult>;
   /** Genera un retrato (busto 3/4, fondo transparente) con OpenAI y lo
    * guarda en portraits/<characterId>.png (o
    * portraits/<characterId>-<expressionKey>.png con expressionKey) — usa la

@@ -24,6 +24,8 @@ const api: DesktopApi = {
   generateScriptBreakdown: (scriptText) => ipcRenderer.invoke('script-breakdown:generate', scriptText),
   saveScriptBreakdown: (gameId, breakdown) => ipcRenderer.invoke('script-breakdown:save', gameId, breakdown),
   readScriptBreakdown: (gameId) => ipcRenderer.invoke('script-breakdown:read', gameId),
+  generateScenePanels: (sceneId, sceneTitle, sourceText) =>
+    ipcRenderer.invoke('script-breakdown:generate-scene-panels', sceneId, sceneTitle, sourceText),
   generateCharacterPortrait: (gameId, characterId, prompt, expressionKey, referenceImagePath) =>
     ipcRenderer.invoke('ai:generate-character-portrait', gameId, characterId, prompt, expressionKey, referenceImagePath),
   flipCharacterPortrait: (gameId, relativePath) =>

@@ -88,20 +88,64 @@ function PanelCard({
   );
 }
 
+function RetryPanelsForm({
+  scene,
+  retrying,
+  retryError,
+  onRetry,
+}: {
+  scene: ScriptBreakdownScene;
+  retrying: boolean;
+  retryError: string | null;
+  onRetry: (sourceText: string) => void;
+}): JSX.Element {
+  const [sourceText, setSourceText] = useState(scene.sourceText);
+  return (
+    <div className="mt-1 rounded border border-graphite-800 bg-graphite-950/60 p-1.5">
+      <p className="mb-1 text-[9px] text-graphite-500">
+        Sin paneles todavía — no se pudo ubicar el texto original de esta escena en el guion. Pegalo acá a mano y
+        generá los paneles solo para esta escena.
+      </p>
+      <textarea
+        value={sourceText}
+        onChange={(event) => setSourceText(event.target.value)}
+        rows={4}
+        className={`${inputClassName} mb-1`}
+        placeholder="Pegá acá el texto original de esta escena..."
+      />
+      {retryError && <p className="mb-1 text-[9px] text-red-300">{retryError}</p>}
+      <button
+        type="button"
+        onClick={() => onRetry(sourceText)}
+        disabled={retrying || sourceText.trim().length < 20}
+        className="w-full rounded border border-amber-accent px-1.5 py-1 text-[9px] font-semibold tracking-widest text-amber-accent uppercase transition-colors hover:bg-amber-accent hover:text-graphite-950 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-amber-accent"
+      >
+        {retrying ? 'Generando paneles...' : 'Generar paneles con este texto'}
+      </button>
+    </div>
+  );
+}
+
 function SceneCard({
   scene,
   characters,
+  retrying,
+  retryError,
   onSummaryChange,
   onStatusChange,
   onPanelDisplayTextChange,
   onPanelImageDescriptionChange,
+  onRetryPanels,
 }: {
   scene: ScriptBreakdownScene;
   characters: ScriptBreakdownCharacter[];
+  retrying: boolean;
+  retryError: string | null;
   onSummaryChange: (summary: string) => void;
   onStatusChange: (status: ScriptBreakdownReviewStatus) => void;
   onPanelDisplayTextChange: (panelId: string, text: string) => void;
   onPanelImageDescriptionChange: (panelId: string, text: string) => void;
+  onRetryPanels: (sourceText: string) => void;
 }): JSX.Element {
   const [panelsOpen, setPanelsOpen] = useState(false);
   const sceneCharacters = scene.characterIds
@@ -188,10 +232,7 @@ function SceneCard({
       {panelsOpen && (
         <div className="mt-1">
           {scene.panels.length === 0 ? (
-            <p className="text-[9px] text-graphite-600">
-              Sin paneles todavía — esta escena no tiene texto original guardado, o el desglose en paneles falló al
-              generar (ver aviso arriba).
-            </p>
+            <RetryPanelsForm scene={scene} retrying={retrying} retryError={retryError} onRetry={onRetryPanels} />
           ) : (
             scene.panels.map((panel) => (
               <PanelCard
@@ -219,6 +260,9 @@ export function ScriptBreakdownPanel({
   onSceneStatusChange,
   onPanelDisplayTextChange,
   onPanelImageDescriptionChange,
+  scenePanelsRetrying,
+  scenePanelsRetryError,
+  onRetryScenePanels,
 }: {
   breakdown: ScriptBreakdown | null;
   generating: boolean;
@@ -234,6 +278,11 @@ export function ScriptBreakdownPanel({
   onSceneStatusChange: (sceneId: string, status: ScriptBreakdownReviewStatus) => void;
   onPanelDisplayTextChange: (sceneId: string, panelId: string, text: string) => void;
   onPanelImageDescriptionChange: (sceneId: string, panelId: string, text: string) => void;
+  /** Reintento puntual de paneles por escena (pegando el texto a mano) —
+   * ver RetryPanelsForm. Claves por sceneId. */
+  scenePanelsRetrying: Record<string, boolean>;
+  scenePanelsRetryError: Record<string, string>;
+  onRetryScenePanels: (sceneId: string, sceneTitle: string, sourceText: string) => void;
 }): JSX.Element {
   const [scriptText, setScriptText] = useState('');
   const [loadedFileName, setLoadedFileName] = useState<string | null>(null);
@@ -351,12 +400,15 @@ export function ScriptBreakdownPanel({
               key={scene.id}
               scene={scene}
               characters={breakdown.characters}
+              retrying={scenePanelsRetrying[scene.id] ?? false}
+              retryError={scenePanelsRetryError[scene.id] ?? null}
               onSummaryChange={(summary) => onSceneSummaryChange(scene.id, summary)}
               onStatusChange={(status) => onSceneStatusChange(scene.id, status)}
               onPanelDisplayTextChange={(panelId, text) => onPanelDisplayTextChange(scene.id, panelId, text)}
               onPanelImageDescriptionChange={(panelId, text) =>
                 onPanelImageDescriptionChange(scene.id, panelId, text)
               }
+              onRetryPanels={(sourceText) => onRetryScenePanels(scene.id, scene.title, sourceText)}
             />
           ))}
         </>
