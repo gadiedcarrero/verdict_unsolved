@@ -204,6 +204,20 @@ function extractSourceTextMarkers(value: unknown): { start: string; end: string 
   });
 }
 
+/** Visto en producción: el modelo dice que está "copiando exactamente" un
+ * fragmento, pero cambia una raya larga (—) por un guion corto (-), o una
+ * comilla tipográfica (" ") por una recta (") — un solo carácter distinto
+ * alcanza para que `indexOf` no encuentre nada. Cada sustitución de acá es
+ * 1 carácter → 1 carácter (nunca colapsa espacios ni cambia el largo), así
+ * que los índices encontrados sobre el texto normalizado siguen siendo
+ * válidos para recortar el texto ORIGINAL sin tocar su formato real. */
+function normalizeForMatching(text: string): string {
+  return text
+    .replace(/[—–]/g, '-')
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'");
+}
+
 /** El paso 1 ya no copia el texto completo de cada escena adentro de su
  * propia respuesta — eso era lo que inflaba la salida al tamaño del guion
  * entero (o más, con el overhead de JSON) en un guion largo, y el modelo
@@ -212,21 +226,25 @@ function extractSourceTextMarkers(value: unknown): { start: string; end: string 
  * fin por escena, y acá se recorta el guion original ENTRE esos dos
  * puntos con `indexOf` — el cursor avanza escena por escena para no
  * engancharse con una repetición anterior del mismo fragmento. Si algún
- * marcador no aparece tal cual en el guion (el modelo lo parafraseó), esa
- * escena queda con sourceText vacío y `looksLikeIncompleteSourceText` más
- * abajo la agarra igual que el caso viejo del placeholder. */
+ * marcador no aparece tal cual en el guion (el modelo lo parafraseó más
+ * allá de lo que normalizeForMatching perdona), esa escena queda con
+ * sourceText vacío y `looksLikeIncompleteSourceText` más abajo la agarra
+ * igual que el caso viejo del placeholder. */
 function resolveSourceTexts(
   scriptText: string,
   markers: { start: string; end: string }[],
 ): { texts: string[]; finalCursor: number } {
+  const normalizedScript = normalizeForMatching(scriptText);
   let cursor = 0;
   const texts = markers.map(({ start, end }) => {
     if (!start || !end) return '';
-    const startIndex = scriptText.indexOf(start, cursor);
+    const normStart = normalizeForMatching(start);
+    const normEnd = normalizeForMatching(end);
+    const startIndex = normalizedScript.indexOf(normStart, cursor);
     if (startIndex === -1) return '';
-    const endMatchIndex = scriptText.indexOf(end, startIndex + start.length);
+    const endMatchIndex = normalizedScript.indexOf(normEnd, startIndex + normStart.length);
     if (endMatchIndex === -1) return '';
-    const endIndex = endMatchIndex + end.length;
+    const endIndex = endMatchIndex + normEnd.length;
     cursor = endIndex;
     return scriptText.slice(startIndex, endIndex);
   });
