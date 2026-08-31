@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type JSX } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { translate } from '../../i18n/translate';
 import type {
   Character,
@@ -215,8 +215,44 @@ function BackgroundThumb({
    * — la edición con IA quedó en un botón aparte para no pisarse. */
   onSelectForZones: () => void;
 }): JSX.Element {
+  // "Guardar cambios" recarga la página entera ~400ms después de escribir el
+  // archivo (ver reloadAfterSave en AdventureRuntime.tsx) — ese margen le
+  // alcanza casi siempre a Vite/Electron para notar los .json, pero un fondo
+  // recién generado por IA puede tardar más en quedar visible para quien
+  // sirve los assets. Sin reintento, un solo 404 transitorio justo después
+  // de recargar dejaba el fondo marcado "sin imagen" para siempre, aunque el
+  // archivo estuviera perfectamente bien en disco — de ahí que pareciera que
+  // guardar "borraba" las imágenes.
+  const MAX_LOAD_RETRIES = 5;
+  const RETRY_DELAY_MS = 500;
   const [failed, setFailed] = useState(false);
+  const [retryToken, setRetryToken] = useState(0);
+  const retryCountRef = useRef(0);
+  const retryTimeoutRef = useRef<number | null>(null);
   const src = gameAssetUrl(gameId, assetPath);
+  const bust = (cacheBust ?? 0) + retryToken;
+  const imgSrc = bust ? `${src}?v=${bust}` : src;
+
+  useEffect(() => {
+    retryCountRef.current = 0;
+    setFailed(false);
+    setRetryToken(0);
+    return () => {
+      if (retryTimeoutRef.current !== null) window.clearTimeout(retryTimeoutRef.current);
+    };
+  }, [assetPath]);
+
+  function handleImageError(): void {
+    if (retryCountRef.current >= MAX_LOAD_RETRIES) {
+      setFailed(true);
+      return;
+    }
+    retryCountRef.current += 1;
+    retryTimeoutRef.current = window.setTimeout(() => {
+      setRetryToken((t) => t + 1);
+    }, RETRY_DELAY_MS * retryCountRef.current);
+  }
+
   return (
     <div className="w-24 shrink-0">
       <div className="relative">
@@ -235,10 +271,10 @@ function BackgroundThumb({
             style={{ backgroundColor: backgroundColor || undefined }}
           >
             <img
-              key={cacheBust ?? 0}
-              src={cacheBust ? `${src}?v=${cacheBust}` : src}
+              key={bust}
+              src={imgSrc}
               alt=""
-              onError={() => setFailed(true)}
+              onError={handleImageError}
               className={imageWidthPercent ? 'max-h-full' : 'h-14 w-24 object-cover'}
               style={imageWidthPercent ? { width: `${imageWidthPercent}%` } : undefined}
             />
