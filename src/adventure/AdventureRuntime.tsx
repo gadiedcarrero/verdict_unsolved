@@ -345,6 +345,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   // forma") — no null mientras se están juntando puntos a click.
   const [polygonDraft, setPolygonDraft] = useState<PolygonDraft | null>(null);
 
+  // Cada fondo de una escena tiene sus propias zonas interactivas (ver
+  // SceneBackground.hotspots) — esto decide sobre cuál fondo cae cada
+  // alta/baja/edición de zona en el editor, y qué fondo se muestra en el
+  // canvas mientras se editan. null = el primero de la escena (default).
+  const [editingZonesBackgroundId, setEditingZonesBackgroundId] = useState<string | null>(null);
+
   // Cambiar de escena (o salir del modo edición) resetea `editedScene` y
   // `polygonDraft` sin avisar — antes se perdía en silencio una zona a
   // medio trazar o cualquier cambio sin guardar. Esta guarda confirma antes
@@ -398,6 +404,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setPendingStrings({});
     setSaveMessage(null);
     setPolygonDraft(null);
+    setEditingZonesBackgroundId(null);
   }, [activeEditorSceneId]);
 
   if (!project) {
@@ -470,6 +477,34 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const baseSiteSettings = bundle.siteSettings;
   const displaySiteSettings = editedSiteSettings ?? baseSiteSettings;
 
+  // Cada fondo tiene sus propias zonas interactivas (ver
+  // SceneBackground.hotspots) — antes vivían todas juntas en Scene.hotspots,
+  // compartidas por todos los fondos de la escena (eso impedía, por
+  // ejemplo, que apagar la luz revelara una zona que no existía con la luz
+  // prendida). `editingZonesBackgroundId` decide sobre cuál fondo cae cada
+  // alta/baja/edición — null = el primero de la escena.
+  function getEditingBackgroundId(base: Scene): string | undefined {
+    return (
+      (editingZonesBackgroundId && base.backgrounds.some((bg) => bg.id === editingZonesBackgroundId)
+        ? editingZonesBackgroundId
+        : base.backgrounds[0]?.id) ?? undefined
+    );
+  }
+
+  function getEditingHotspots(base: Scene): Hotspot[] {
+    const bgId = getEditingBackgroundId(base);
+    return base.backgrounds.find((bg) => bg.id === bgId)?.hotspots ?? [];
+  }
+
+  function withEditingHotspots(base: Scene, updater: (hotspots: Hotspot[]) => Hotspot[]): Scene {
+    const bgId = getEditingBackgroundId(base);
+    if (!bgId) return base;
+    return {
+      ...base,
+      backgrounds: base.backgrounds.map((bg) => (bg.id === bgId ? { ...bg, hotspots: updater(bg.hotspots) } : bg)),
+    };
+  }
+
   // Un "objeto" del editor es una capa y su hotspot (si existe) con el mismo
   // id — se mueven juntos porque representan la misma cosa en pantalla. Ver
   // editor/editableObjects.ts.
@@ -478,13 +513,15 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       const base = prev ?? baseScene;
       if (!base) return prev;
       const hasLayer = base.layers.some((layer) => layer.id === objectId);
-      return {
+      const withLayers: Scene = {
         ...base,
         layers: hasLayer
           ? base.layers.map((layer) => (layer.id === objectId ? { ...layer, ...rect } : layer))
           : base.layers,
-        hotspots: base.hotspots.map((hotspot) => (hotspot.id === objectId ? { ...hotspot, area: rect } : hotspot)),
       };
+      return withEditingHotspots(withLayers, (hotspots) =>
+        hotspots.map((hotspot) => (hotspot.id === objectId ? { ...hotspot, area: rect } : hotspot)),
+      );
     });
   }
 
@@ -495,21 +532,19 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   function toggleInteractable(objectId: string, interactable: boolean): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
-    const hasHotspot = base.hotspots.some((h) => h.id === objectId);
+    const hasHotspot = getEditingHotspots(base).some((h) => h.id === objectId);
     if (hasHotspot) {
-      setEditedScene({
-        ...base,
-        hotspots: base.hotspots.map((h) => (h.id === objectId ? { ...h, interactable } : h)),
-      });
+      setEditedScene(
+        withEditingHotspots(base, (hotspots) => hotspots.map((h) => (h.id === objectId ? { ...h, interactable } : h))),
+      );
       return;
     }
     const layer = base.layers.find((l) => l.id === objectId);
     if (!layer) return;
     const labelKey = `hotspot.${base.id}.${objectId}`;
-    setEditedScene({
-      ...base,
-      hotspots: [
-        ...base.hotspots,
+    setEditedScene(
+      withEditingHotspots(base, (hotspots) => [
+        ...hotspots,
         {
           id: layer.id,
           label: labelKey,
@@ -522,8 +557,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           onExamine: [],
           interactWithTargets: [],
         },
-      ],
-    });
+      ]),
+    );
     setPendingStrings((prev) => (labelKey in prev ? prev : { ...prev, [labelKey]: objectId }));
   }
 
@@ -533,7 +568,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   function createZone(name: string, labelText: string, interactable: boolean, shape: HotspotShape): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
-    const taken = new Set([...base.hotspots.map((h) => h.id), ...base.layers.map((l) => l.id)]);
+    const taken = new Set([...getEditingHotspots(base).map((h) => h.id), ...base.layers.map((l) => l.id)]);
     const id = uniqueId(slugify(name), taken);
     const labelKey = `hotspot.${base.id}.${id}`;
 
@@ -555,10 +590,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       return;
     }
 
-    setEditedScene({
-      ...base,
-      hotspots: [
-        ...base.hotspots,
+    setEditedScene(
+      withEditingHotspots(base, (hotspots) => [
+        ...hotspots,
         {
           id,
           label: labelKey,
@@ -571,8 +605,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           onExamine: [],
           interactWithTargets: [],
         },
-      ],
-    });
+      ]),
+    );
     setPendingStrings((prev) => ({ ...prev, [labelKey]: labelText }));
   }
 
@@ -583,12 +617,13 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   function updateHotspotLabelStyle(objectId: string, patch: Partial<TextStyleOverride> | null): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
-    setEditedScene({
-      ...base,
-      hotspots: base.hotspots.map((h) =>
-        h.id === objectId ? { ...h, labelStyle: patch === null ? undefined : { ...(h.labelStyle ?? {}), ...patch } } : h,
+    setEditedScene(
+      withEditingHotspots(base, (hotspots) =>
+        hotspots.map((h) =>
+          h.id === objectId ? { ...h, labelStyle: patch === null ? undefined : { ...(h.labelStyle ?? {}), ...patch } } : h,
+        ),
       ),
-    });
+    );
   }
 
   // "actionMenuEnabled": si es true, un click en la zona abre el menú de
@@ -598,10 +633,11 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   function setActionMenuEnabled(objectId: string, enabled: boolean): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
-    setEditedScene({
-      ...base,
-      hotspots: base.hotspots.map((h) => (h.id === objectId ? { ...h, actionMenuEnabled: enabled } : h)),
-    });
+    setEditedScene(
+      withEditingHotspots(base, (hotspots) =>
+        hotspots.map((h) => (h.id === objectId ? { ...h, actionMenuEnabled: enabled } : h)),
+      ),
+    );
   }
 
   type ActionSlot = 'onExamine' | 'onInteract';
@@ -615,7 +651,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   }
 
   function actionComposerValue(base: Scene, objectId: string, slot: ActionSlot): ActionComposerValue {
-    const actions = base.hotspots.find((h) => h.id === objectId)?.[slot] ?? [];
+    const actions = getEditingHotspots(base).find((h) => h.id === objectId)?.[slot] ?? [];
     const backgroundAction = actions.find((a) => a.type === 'toggleBackground');
     const sceneAction = actions.find((a) => a.type === 'transitionTo');
     const dialogueAction = actions.find((a) => a.type === 'dialogue');
@@ -663,11 +699,11 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       delete dialogueNodes[nodeId];
     }
 
-    setEditedScene({
-      ...base,
-      dialogueNodes,
-      hotspots: base.hotspots.map((h) => (h.id === objectId ? { ...h, [slot]: actions } : h)),
-    });
+    setEditedScene(
+      withEditingHotspots({ ...base, dialogueNodes }, (hotspots) =>
+        hotspots.map((h) => (h.id === objectId ? { ...h, [slot]: actions } : h)),
+      ),
+    );
   }
 
   function interactWithNodeId(sceneId: string, objectId: string, targetObjectId: string): string {
@@ -675,7 +711,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   }
 
   function interactWithComposerValue(base: Scene, objectId: string, targetObjectId: string): ActionComposerValue {
-    const entry = base.hotspots
+    const entry = getEditingHotspots(base)
       .find((h) => h.id === objectId)
       ?.interactWithTargets.find((t) => t.targetObjectId === targetObjectId);
     const actions = entry?.onInteract ?? [];
@@ -727,33 +763,34 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       delete dialogueNodes[nodeId];
     }
 
-    setEditedScene({
-      ...base,
-      dialogueNodes,
-      hotspots: base.hotspots.map((h) =>
-        h.id === objectId
-          ? {
-              ...h,
-              interactWithTargets: h.interactWithTargets.map((t) =>
-                t.targetObjectId === targetObjectId ? { ...t, onInteract: actions } : t,
-              ),
-            }
-          : h,
+    setEditedScene(
+      withEditingHotspots({ ...base, dialogueNodes }, (hotspots) =>
+        hotspots.map((h) =>
+          h.id === objectId
+            ? {
+                ...h,
+                interactWithTargets: h.interactWithTargets.map((t) =>
+                  t.targetObjectId === targetObjectId ? { ...t, onInteract: actions } : t,
+                ),
+              }
+            : h,
+        ),
       ),
-    });
+    );
   }
 
   function addInteractWithTarget(objectId: string, targetObjectId: string): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
-    setEditedScene({
-      ...base,
-      hotspots: base.hotspots.map((h) =>
-        h.id === objectId
-          ? { ...h, interactWithTargets: [...h.interactWithTargets, { targetObjectId, onInteract: [] }] }
-          : h,
+    setEditedScene(
+      withEditingHotspots(base, (hotspots) =>
+        hotspots.map((h) =>
+          h.id === objectId
+            ? { ...h, interactWithTargets: [...h.interactWithTargets, { targetObjectId, onInteract: [] }] }
+            : h,
+        ),
       ),
-    });
+    );
   }
 
   function removeInteractWithTarget(objectId: string, targetObjectId: string): void {
@@ -762,15 +799,15 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     const nodeId = interactWithNodeId(base.id, objectId, targetObjectId);
     const dialogueNodes = { ...base.dialogueNodes };
     delete dialogueNodes[nodeId];
-    setEditedScene({
-      ...base,
-      dialogueNodes,
-      hotspots: base.hotspots.map((h) =>
-        h.id === objectId
-          ? { ...h, interactWithTargets: h.interactWithTargets.filter((t) => t.targetObjectId !== targetObjectId) }
-          : h,
+    setEditedScene(
+      withEditingHotspots({ ...base, dialogueNodes }, (hotspots) =>
+        hotspots.map((h) =>
+          h.id === objectId
+            ? { ...h, interactWithTargets: h.interactWithTargets.filter((t) => t.targetObjectId !== targetObjectId) }
+            : h,
+        ),
       ),
-    });
+    );
   }
 
   // "Interactuar" de un objeto puede componer escena+diálogo (lo de
@@ -780,33 +817,35 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   function setMinigameEnabled(objectId: string, enabled: boolean): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
-    setEditedScene({
-      ...base,
-      hotspots: base.hotspots.map((h) =>
-        h.id === objectId
-          ? {
-              ...h,
-              onInteract: enabled
-                ? [{ type: 'openMinigame', template: 'sequence', sequenceLength: 4, onSuccess: [], onFail: [] }]
-                : [],
-            }
-          : h,
+    setEditedScene(
+      withEditingHotspots(base, (hotspots) =>
+        hotspots.map((h) =>
+          h.id === objectId
+            ? {
+                ...h,
+                onInteract: enabled
+                  ? [{ type: 'openMinigame', template: 'sequence', sequenceLength: 4, onSuccess: [], onFail: [] }]
+                  : [],
+              }
+            : h,
+        ),
       ),
-    });
+    );
   }
 
   function updateMinigameSequenceLength(objectId: string, sequenceLength: number): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
-    setEditedScene({
-      ...base,
-      hotspots: base.hotspots.map((h) => {
-        if (h.id !== objectId) return h;
-        const action = h.onInteract[0];
-        if (action?.type !== 'openMinigame') return h;
-        return { ...h, onInteract: [{ ...action, sequenceLength }] };
-      }),
-    });
+    setEditedScene(
+      withEditingHotspots(base, (hotspots) =>
+        hotspots.map((h) => {
+          if (h.id !== objectId) return h;
+          const action = h.onInteract[0];
+          if (action?.type !== 'openMinigame') return h;
+          return { ...h, onInteract: [{ ...action, sequenceLength }] };
+        }),
+      ),
+    );
   }
 
   function minigameOutcomeNodeId(sceneId: string, objectId: string, outcome: 'onSuccess' | 'onFail'): string {
@@ -814,7 +853,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   }
 
   function minigameOutcomeComposerValue(base: Scene, objectId: string, outcome: 'onSuccess' | 'onFail'): ActionComposerValue {
-    const action = base.hotspots.find((h) => h.id === objectId)?.onInteract[0];
+    const action = getEditingHotspots(base).find((h) => h.id === objectId)?.onInteract[0];
     const actions: SceneAction[] = action?.type === 'openMinigame' ? action[outcome] : [];
     const backgroundAction = actions.find((a) => a.type === 'toggleBackground');
     const sceneAction = actions.find((a) => a.type === 'transitionTo');
@@ -860,36 +899,36 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       delete dialogueNodes[nodeId];
     }
 
-    setEditedScene({
-      ...base,
-      dialogueNodes,
-      hotspots: base.hotspots.map((h) => {
-        if (h.id !== objectId) return h;
-        const action = h.onInteract[0];
-        if (action?.type !== 'openMinigame') return h;
-        return { ...h, onInteract: [{ ...action, [outcome]: actions }] };
-      }),
-    });
+    setEditedScene(
+      withEditingHotspots({ ...base, dialogueNodes }, (hotspots) =>
+        hotspots.map((h) => {
+          if (h.id !== objectId) return h;
+          const action = h.onInteract[0];
+          if (action?.type !== 'openMinigame') return h;
+          return { ...h, onInteract: [{ ...action, [outcome]: actions }] };
+        }),
+      ),
+    );
   }
 
   function updatePolygonPoints(objectId: string, points: PolygonPoint[]): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
-    setEditedScene({
-      ...base,
-      hotspots: base.hotspots.map((h) =>
-        h.id === objectId ? { ...h, points, area: boundingBoxOfPoints(points) } : h,
+    setEditedScene(
+      withEditingHotspots(base, (hotspots) =>
+        hotspots.map((h) => (h.id === objectId ? { ...h, points, area: boundingBoxOfPoints(points) } : h)),
       ),
-    });
+    );
   }
 
   function updateLabelPosition(objectId: string, position: PolygonPoint): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
-    setEditedScene({
-      ...base,
-      hotspots: base.hotspots.map((h) => (h.id === objectId ? { ...h, labelOffset: position } : h)),
-    });
+    setEditedScene(
+      withEditingHotspots(base, (hotspots) =>
+        hotspots.map((h) => (h.id === objectId ? { ...h, labelOffset: position } : h)),
+      ),
+    );
   }
 
   // "Reiniciar forma": saca el hotspot existente y arranca un trazado nuevo
@@ -897,9 +936,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   function resetShape(objectId: string): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
-    const hotspot = base.hotspots.find((h) => h.id === objectId);
+    const hotspot = getEditingHotspots(base).find((h) => h.id === objectId);
     if (!hotspot) return;
-    setEditedScene({ ...base, hotspots: base.hotspots.filter((h) => h.id !== objectId) });
+    setEditedScene(withEditingHotspots(base, (hotspots) => hotspots.filter((h) => h.id !== objectId)));
     setPolygonDraft({
       id: hotspot.id,
       label: hotspot.label,
@@ -923,7 +962,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   function removeHotspot(objectId: string): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
-    setEditedScene({ ...base, hotspots: base.hotspots.filter((h) => h.id !== objectId) });
+    setEditedScene(withEditingHotspots(base, (hotspots) => hotspots.filter((h) => h.id !== objectId)));
   }
 
   function addPolygonDraftPoint(point: PolygonPoint): void {
@@ -953,7 +992,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       onExamine: polygonDraft.onExamine,
       interactWithTargets: polygonDraft.interactWithTargets,
     };
-    setEditedScene({ ...base, hotspots: [...base.hotspots, newHotspot] });
+    setEditedScene(withEditingHotspots(base, (hotspots) => [...hotspots, newHotspot]));
     if (polygonDraft.labelText !== null) {
       const text = polygonDraft.labelText;
       setPendingStrings((prev) => ({ ...prev, [polygonDraft.label]: text }));
@@ -987,7 +1026,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       const buffer = new Uint8Array(await file.arrayBuffer());
       const result = await window.api.saveSceneBackground(gameId, `${base.id}-${bgId}`, ext, buffer);
       if (result.ok) {
-        setEditedScene({ ...base, backgrounds: [...base.backgrounds, { id: bgId, assetPath: result.path }] });
+        setEditedScene({ ...base, backgrounds: [...base.backgrounds, { id: bgId, assetPath: result.path, hotspots: [] }] });
       } else {
         setSaveMessage(`Error subiendo fondo: ${result.error}`);
       }
@@ -1016,7 +1055,10 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       const bgId = nextBackgroundId(base);
       const result = await window.api.generateBackground(gameId, `${base.id}-${bgId}`, prompt, characterRefs);
       if (result.ok) {
-        setEditedScene({ ...base, backgrounds: [...base.backgrounds, { id: bgId, assetPath: result.path, caption }] });
+        setEditedScene({
+          ...base,
+          backgrounds: [...base.backgrounds, { id: bgId, assetPath: result.path, caption, hotspots: [] }],
+        });
       } else {
         setBackgroundGenError(result.error);
       }
@@ -1208,7 +1250,6 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       kind,
       backgrounds: [],
       layers: [],
-      hotspots: [],
       dialogueNodes: {},
       introSkippable: true,
       cinematicTransition: 'fade',
@@ -1254,7 +1295,6 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       kind: breakdownScene?.scriptKind === 'interactiva' ? 'standard' : 'cinematica',
       backgrounds: [],
       layers: [],
-      hotspots: [],
       dialogueNodes: {},
       introSkippable: true,
       cinematicTransition: 'fade',
@@ -2146,6 +2186,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onLabelTextChange={setLabelText}
                   onLabelStyleChange={updateHotspotLabelStyle}
                   onCreateZone={createZone}
+                  editingZonesBackgroundId={displayScene ? getEditingBackgroundId(displayScene) : undefined}
+                  onChangeEditingZonesBackground={setEditingZonesBackgroundId}
                   polygonDraftPointCount={polygonDraft?.points.length ?? null}
                   onCancelPolygonDraft={cancelPolygonDraft}
                   onResetShape={resetShape}
@@ -2452,6 +2494,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 polygonDraftPoints={polygonDraft?.points ?? null}
                 onAddPolygonDraftPoint={addPolygonDraftPoint}
                 onClosePolygonDraft={closePolygonDraft}
+                activeBackgroundId={getEditingBackgroundId(displayScene) ?? null}
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-[11px] tracking-widest text-graphite-600 uppercase">

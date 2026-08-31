@@ -9,6 +9,7 @@ import type {
   MinigameTemplate,
   Scene,
   SceneAction,
+  SceneBackground,
 } from '../game-engine/scene-engine/schemas';
 
 export type ActionMenuActionKind = 'examine' | 'interact' | 'interactWith' | 'close';
@@ -64,6 +65,12 @@ type AdventureRuntimeState = {
 
   init: (bundle: AdventureCaseBundle, persisted: AdventureCaseState | null) => void;
   getActiveScene: () => Scene | null;
+  /** El fondo efectivamente activo ahora mismo (`activeBackgroundId`, o el
+   * primero de la escena si todavía no se tocó ningún `toggleBackground`/
+   * `setBackground`) — cada fondo trae sus propias zonas interactivas (ver
+   * SceneBackground.hotspots), así que esto es la fuente real de qué zonas
+   * responden en este momento, no `getActiveScene()` sola. */
+  getActiveBackground: () => SceneBackground | null;
   getActiveNode: () => DialogueNode | null;
   /** Si el juego está en modo "combinar" (ver combiningHotspotId), el click
    * se interpreta como el segundo objeto en vez de correr la interacción
@@ -153,6 +160,13 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
     return bundle?.scenes.find((s) => s.id === currentSceneId) ?? null;
   },
 
+  getActiveBackground: () => {
+    const scene = get().getActiveScene();
+    if (!scene) return null;
+    const effectiveId = get().activeBackgroundId ?? scene.backgrounds[0]?.id ?? null;
+    return scene.backgrounds.find((bg) => bg.id === effectiveId) ?? scene.backgrounds[0] ?? null;
+  },
+
   getActiveNode: () => {
     const { bundle, activeDialogueNodeId } = get();
     if (!bundle || !activeDialogueNodeId) return null;
@@ -190,7 +204,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       set({ combiningHotspotId: hotspotId });
       return;
     }
-    const hotspot = get().getActiveScene()?.hotspots.find((h) => h.id === hotspotId);
+    const hotspot = get().getActiveBackground()?.hotspots.find((h) => h.id === hotspotId);
     if (!hotspot) return;
     get().runActions(kind === 'examine' ? hotspot.onExamine : hotspot.onInteract);
   },
@@ -199,7 +213,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
     const sourceId = get().combiningHotspotId;
     set({ combiningHotspotId: null });
     if (!sourceId || sourceId === targetHotspotId) return;
-    const source = get().getActiveScene()?.hotspots.find((h) => h.id === sourceId);
+    const source = get().getActiveBackground()?.hotspots.find((h) => h.id === sourceId);
     const match = source?.interactWithTargets.find((t) => t.targetObjectId === targetHotspotId);
     if (match) {
       get().runActions(match.onInteract);

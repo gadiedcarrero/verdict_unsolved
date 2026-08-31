@@ -41,9 +41,11 @@ describe('loadAdventureCase', () => {
       }
     }
     for (const scene of scenes) {
-      for (const hotspot of scene.hotspots) {
-        for (const action of hotspot.onInteract) {
-          if (action.type === 'dialogue') referencedIds.add(action.nodeId);
+      for (const background of scene.backgrounds) {
+        for (const hotspot of background.hotspots) {
+          for (const action of hotspot.onInteract) {
+            if (action.type === 'dialogue') referencedIds.add(action.nodeId);
+          }
         }
       }
       for (const action of scene.onEnter ?? []) {
@@ -69,9 +71,11 @@ describe('loadAdventureCase', () => {
     const reachableNodeIds = new Set<string>();
     const queue: string[] = [];
     for (const scene of scenes) {
-      for (const hotspot of scene.hotspots) {
-        for (const action of hotspot.onInteract) {
-          if (action.type === 'dialogue') queue.push(action.nodeId);
+      for (const background of scene.backgrounds) {
+        for (const hotspot of background.hotspots) {
+          for (const action of hotspot.onInteract) {
+            if (action.type === 'dialogue') queue.push(action.nodeId);
+          }
         }
       }
       for (const action of scene.onEnter ?? []) {
@@ -98,9 +102,11 @@ describe('loadAdventureCase', () => {
       }
     }
     for (const scene of scenes) {
-      for (const hotspot of scene.hotspots) {
-        for (const action of hotspot.onInteract) {
-          if (action.type === 'transitionTo') referencedSceneIds.add(action.sceneId);
+      for (const background of scene.backgrounds) {
+        for (const hotspot of background.hotspots) {
+          for (const action of hotspot.onInteract) {
+            if (action.type === 'transitionTo') referencedSceneIds.add(action.sceneId);
+          }
         }
       }
       for (const action of scene.onEnter ?? []) {

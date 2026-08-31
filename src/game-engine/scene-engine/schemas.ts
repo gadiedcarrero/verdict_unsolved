@@ -246,6 +246,17 @@ export const SceneBackgroundSchema = z.object({
    * project_dialogue_audio_elevenlabs) — el campo queda aparte a propósito
    * para no tener que migrar nada cuando eso se construya. */
   caption: z.string().optional(),
+  /** Zonas interactivas propias de ESTE fondo puntual — no de la escena
+   * entera. Antes vivían en `Scene.hotspots`, compartidas por todos los
+   * fondos de la escena; eso impedía cosas como "al apagar la luz aparece
+   * una caja fuerte que no se veía antes" (la zona de la caja fuerte tiene
+   * que existir solo en el fondo "luz apagada"). Una zona que deba
+   * responder en varios fondos (una puerta que siempre está ahí) se repite
+   * a mano en cada uno — no hay "zona compartida" implícita. Escenas
+   * viejas guardadas antes de este campo migran solas al cargar (ver
+   * migrateLegacySceneHotspots más abajo): sus `hotspots` de escena pasan
+   * al primer fondo. */
+  hotspots: z.array(HotspotSchema).default([]),
 });
 
 export const SceneKindSchema = z.enum(['standard', 'intro', 'menu', 'cinematica']);
@@ -289,7 +300,36 @@ export const MenuTitleSchema = z.object({
   color: z.string().default('#e6eaef'),
 });
 
-export const SceneSchema = z.object({
+/** Antes de que existiera `SceneBackground.hotspots`, todas las zonas de
+ * una escena vivían juntas en `Scene.hotspots`, compartidas por todos sus
+ * fondos. Las escenas guardadas con ese formato viejo siguen teniendo ese
+ * campo en su JSON — esto corre ANTES de la validación de Zod (que ya no
+ * conoce `Scene.hotspots` y lo descartaría en silencio) y mueve esas zonas
+ * al primer fondo, para no perder ninguna zona ya trazada a mano. Si el
+ * fondo ya tiene sus propias `hotspots` (escena migrada o creada después
+ * de este cambio), no se toca nada. */
+function migrateLegacySceneHotspots(raw: unknown): unknown {
+  if (!raw || typeof raw !== 'object') return raw;
+  const r = raw as Record<string, unknown>;
+  const legacyHotspots = r['hotspots'];
+  if (!Array.isArray(legacyHotspots) || legacyHotspots.length === 0) return raw;
+  const backgroundsRaw = r['backgrounds'];
+  if (!Array.isArray(backgroundsRaw) || backgroundsRaw.length === 0) return raw;
+  // `Array.isArray` narrows a lib.es5 `unknown` value to `any[]`, no `unknown[]`
+  // — el cast explícito evita que el resto del bloque quede "any" sin querer.
+  const backgrounds = backgroundsRaw as unknown[];
+  const [firstBackground, ...restBackgrounds] = backgrounds;
+  const firstBackgroundObj =
+    firstBackground && typeof firstBackground === 'object' ? (firstBackground as Record<string, unknown>) : {};
+  if (Array.isArray(firstBackgroundObj['hotspots'])) return raw;
+  const { hotspots: _legacyHotspots, ...rest } = r;
+  return {
+    ...rest,
+    backgrounds: [{ ...firstBackgroundObj, hotspots: legacyHotspots }, ...restBackgrounds],
+  };
+}
+
+const SceneObjectSchema = z.object({
   id: z.string(),
   act: z.number(),
   /** "intro" es una escena especial de solo fondos (logos, splash) que pasa
@@ -303,10 +343,10 @@ export const SceneSchema = z.object({
   kind: SceneKindSchema.default('standard'),
   /** Una escena puede tener varios fondos (luz prendida/apagada, flashes de
    * relámpago, etc.) — el primero de la lista es el que se ve por defecto.
-   * Vincular qué objeto/estado cambia a cuál fondo se hace más adelante. */
+   * Cada fondo trae sus propias zonas interactivas (ver
+   * SceneBackground.hotspots) — no hay una lista de zonas a nivel escena. */
   backgrounds: z.array(SceneBackgroundSchema),
   layers: z.array(SceneLayerSchema),
-  hotspots: z.array(HotspotSchema),
   /** Nodos de diálogo de una sola línea, generados por el editor visual al
    * definir qué dice un personaje en una acción de un objeto (Examinar/
    * Interactuar/Interactuar con) — clave = id autogenerado
@@ -350,6 +390,8 @@ export const SceneSchema = z.object({
     hoverColor: '#e0a636',
   }),
 });
+
+export const SceneSchema = z.preprocess(migrateLegacySceneHotspots, SceneObjectSchema);
 
 export const AdventureCaseMetaSchema = z.object({
   id: z.string(),

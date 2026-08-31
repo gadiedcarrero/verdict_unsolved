@@ -1,4 +1,5 @@
 import type {
+  Hotspot,
   HotspotShape,
   InteractWithTarget,
   PolygonPoint,
@@ -43,10 +44,12 @@ export type EditableObject = {
  * cuando una capa y un hotspot comparten id, se editan como una sola caja
  * (misma posición para el arte y la zona clicable) en vez de dos separadas.
  * Los hotspots sin capa (zonas puras sobre el fondo, creadas a mano en el
- * editor) aparecen igual, marcados como 'zone'.
+ * editor) aparecen igual, marcados como 'zone'. `hotspots` es el del fondo
+ * que se está editando ahora mismo (ver SceneBackground.hotspots) — no de
+ * la escena entera, ya que cada fondo tiene las suyas.
  */
-export function buildEditableObjects(scene: Scene): EditableObject[] {
-  const hotspotById = new Map(scene.hotspots.map((h) => [h.id, h]));
+export function buildEditableObjects(scene: Scene, hotspots: Hotspot[]): EditableObject[] {
+  const hotspotById = new Map(hotspots.map((h) => [h.id, h]));
   const layerIds = new Set(scene.layers.map((l) => l.id));
 
   const spriteObjects: EditableObject[] = scene.layers.map((layer) => {
@@ -68,7 +71,7 @@ export function buildEditableObjects(scene: Scene): EditableObject[] {
     };
   });
 
-  const zoneObjects: EditableObject[] = scene.hotspots
+  const zoneObjects: EditableObject[] = hotspots
     .filter((hotspot) => !layerIds.has(hotspot.id))
     .map((hotspot) => ({
       id: hotspot.id,

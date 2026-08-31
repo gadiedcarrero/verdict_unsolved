@@ -1829,6 +1829,8 @@ export function SceneEditorPanel({
   onLabelTextChange,
   onLabelStyleChange,
   onCreateZone,
+  editingZonesBackgroundId,
+  onChangeEditingZonesBackground,
   polygonDraftPointCount,
   onCancelPolygonDraft,
   onResetShape,
@@ -1889,6 +1891,11 @@ export function SceneEditorPanel({
   onLabelTextChange: (labelKey: string, text: string) => void;
   onLabelStyleChange: (objectId: string, patch: Partial<TextStyleOverride> | null) => void;
   onCreateZone: (name: string, labelText: string, interactable: boolean, shape: HotspotShape) => void;
+  /** Fondo cuyas zonas se están viendo/editando ahora mismo — cada fondo
+   * tiene las suyas (ver SceneBackground.hotspots). Ya resuelto por el
+   * llamador (nunca null si la escena tiene al menos un fondo). */
+  editingZonesBackgroundId: string | undefined;
+  onChangeEditingZonesBackground: (backgroundId: string) => void;
   /** No null mientras se está trazando una zona de forma libre nueva. */
   polygonDraftPointCount: number | null;
   onCancelPolygonDraft: () => void;
@@ -1994,6 +2001,26 @@ export function SceneEditorPanel({
                 aprietes Guardar.
               </p>
 
+              {scene.backgrounds.length > 1 && (
+                <label className="mb-3 flex flex-col">
+                  <span className="text-[9px] text-graphite-500 uppercase">
+                    Editando zonas del fondo (cada fondo tiene las suyas)
+                  </span>
+                  <select
+                    value={editingZonesBackgroundId ?? scene.backgrounds[0]?.id ?? ''}
+                    onChange={(event) => onChangeEditingZonesBackground(event.target.value)}
+                    className={inputClassName}
+                  >
+                    {scene.backgrounds.map((bg, index) => (
+                      <option key={bg.id} value={bg.id}>
+                        BG {index + 1}
+                        {bg.caption ? ` — ${bg.caption.slice(0, 30)}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
               {polygonDraftPointCount !== null ? (
                 <PolygonDraftStatus pointCount={polygonDraftPointCount} onCancel={onCancelPolygonDraft} />
               ) : (
@@ -2001,7 +2028,9 @@ export function SceneEditorPanel({
               )}
 
               {(() => {
-                const editableObjects = buildEditableObjects(scene);
+                const editingBackground =
+                  scene.backgrounds.find((bg) => bg.id === editingZonesBackgroundId) ?? scene.backgrounds[0];
+                const editableObjects = buildEditableObjects(scene, editingBackground?.hotspots ?? []);
                 const otherObjects = editableObjects
                   .filter((o) => o.labelKey)
                   .map((o) => ({ id: o.id, label: o.labelKey ? translate(strings, o.labelKey) : o.id }));

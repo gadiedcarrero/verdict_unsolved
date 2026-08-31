@@ -73,7 +73,10 @@ export function SceneViewer({
   /** True brevemente tras intentar una combinación sin acción programada. */
   interactWithFallbackVisible?: boolean;
   /** Id del fondo activo (ver acción `toggleBackground`) — null/no
-   * encontrado = usar `scene.backgrounds[0]` como siempre. */
+   * encontrado = usar `scene.backgrounds[0]` como siempre. Decide tanto la
+   * imagen mostrada como qué `hotspots` responden (cada fondo trae los
+   * suyos, ver SceneBackground.hotspots) — en el editor (`editMode`), esto
+   * mismo decide para cuál fondo se están dibujando/editando zonas ahora. */
   activeBackgroundId?: string | null;
 }): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -145,11 +148,12 @@ export function SceneViewer({
 
         {!editMode &&
           (() => {
+            const activeHotspots = activeBackground?.hotspots ?? [];
             const combiningSource = combiningHotspotId
-              ? scene.hotspots.find((h) => h.id === combiningHotspotId)
+              ? activeHotspots.find((h) => h.id === combiningHotspotId)
               : null;
             const combiningSourceLabel = combiningSource ? translate(strings, combiningSource.label) : null;
-            return scene.hotspots
+            return activeHotspots
               .filter((hotspot) => hotspot.interactable)
               .map((hotspot) => (
                 <HotspotArea
@@ -192,7 +196,7 @@ export function SceneViewer({
 
         {editMode &&
           onObjectRectChange &&
-          buildEditableObjects(scene).map((object) => {
+          buildEditableObjects(scene, activeBackground?.hotspots ?? []).map((object) => {
             const label = `${object.labelKey ? translate(strings, object.labelKey) : object.id}${object.interactable ? '' : ' · no interactuable'}`;
             return (
               <div key={object.id} className="contents">
@@ -241,7 +245,7 @@ export function SceneViewer({
           onSelectAction &&
           onCloseActionMenu &&
           (() => {
-            const activeHotspot = scene.hotspots.find((h) => h.id === activeActionMenuHotspotId);
+            const activeHotspot = (activeBackground?.hotspots ?? []).find((h) => h.id === activeActionMenuHotspotId);
             if (!activeHotspot) return null;
             return (
               <ActionMenu
