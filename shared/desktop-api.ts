@@ -16,6 +16,8 @@ export type ScriptBreakdownReadResult = { ok: true; breakdown: ScriptBreakdown |
 export type ScriptBreakdownScenePanelsResult =
   | { ok: true; sourceText: string; panels: ScriptBreakdownPanel[] }
   | { ok: false; error: string };
+export type ComfyUIStatusResult = { running: boolean };
+export type ComfyUILaunchResult = { ok: true } | { ok: false; error: string };
 
 export type DesktopApi = {
   /** Un archivo de guardado por juego (save-<gameId>.json en userData). */
@@ -146,4 +148,13 @@ export type DesktopApi = {
    * propias) — usa la key ya guardada en Integraciones IA. No es por juego:
    * la cuenta de ElevenLabs es una sola para toda la plataforma. */
   listElevenLabsVoices: () => Promise<ElevenLabsVoicesResult>;
+  /** ¿Está prendido el servidor ComfyUI local en `baseUrl`? Ping corto (ver
+   * comfyuiStatusHandlers.ts) — pensado para pollear desde un indicador en
+   * el editor, no para saber si la generación en sí va a funcionar. */
+  checkComfyUIStatus: (baseUrl: string) => Promise<ComfyUIStatusResult>;
+  /** Arranca ComfyUI en esta máquina (`~/ComfyUI`), desapegado del proceso
+   * de Electron — queda corriendo aunque se cierre la app. No hace falta
+   * llamarlo si el semáforo ya está en verde (un segundo `python main.py`
+   * no puede tomar el mismo puerto y se cierra solo sin avisar nada útil). */
+  launchComfyUI: () => Promise<ComfyUILaunchResult>;
 };

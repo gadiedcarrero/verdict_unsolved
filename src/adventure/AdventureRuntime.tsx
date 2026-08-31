@@ -39,6 +39,7 @@ import { useAdventureRuntimeStore } from './adventureRuntime.store';
 import { DialogueOverlay } from './DialogueOverlay';
 import { InterfaceHost } from './interfaces/InterfaceHost';
 import { CinematicScene } from './CinematicScene';
+import { ComfyUIStatusIndicator } from '../components/ComfyUIStatusIndicator';
 import { IntroScene } from './IntroScene';
 import { MENU_BUTTON_ACTION_CONTINUE, MENU_BUTTON_ACTION_QUIT } from './menuButtonActions';
 import { MenuScene } from './MenuScene';
@@ -2311,6 +2312,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
               >
                 Guion IA
               </button>
+            </div>
+            <div className="flex shrink-0 justify-end px-2 pt-1.5">
+              <ComfyUIStatusIndicator />
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
               {editorTab === 'scene' ? (

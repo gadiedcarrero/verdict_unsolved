@@ -3,6 +3,7 @@ import { createMainWindow } from './window';
 import { registerAiIntegrationsHandlers } from './ipc/aiIntegrationsHandlers';
 import { registerBackgroundArtHandlers } from './ipc/backgroundArtHandlers';
 import { registerCharacterArtHandlers } from './ipc/characterArtHandlers';
+import { registerComfyUIStatusHandlers } from './ipc/comfyuiStatusHandlers';
 import { registerElevenLabsHandlers } from './ipc/elevenLabsHandlers';
 import { registerImageEditHandlers } from './ipc/imageEditHandlers';
 import { registerSaveHandlers } from './ipc/saveHandlers';
@@ -31,6 +32,7 @@ if (!gotSingleInstanceLock) {
     registerElevenLabsHandlers();
     registerImageEditHandlers();
     registerBackgroundArtHandlers();
+    registerComfyUIStatusHandlers();
     createMainWindow();
 
     app.on('activate', () => {

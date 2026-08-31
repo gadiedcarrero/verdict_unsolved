@@ -5,6 +5,7 @@ import {
   type AiIntegrationsConfig,
   type ImageProvider,
 } from '../../shared/ai-integrations';
+import { ComfyUIStatusIndicator } from '../components/ComfyUIStatusIndicator';
 
 const inputClassName =
   'w-full rounded border border-graphite-700 bg-graphite-900 px-1.5 py-1 text-[10px] text-graphite-100';
@@ -135,9 +136,12 @@ export function AiIntegrationsPanel({ onClose }: { onClose: () => void }): JSX.E
                     className={inputClassName}
                   />
                 </label>
-                <p className="mt-1 text-[8px] text-graphite-600">
-                  Tiene que estar corriendo en esta máquina antes de generar — abrí ComfyUI y dejalo abierto.
+                <p className="mb-2 text-[8px] text-graphite-600">
+                  Tiene que estar corriendo en esta máquina antes de generar.
                 </p>
+                <ComfyUIStatusIndicator
+                  override={{ imageProvider: config.imageProvider, baseUrl: config.comfyuiBaseUrl }}
+                />
               </div>
             )}
 

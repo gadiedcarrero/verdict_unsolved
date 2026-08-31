@@ -34,6 +34,8 @@ const api: DesktopApi = {
     ipcRenderer.invoke('ai:edit-image', gameId, relativePath, instruction, referenceImages),
   undoImageEdit: (gameId, relativePath) => ipcRenderer.invoke('ai:undo-image-edit', gameId, relativePath),
   listElevenLabsVoices: () => ipcRenderer.invoke('ai:list-elevenlabs-voices'),
+  checkComfyUIStatus: (baseUrl) => ipcRenderer.invoke('comfyui:status', baseUrl),
+  launchComfyUI: () => ipcRenderer.invoke('comfyui:launch'),
 };
 
 contextBridge.exposeInMainWorld('api', api);
