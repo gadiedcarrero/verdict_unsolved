@@ -353,6 +353,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   // canvas mientras se editan. null = el primero de la escena (default).
   const [editingZonesBackgroundId, setEditingZonesBackgroundId] = useState<string | null>(null);
 
+  // bgId con el formulario "regenerar desde cero" abierto (ver
+  // RegenerateBackgroundForm) — distinto de editingImagePath (edición
+  // puntual con instrucción) y de editingZonesBackgroundId (qué zonas se
+  // ven), aunque los tres puedan referirse al mismo fondo a la vez.
+  const [regeneratingBackgroundId, setRegeneratingBackgroundId] = useState<string | null>(null);
+
   // Cambiar de escena (o salir del modo edición) resetea `editedScene` y
   // `polygonDraft` sin avisar — antes se perdía en silencio una zona a
   // medio trazar o cualquier cambio sin guardar. Esta guarda confirma antes
@@ -407,6 +413,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setSaveMessage(null);
     setPolygonDraft(null);
     setEditingZonesBackgroundId(null);
+    setRegeneratingBackgroundId(null);
   }, [activeEditorSceneId]);
 
   if (!project) {
@@ -1085,6 +1092,38 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           ...base,
           backgrounds: [...base.backgrounds, { id: bgId, assetPath: result.path, caption, hotspots: [] }],
         });
+      } else {
+        setBackgroundGenError(result.error);
+      }
+    } catch (error) {
+      setBackgroundGenError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setGeneratingBackground(false);
+    }
+  }
+
+  // Regenera un fondo YA generado con un prompt/personajes nuevos, en vez
+  // de agregar uno más — a diferencia del "editar con IA" (una instrucción
+  // puntual sobre los píxeles ya existentes), esto vuelve a generar de cero
+  // a partir de una descripción de texto, útil cuando el resultado salió
+  // mal (personajes con la ropa cambiada, un error de generación, etc.) y
+  // conviene empezar de nuevo en vez de corregir a parches. Usa el MISMO
+  // fileId que ya tenía ese fondo, así que pisa el archivo en el mismo
+  // lugar — no toca el id/caption/duración/zonas de ese fondo.
+  async function regenerateBackgroundWithAi(bgId: string, prompt: string, characterIds: string[]): Promise<void> {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setGeneratingBackground(true);
+    setBackgroundGenError(null);
+    try {
+      const characterRefs = characterIds
+        .map((id) => displayCharacters.find((c) => c.id === id))
+        .filter((c): c is Character => Boolean(c?.portrait))
+        .map((c) => ({ name: translate(strings, c.name), description: c.description, portraitPath: c.portrait! }));
+      const result = await window.api.generateBackground(gameId, `${base.id}-${bgId}`, prompt, characterRefs);
+      if (result.ok) {
+        setPortraitCacheBust((prev) => ({ ...prev, [result.path]: (prev[result.path] ?? 0) + 1 }));
+        setRegeneratingBackgroundId(null);
       } else {
         setBackgroundGenError(result.error);
       }
@@ -2319,6 +2358,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onCreateZone={createZone}
                   editingZonesBackgroundId={displayScene ? getEditingBackgroundId(displayScene) : undefined}
                   onChangeEditingZonesBackground={setEditingZonesBackgroundId}
+                  regeneratingBackgroundId={regeneratingBackgroundId}
+                  onStartRegenerateBackground={setRegeneratingBackgroundId}
+                  onCancelRegenerateBackground={() => setRegeneratingBackgroundId(null)}
+                  onRegenerateBackground={(bgId, prompt, characterIds) =>
+                    void regenerateBackgroundWithAi(bgId, prompt, characterIds)
+                  }
                   polygonDraftPointCount={polygonDraft?.points.length ?? null}
                   onCancelPolygonDraft={cancelPolygonDraft}
                   onResetShape={resetShape}

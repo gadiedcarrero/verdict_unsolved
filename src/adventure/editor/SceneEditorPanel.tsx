@@ -183,6 +183,8 @@ function BackgroundThumb({
   onTitleChange,
   onEditWithAi,
   onSelectForZones,
+  isRegenerating,
+  onRegenerateWithAi,
 }: {
   gameId: string;
   assetPath: string;
@@ -214,6 +216,10 @@ function BackgroundThumb({
    * en cuanto a zonas (canvas + lista de "Zonas" pasan a mostrar las suyas)
    * — la edición con IA quedó en un botón aparte para no pisarse. */
   onSelectForZones: () => void;
+  /** True si el formulario de "regenerar desde cero" está abierto para
+   * ESTE fondo puntual (ver RegenerateBackgroundForm/regeneratingBackgroundId). */
+  isRegenerating: boolean;
+  onRegenerateWithAi: () => void;
 }): JSX.Element {
   const [failed, setFailed] = useState(false);
   const src = gameAssetUrl(gameId, assetPath);
@@ -263,6 +269,16 @@ function BackgroundThumb({
           }`}
         >
           🪄
+        </button>
+        <button
+          type="button"
+          onClick={onRegenerateWithAi}
+          title="Regenerar esta imagen desde cero (prompt y personajes nuevos)"
+          className={`absolute bottom-0.5 left-0.5 rounded bg-graphite-950/80 px-1 text-[9px] ${
+            isRegenerating ? 'text-sky-300' : 'text-graphite-300 hover:text-sky-300'
+          }`}
+        >
+          🔄
         </button>
       </div>
       <input
@@ -432,6 +448,96 @@ function GenerateBackgroundForm({
   );
 }
 
+/** Vuelve a generar un fondo YA existente desde cero, con un prompt y
+ * personajes nuevos — distinto del botón 🪄 (edición puntual sobre los
+ * píxeles ya existentes): esto tira la imagen vieja y arranca de nuevo a
+ * partir de una descripción, útil cuando salió mal del todo (personajes
+ * con la ropa cambiada, un error de generación) y conviene empezar de
+ * cero en vez de parchear. Mismo formulario que "+ Generar fondo con IA",
+ * pero apuntando al fondo puntual que lo disparó. */
+function RegenerateBackgroundForm({
+  label,
+  characters,
+  strings,
+  generating,
+  error,
+  onGenerate,
+  onCancel,
+}: {
+  label: string;
+  characters: Character[];
+  strings: Record<string, string>;
+  generating: boolean;
+  error: string | null;
+  onGenerate: (prompt: string, characterIds: string[]) => void;
+  onCancel: () => void;
+}): JSX.Element {
+  const [prompt, setPrompt] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  function toggleCharacter(id: string): void {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  return (
+    <div className="mb-2 rounded border border-sky-400/40 bg-graphite-950 p-2">
+      <p className="mb-1 text-[9px] tracking-widest text-sky-300 uppercase">Regenerando {label} desde cero</p>
+      <textarea
+        value={prompt}
+        onChange={(event) => setPrompt(event.target.value)}
+        rows={3}
+        placeholder='Narrá la escena de nuevo (ej. "Pepe y Juan sentados de espaldas en un banco de un parque, de noche")...'
+        className={`${inputClassName} mb-2`}
+      />
+      {characters.length > 0 && (
+        <div className="mb-2">
+          <p className="mb-1 text-[8px] tracking-widest text-graphite-500 uppercase">
+            Personajes que aparecen (usan su propio retrato como referencia)
+          </p>
+          <div className="flex max-h-32 flex-wrap gap-1 overflow-y-auto">
+            {characters.map((character) => (
+              <label
+                key={character.id}
+                className={`flex items-center gap-1 rounded border px-1.5 py-1 text-[9px] ${
+                  selectedIds.includes(character.id)
+                    ? 'border-amber-accent text-amber-accent'
+                    : 'border-graphite-700 text-graphite-300'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(character.id)}
+                  onChange={() => toggleCharacter(character.id)}
+                  className="hidden"
+                />
+                {translate(strings, character.name)}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+      {error && <p className="mb-1 text-[9px] text-red-300">{error}</p>}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onGenerate(prompt.trim(), selectedIds)}
+          disabled={!prompt.trim() || generating}
+          className="flex-1 rounded border border-sky-400/40 px-2 py-1.5 text-[10px] tracking-widest text-sky-300 uppercase transition-colors hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {generating ? 'Generando...' : 'Regenerar'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="shrink-0 text-[9px] text-graphite-500 uppercase hover:text-graphite-300"
+        >
+          cancelar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /** Cola de un solo panel a la vez (el que sigue) para "crear escena de
  * juego" desde el desglose de guion — ver createSceneFromBreakdown en
  * AdventureRuntime.tsx. Prompt y pie de foto vienen precompletados por la
@@ -548,6 +654,10 @@ function BackgroundsSection({
   onEditBackgroundWithAi,
   editingZonesBackgroundId,
   onSelectForZones,
+  regeneratingBackgroundId,
+  onStartRegenerate,
+  onCancelRegenerate,
+  onRegenerateBackground,
 }: {
   gameId: string;
   scene: Scene;
@@ -571,6 +681,11 @@ function BackgroundsSection({
   onEditBackgroundWithAi: (assetPath: string) => void;
   editingZonesBackgroundId: string | undefined;
   onSelectForZones: (bgId: string) => void;
+  /** bgId con el formulario "regenerar desde cero" abierto, o null. */
+  regeneratingBackgroundId: string | null;
+  onStartRegenerate: (bgId: string) => void;
+  onCancelRegenerate: () => void;
+  onRegenerateBackground: (bgId: string, prompt: string, characterIds: string[]) => void;
 }): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fieldsVariant: BackgroundFieldsVariant =
@@ -616,9 +731,27 @@ function BackgroundsSection({
             onTitleChange={(title) => onTitleChange(bg.id, title)}
             onEditWithAi={() => onEditBackgroundWithAi(bg.assetPath)}
             onSelectForZones={() => onSelectForZones(bg.id)}
+            isRegenerating={regeneratingBackgroundId === bg.id}
+            onRegenerateWithAi={() => onStartRegenerate(bg.id)}
           />
         ))}
       </div>
+      {regeneratingBackgroundId &&
+        (() => {
+          const index = scene.backgrounds.findIndex((bg) => bg.id === regeneratingBackgroundId);
+          if (index === -1) return null;
+          return (
+            <RegenerateBackgroundForm
+              label={scene.backgrounds[index]?.title || `BG ${index + 1}`}
+              characters={characters}
+              strings={strings}
+              generating={generatingBackground}
+              error={backgroundGenError}
+              onGenerate={(prompt, characterIds) => onRegenerateBackground(regeneratingBackgroundId, prompt, characterIds)}
+              onCancel={onCancelRegenerate}
+            />
+          );
+        })()}
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
@@ -1995,6 +2128,10 @@ export function SceneEditorPanel({
   onCreateZone,
   editingZonesBackgroundId,
   onChangeEditingZonesBackground,
+  regeneratingBackgroundId,
+  onStartRegenerateBackground,
+  onCancelRegenerateBackground,
+  onRegenerateBackground,
   polygonDraftPointCount,
   onCancelPolygonDraft,
   onResetShape,
@@ -2066,6 +2203,11 @@ export function SceneEditorPanel({
    * llamador (nunca null si la escena tiene al menos un fondo). */
   editingZonesBackgroundId: string | undefined;
   onChangeEditingZonesBackground: (backgroundId: string) => void;
+  /** bgId con el formulario "regenerar desde cero" abierto, o null. */
+  regeneratingBackgroundId: string | null;
+  onStartRegenerateBackground: (bgId: string) => void;
+  onCancelRegenerateBackground: () => void;
+  onRegenerateBackground: (bgId: string, prompt: string, characterIds: string[]) => void;
   /** No null mientras se está trazando una zona de forma libre nueva. */
   polygonDraftPointCount: number | null;
   onCancelPolygonDraft: () => void;
@@ -2148,6 +2290,10 @@ export function SceneEditorPanel({
             onEditBackgroundWithAi={onEditBackgroundWithAi}
             editingZonesBackgroundId={editingZonesBackgroundId}
             onSelectForZones={onChangeEditingZonesBackground}
+            regeneratingBackgroundId={regeneratingBackgroundId}
+            onStartRegenerate={onStartRegenerateBackground}
+            onCancelRegenerate={onCancelRegenerateBackground}
+            onRegenerateBackground={onRegenerateBackground}
           />
 
           {scene.kind === 'intro' ? (

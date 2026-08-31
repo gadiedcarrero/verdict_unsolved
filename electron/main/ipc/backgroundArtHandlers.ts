@@ -109,9 +109,12 @@ export function registerBackgroundArtHandlers(): void {
             .map((c, i) => `Reference image ${i + 1} = ${c.name}${c.description ? ` (${c.description})` : ''}.`)
             .join(' ');
           const fullPrompt =
-            `${referenceList} Use each character's EXACT reference image likeness (face, hair, build, ` +
-            "clothing) for that named character wherever they appear in the scene below — don't reinterpret " +
-            `them from the text description alone. Scene: ${prompt.trim()}\n\n${BACKGROUND_STYLE_PROMPT}`;
+            `${referenceList} Use each character's EXACT reference image likeness (face, hair, build, and ` +
+            "clothing/outfit) for that named character wherever they appear in the scene below — copy their " +
+            "exact clothing from the reference image pixel-for-pixel, don't reinterpret it from the text " +
+            "description, and don't swap it for something that seems to fit the location better (e.g. never " +
+            'put a character in a suit or formal wear just because the scene is a meeting room/office — they ' +
+            `keep wearing exactly what their reference image shows, regardless of location). Scene: ${prompt.trim()}\n\n${BACKGROUND_STYLE_PROMPT}`;
           response = await fetchWithRetry('https://fal.run/fal-ai/nano-banana/edit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Key ${config.falApiKey}` },
