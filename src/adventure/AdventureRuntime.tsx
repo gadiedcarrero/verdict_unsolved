@@ -660,6 +660,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       backgroundIdA: backgroundAction?.type === 'toggleBackground' ? backgroundAction.backgroundIdA : '',
       backgroundIdB: backgroundAction?.type === 'toggleBackground' ? backgroundAction.backgroundIdB : '',
       sceneId: sceneAction?.type === 'transitionTo' ? sceneAction.sceneId : '',
+      backgroundId: sceneAction?.type === 'transitionTo' ? (sceneAction.backgroundId ?? '') : '',
       characterId: node?.speaker ?? '',
       dialogueText: node ? (strings[node.line] ?? '') : '',
       portraitExpression: node?.portraitExpression ?? '',
@@ -683,7 +684,14 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     if (next.backgroundIdA && next.backgroundIdB) {
       actions.push({ type: 'toggleBackground', backgroundIdA: next.backgroundIdA, backgroundIdB: next.backgroundIdB });
     }
-    if (next.sceneId) actions.push({ type: 'transitionTo', sceneId: next.sceneId, fade: 'fade' });
+    if (next.sceneId) {
+      actions.push({
+        type: 'transitionTo',
+        sceneId: next.sceneId,
+        fade: 'fade',
+        backgroundId: next.backgroundId || undefined,
+      });
+    }
     if (next.characterId) actions.push({ type: 'dialogue', nodeId });
 
     const dialogueNodes: Record<string, DialogueNode> = { ...base.dialogueNodes };
@@ -723,6 +731,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       backgroundIdA: backgroundAction?.type === 'toggleBackground' ? backgroundAction.backgroundIdA : '',
       backgroundIdB: backgroundAction?.type === 'toggleBackground' ? backgroundAction.backgroundIdB : '',
       sceneId: sceneAction?.type === 'transitionTo' ? sceneAction.sceneId : '',
+      backgroundId: sceneAction?.type === 'transitionTo' ? (sceneAction.backgroundId ?? '') : '',
       characterId: node?.speaker ?? '',
       dialogueText: node ? (strings[node.line] ?? '') : '',
       portraitExpression: node?.portraitExpression ?? '',
@@ -747,7 +756,14 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     if (next.backgroundIdA && next.backgroundIdB) {
       actions.push({ type: 'toggleBackground', backgroundIdA: next.backgroundIdA, backgroundIdB: next.backgroundIdB });
     }
-    if (next.sceneId) actions.push({ type: 'transitionTo', sceneId: next.sceneId, fade: 'fade' });
+    if (next.sceneId) {
+      actions.push({
+        type: 'transitionTo',
+        sceneId: next.sceneId,
+        fade: 'fade',
+        backgroundId: next.backgroundId || undefined,
+      });
+    }
     if (next.characterId) actions.push({ type: 'dialogue', nodeId });
 
     const dialogueNodes: Record<string, DialogueNode> = { ...base.dialogueNodes };
@@ -863,6 +879,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       backgroundIdA: backgroundAction?.type === 'toggleBackground' ? backgroundAction.backgroundIdA : '',
       backgroundIdB: backgroundAction?.type === 'toggleBackground' ? backgroundAction.backgroundIdB : '',
       sceneId: sceneAction?.type === 'transitionTo' ? sceneAction.sceneId : '',
+      backgroundId: sceneAction?.type === 'transitionTo' ? (sceneAction.backgroundId ?? '') : '',
       characterId: node?.speaker ?? '',
       dialogueText: node ? (strings[node.line] ?? '') : '',
       portraitExpression: node?.portraitExpression ?? '',
@@ -883,7 +900,14 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     if (next.backgroundIdA && next.backgroundIdB) {
       actions.push({ type: 'toggleBackground', backgroundIdA: next.backgroundIdA, backgroundIdB: next.backgroundIdB });
     }
-    if (next.sceneId) actions.push({ type: 'transitionTo', sceneId: next.sceneId, fade: 'fade' });
+    if (next.sceneId) {
+      actions.push({
+        type: 'transitionTo',
+        sceneId: next.sceneId,
+        fade: 'fade',
+        backgroundId: next.backgroundId || undefined,
+      });
+    }
     if (next.characterId) actions.push({ type: 'dialogue', nodeId });
 
     const dialogueNodes: Record<string, DialogueNode> = { ...base.dialogueNodes };
@@ -1128,6 +1152,24 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     const base = editedScene ?? baseScene;
     if (!base) return;
     setEditedScene({ ...base, kind });
+  }
+
+  // Nombre legible para reconocer la escena al enlazarla desde otro lado
+  // (selector escena→fondo de una interacción, "al terminar ir a", etc.) —
+  // el id sigue siendo el slug técnico, esto es puramente para el editor.
+  function updateSceneTitle(title: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({ ...base, title });
+  }
+
+  function updateBackgroundTitle(bgId: string, title: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({
+      ...base,
+      backgrounds: base.backgrounds.map((bg) => (bg.id === bgId ? { ...bg, title } : bg)),
+    });
   }
 
   function updateIntroSkippable(introSkippable: boolean): void {
@@ -2144,7 +2186,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   scene={displayScene}
                   strings={strings}
                   characters={displayCharacters}
-                  sceneOptions={allScenes.map((s) => ({ id: s.id, act: s.act }))}
+                  sceneOptions={allScenes.map((s) => ({
+                    id: s.id,
+                    act: s.act,
+                    title: s.title,
+                    backgrounds: s.backgrounds.map((bg) => ({ id: bg.id, title: bg.title })),
+                  }))}
                   activeSceneId={activeEditorSceneId}
                   creatingScene={creatingScene}
                   uploadingBackground={uploadingBackground}
@@ -2169,6 +2216,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onBackgroundImageWidthChange={updateBackgroundImageWidth}
                   onBackgroundCaptionChange={updateBackgroundCaption}
                   onChangeKind={updateSceneKind}
+                  onChangeSceneTitle={updateSceneTitle}
+                  onChangeBackgroundTitle={updateBackgroundTitle}
                   onChangeIntroSkippable={updateIntroSkippable}
                   onChangeIntroCompleteTarget={updateIntroCompleteTarget}
                   onChangeCinematicTransition={updateCinematicTransition}

@@ -295,7 +295,20 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
           // entrar — si no, se disparaba en el mismo tick, antes de que
           // la pantalla llegara a fundirse a la escena nueva.
           const remaining = actions.slice(i + 1);
-          get().transitionToScene(action.sceneId, action.fade, remaining.length > 0 ? () => get().runActions(remaining) : undefined);
+          const runRemaining = remaining.length > 0 ? () => get().runActions(remaining) : undefined;
+          // sceneId puede ser la escena en la que ya se está (ver
+          // comentario de backgroundId en el schema) — ahí no tiene
+          // sentido un fundido completo ni volver a correr onEnter, así
+          // que se resuelve como un simple cambio de fondo instantáneo.
+          if (action.sceneId === get().currentSceneId) {
+            if (action.backgroundId) get().setBackground(action.backgroundId);
+            runRemaining?.();
+            return;
+          }
+          get().transitionToScene(action.sceneId, action.fade, () => {
+            if (action.backgroundId) get().setBackground(action.backgroundId);
+            runRemaining?.();
+          });
           return;
         }
         case 'openInterface':

@@ -39,6 +39,15 @@ const OUTCOME_ACTION_VARIANTS = [
     type: z.literal('transitionTo'),
     sceneId: z.string(),
     fade: z.enum(['cut', 'fade', 'fadeToBlack']).default('fade'),
+    /** Qué fondo de `sceneId` queda activo al llegar — si no está, se usa
+     * el default de esa escena (`backgrounds[0]`). Si `sceneId` es la
+     * escena en la que ya se está, esto se comporta como `setBackground`
+     * (sin fundido ni re-disparar `onEnter`) en vez de una transición de
+     * verdad — ver runActions en adventureRuntime.store.ts. Pensado para
+     * que el editor pueda ofrecer un solo selector "escena → uno de sus
+     * fondos" que sirva tanto para saltar a otra escena en un fondo
+     * puntual como para cambiar el fondo de la escena actual. */
+    backgroundId: z.string().optional(),
   }),
   z.object({ type: z.literal('openInterface'), interfaceId: InterfaceIdSchema }),
   z.object({ type: z.literal('addMoney'), amount: z.number() }),
@@ -226,6 +235,11 @@ export const DialogueNodeSchema = z.object({
 export const SceneBackgroundSchema = z.object({
   /** Auto-generado al crearlo en el editor: "bg-1", "bg-2"... */
   id: z.string(),
+  /** Nombre legible para el editor (ej. "Luz apagada") — para reconocer
+   * este fondo puntual al enlazarlo desde el selector escena→fondo de una
+   * interacción, en vez de un "bg-2" sin contexto. Vacío/ausente = el
+   * editor cae al id. Nunca se le muestra al jugador. */
+  title: z.string().optional(),
   assetPath: z.string(),
   /** Solo se usa en escenas `kind: "intro"`: cuánto se muestra este fondo
    * antes de pasar al siguiente, en milisegundos. Si no está, se usa un
@@ -331,6 +345,11 @@ function migrateLegacySceneHotspots(raw: unknown): unknown {
 
 const SceneObjectSchema = z.object({
   id: z.string(),
+  /** Nombre legible para el editor (ej. "Oficina de Gray") — el `id` sigue
+   * siendo el slug técnico usado en referencias (transitionTo, etc.).
+   * Vacío/ausente = el editor cae al id como texto de respaldo. Puramente
+   * de organización interna, nunca se le muestra al jugador. */
+  title: z.string().optional(),
   act: z.number(),
   /** "intro" es una escena especial de solo fondos (logos, splash) que pasa
    * de uno a otro por tiempo y termina disparando `onIntroComplete` — sin

@@ -33,7 +33,7 @@ function SceneSwitcher({
   onSwitchScene,
   onCreateScene,
 }: {
-  sceneOptions: { id: string; act: number }[];
+  sceneOptions: SceneOption[];
   activeSceneId: string;
   creatingScene: boolean;
   onSwitchScene: (sceneId: string) => void;
@@ -65,7 +65,7 @@ function SceneSwitcher({
         >
           {sceneOptions.map((option) => (
             <option key={option.id} value={option.id}>
-              {option.id} (acto {option.act})
+              {option.title ?? option.id} (acto {option.act})
             </option>
           ))}
         </select>
@@ -139,6 +139,17 @@ type BackgroundFieldsVariant = 'none' | 'intro' | 'cinematica';
  * continuity no son solo para mostrar: AdventureRuntime los suma al prompt
  * real que recibe el generador de imágenes (ver appendPanelContinuity) para
  * mantener la misma locación/iluminación/posiciones entre paneles. */
+/** Un ítem de `sceneOptions` — cada escena que se puede elegir como
+ * destino, con sus fondos (id + título) para el selector escena→fondo de
+ * una interacción (ver ActionComposerValue.backgroundId). `title` es lo
+ * que se muestra; si está vacío se cae al `id` técnico. */
+type SceneOption = {
+  id: string;
+  act: number;
+  title: string | undefined;
+  backgrounds: { id: string; title: string | undefined }[];
+};
+
 type PendingBreakdownPanel = {
   imageDescription: string;
   displayText: string;
@@ -153,6 +164,7 @@ function BackgroundThumb({
   gameId,
   assetPath,
   label,
+  title,
   durationMs,
   backgroundColor,
   imageWidthPercent,
@@ -160,16 +172,20 @@ function BackgroundThumb({
   fieldsVariant,
   cacheBust,
   isEditing,
+  isZonesTarget,
   onRemove,
   onDurationChange,
   onBackgroundColorChange,
   onImageWidthChange,
   onCaptionChange,
+  onTitleChange,
   onEditWithAi,
+  onSelectForZones,
 }: {
   gameId: string;
   assetPath: string;
   label: string;
+  title: string | undefined;
   durationMs: number | undefined;
   backgroundColor: string | undefined;
   imageWidthPercent: number | undefined;
@@ -181,12 +197,21 @@ function BackgroundThumb({
    * vieja cacheada. */
   cacheBust: number | undefined;
   isEditing: boolean;
+  /** True si este es el fondo cuyas zonas se están viendo/editando ahora
+   * (ver editingZonesBackgroundId) — borde celeste, distinto del ámbar de
+   * "isEditing" (edición de imagen con IA), para no confundir los dos. */
+  isZonesTarget: boolean;
   onRemove: () => void;
   onDurationChange: (durationMs: number) => void;
   onBackgroundColorChange: (color: string | undefined) => void;
   onImageWidthChange: (widthPercent: number | undefined) => void;
   onCaptionChange: (caption: string) => void;
+  onTitleChange: (title: string) => void;
   onEditWithAi: () => void;
+  /** Clickear la imagen selecciona este fondo como el que se está editando
+   * en cuanto a zonas (canvas + lista de "Zonas" pasan a mostrar las suyas)
+   * — la edición con IA quedó en un botón aparte para no pisarse. */
+  onSelectForZones: () => void;
 }): JSX.Element {
   const [failed, setFailed] = useState(false);
   const src = gameAssetUrl(gameId, assetPath);
@@ -200,10 +225,10 @@ function BackgroundThumb({
         ) : (
           <button
             type="button"
-            onClick={onEditWithAi}
-            title="Editar esta imagen con IA (describir qué cambiar)"
+            onClick={onSelectForZones}
+            title="Ver/editar las zonas de este fondo"
             className={`flex h-14 w-24 items-center justify-center overflow-hidden rounded border ${
-              isEditing ? 'border-amber-accent' : 'border-graphite-700 hover:border-amber-accent'
+              isZonesTarget ? 'border-sky-400' : 'border-graphite-700 hover:border-sky-400'
             }`}
             style={{ backgroundColor: backgroundColor || undefined }}
           >
@@ -227,7 +252,24 @@ function BackgroundThumb({
         >
           ✕
         </button>
+        <button
+          type="button"
+          onClick={onEditWithAi}
+          title="Editar esta imagen con IA (describir qué cambiar)"
+          className={`absolute bottom-0.5 right-0.5 rounded bg-graphite-950/80 px-1 text-[9px] ${
+            isEditing ? 'text-amber-accent' : 'text-graphite-300 hover:text-amber-accent'
+          }`}
+        >
+          🪄
+        </button>
       </div>
+      <input
+        type="text"
+        value={title ?? ''}
+        onChange={(event) => onTitleChange(event.target.value)}
+        placeholder={label}
+        className="mt-1 w-full rounded border border-graphite-700 bg-graphite-900 px-1 py-0.5 text-[9px] text-graphite-100"
+      />
       {fieldsVariant !== 'none' && (
         <div className="mt-1 flex flex-col gap-1">
           <label className="flex items-center gap-1">
@@ -500,7 +542,10 @@ function BackgroundsSection({
   onBackgroundColorChange,
   onImageWidthChange,
   onCaptionChange,
+  onTitleChange,
   onEditBackgroundWithAi,
+  editingZonesBackgroundId,
+  onSelectForZones,
 }: {
   gameId: string;
   scene: Scene;
@@ -520,7 +565,10 @@ function BackgroundsSection({
   onBackgroundColorChange: (bgId: string, color: string | undefined) => void;
   onImageWidthChange: (bgId: string, widthPercent: number | undefined) => void;
   onCaptionChange: (bgId: string, caption: string) => void;
+  onTitleChange: (bgId: string, title: string) => void;
   onEditBackgroundWithAi: (assetPath: string) => void;
+  editingZonesBackgroundId: string | undefined;
+  onSelectForZones: (bgId: string) => void;
 }): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fieldsVariant: BackgroundFieldsVariant =
@@ -553,15 +601,19 @@ function BackgroundsSection({
             backgroundColor={bg.backgroundColor}
             imageWidthPercent={bg.imageWidthPercent}
             caption={bg.caption}
+            title={bg.title}
             fieldsVariant={fieldsVariant}
             cacheBust={backgroundCacheBust[bg.assetPath]}
             isEditing={editingBackgroundPath === bg.assetPath}
+            isZonesTarget={(editingZonesBackgroundId ?? scene.backgrounds[0]?.id) === bg.id}
             onRemove={() => onRemoveBackground(bg.id)}
             onDurationChange={(durationMs) => onDurationChange(bg.id, durationMs)}
             onBackgroundColorChange={(color) => onBackgroundColorChange(bg.id, color)}
             onImageWidthChange={(widthPercent) => onImageWidthChange(bg.id, widthPercent)}
             onCaptionChange={(caption) => onCaptionChange(bg.id, caption)}
+            onTitleChange={(title) => onTitleChange(bg.id, title)}
             onEditWithAi={() => onEditBackgroundWithAi(bg.assetPath)}
+            onSelectForZones={() => onSelectForZones(bg.id)}
           />
         ))}
       </div>
@@ -607,7 +659,7 @@ function IntroSettings({
   onChangeIntroCompleteTarget,
 }: {
   scene: Scene;
-  sceneOptions: { id: string; act: number }[];
+  sceneOptions: SceneOption[];
   onChangeIntroSkippable: (skippable: boolean) => void;
   onChangeIntroCompleteTarget: (sceneId: string) => void;
 }): JSX.Element {
@@ -637,7 +689,7 @@ function IntroSettings({
             .filter((option) => option.id !== scene.id)
             .map((option) => (
               <option key={option.id} value={option.id}>
-                {option.id}
+                {option.title ?? option.id}
               </option>
             ))}
         </select>
@@ -659,7 +711,7 @@ function CinematicSettings({
   onChangeCinematicCompleteTarget,
 }: {
   scene: Scene;
-  sceneOptions: { id: string; act: number }[];
+  sceneOptions: SceneOption[];
   onChangeIntroSkippable: (skippable: boolean) => void;
   onChangeCinematicTransition: (transition: CinematicTransition) => void;
   onChangeCinematicCompleteTarget: (sceneId: string) => void;
@@ -704,7 +756,7 @@ function CinematicSettings({
             .filter((option) => option.id !== scene.id)
             .map((option) => (
               <option key={option.id} value={option.id}>
-                {option.id}
+                {option.title ?? option.id}
               </option>
             ))}
         </select>
@@ -723,7 +775,7 @@ function MenuButtonFields({
 }: {
   button: MenuButton;
   strings: Record<string, string>;
-  sceneOptions: { id: string; act: number }[];
+  sceneOptions: SceneOption[];
   onLabelTextChange: (text: string) => void;
   onTargetChange: (sceneId: string) => void;
   onRemove: () => void;
@@ -767,7 +819,7 @@ function MenuButtonFields({
           <option value={MENU_BUTTON_ACTION_QUIT}>Salir del juego</option>
           {sceneOptions.map((option) => (
             <option key={option.id} value={option.id}>
-              Ir a escena: {option.id}
+              Ir a escena: {option.title ?? option.id}
             </option>
           ))}
         </select>
@@ -904,7 +956,7 @@ function MenuSettings({
 }: {
   scene: Scene;
   strings: Record<string, string>;
-  sceneOptions: { id: string; act: number }[];
+  sceneOptions: SceneOption[];
   onChangeAppearance: (patch: Partial<MenuAppearance>) => void;
   onSetTitleEnabled: (enabled: boolean) => void;
   onTitleTextChange: (labelKey: string, text: string) => void;
@@ -1023,6 +1075,11 @@ export type ActionComposerValue = {
   backgroundIdA: string;
   backgroundIdB: string;
   sceneId: string;
+  /** Fondo de `sceneId` que queda activo al llegar — '' = el default de esa
+   * escena (backgrounds[0]). Si `sceneId` es la escena actual, esto cambia
+   * el fondo en el momento en vez de disparar una transición de verdad
+   * (ver comentario de TransitionToActionSchema.backgroundId). */
+  backgroundId: string;
   characterId: string;
   dialogueText: string;
   /** Clave de Character.expressions, o '' para el retrato por defecto. Solo
@@ -1050,6 +1107,7 @@ function resolveActionComposerValue(
     backgroundIdA: backgroundAction?.backgroundIdA ?? '',
     backgroundIdB: backgroundAction?.backgroundIdB ?? '',
     sceneId: sceneAction?.sceneId ?? '',
+    backgroundId: sceneAction?.backgroundId ?? '',
     characterId: node?.speaker ?? '',
     dialogueText: node ? (strings[node.line] ?? '') : '',
     portraitExpression: node?.portraitExpression ?? '',
@@ -1075,7 +1133,7 @@ function ActionComposer({
   actions: SceneAction[];
   dialogueNodes: Record<string, DialogueNode>;
   strings: Record<string, string>;
-  sceneOptions: { id: string; act: number }[];
+  sceneOptions: SceneOption[];
   characters: Character[];
   backgroundOptions: { id: string }[];
   onChange: (patch: Partial<ActionComposerValue>) => void;
@@ -1123,17 +1181,39 @@ function ActionComposer({
         <span className="text-[9px] text-graphite-500 uppercase">Escena que activa</span>
         <select
           value={value.sceneId}
-          onChange={(event) => onChange({ sceneId: event.target.value })}
+          onChange={(event) => onChange({ sceneId: event.target.value, backgroundId: '' })}
           className={inputClassName}
         >
           <option value="">(ninguna)</option>
           {sceneOptions.map((option) => (
             <option key={option.id} value={option.id}>
-              {option.id}
+              {option.title ?? option.id}
             </option>
           ))}
         </select>
       </label>
+      {value.sceneId &&
+        (() => {
+          const targetScene = sceneOptions.find((option) => option.id === value.sceneId);
+          if (!targetScene || targetScene.backgrounds.length < 2) return null;
+          return (
+            <label className="mb-1 flex flex-col">
+              <span className="text-[9px] text-graphite-500 uppercase">Fondo de esa escena</span>
+              <select
+                value={value.backgroundId}
+                onChange={(event) => onChange({ backgroundId: event.target.value })}
+                className={inputClassName}
+              >
+                <option value="">(el de siempre de esa escena)</option>
+                {targetScene.backgrounds.map((bg) => (
+                  <option key={bg.id} value={bg.id}>
+                    {bg.title ?? bg.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+          );
+        })()}
       <label className="mb-1 flex flex-col">
         <span className="text-[9px] text-graphite-500 uppercase">Personaje que habla</span>
         <select
@@ -1209,7 +1289,7 @@ function InteractWithTargetsSection({
   targets: InteractWithTarget[];
   dialogueNodes: Record<string, DialogueNode>;
   strings: Record<string, string>;
-  sceneOptions: { id: string; act: number }[];
+  sceneOptions: SceneOption[];
   characters: Character[];
   backgroundOptions: { id: string }[];
   otherObjects: { id: string; label: string }[];
@@ -1303,7 +1383,7 @@ function MinigameSection({
   onFail: SceneAction[];
   dialogueNodes: Record<string, DialogueNode>;
   strings: Record<string, string>;
-  sceneOptions: { id: string; act: number }[];
+  sceneOptions: SceneOption[];
   characters: Character[];
   backgroundOptions: { id: string }[];
   onSetMinigameEnabled: (enabled: boolean) => void;
@@ -1402,7 +1482,7 @@ function ActionMenuFields({
   minigameOnFail: SceneAction[];
   dialogueNodes: Record<string, DialogueNode>;
   strings: Record<string, string>;
-  sceneOptions: { id: string; act: number }[];
+  sceneOptions: SceneOption[];
   characters: Character[];
   backgroundOptions: { id: string }[];
   otherObjects: { id: string; label: string }[];
@@ -1529,7 +1609,7 @@ function ObjectFields({
 }: {
   object: EditableObject;
   strings: Record<string, string>;
-  sceneOptions: { id: string; act: number }[];
+  sceneOptions: SceneOption[];
   dialogueNodes: Record<string, DialogueNode>;
   characters: Character[];
   backgroundOptions: { id: string }[];
@@ -1812,6 +1892,8 @@ export function SceneEditorPanel({
   editingBackgroundPath,
   onEditBackgroundWithAi,
   onChangeKind,
+  onChangeSceneTitle,
+  onChangeBackgroundTitle,
   onChangeIntroSkippable,
   onChangeIntroCompleteTarget,
   onChangeCinematicTransition,
@@ -1850,7 +1932,7 @@ export function SceneEditorPanel({
   scene: Scene | null;
   strings: Record<string, string>;
   characters: Character[];
-  sceneOptions: { id: string; act: number }[];
+  sceneOptions: SceneOption[];
   activeSceneId: string;
   creatingScene: boolean;
   uploadingBackground: boolean;
@@ -1874,6 +1956,8 @@ export function SceneEditorPanel({
   editingBackgroundPath: string | null;
   onEditBackgroundWithAi: (assetPath: string) => void;
   onChangeKind: (kind: SceneKind) => void;
+  onChangeSceneTitle: (title: string) => void;
+  onChangeBackgroundTitle: (bgId: string, title: string) => void;
   onChangeIntroSkippable: (skippable: boolean) => void;
   onChangeIntroCompleteTarget: (sceneId: string) => void;
   onChangeCinematicTransition: (transition: CinematicTransition) => void;
@@ -1928,6 +2012,18 @@ export function SceneEditorPanel({
         </p>
       ) : (
         <>
+          <label className="mb-3 flex flex-col">
+            <span className="text-[9px] text-graphite-500 uppercase">
+              Título de la escena (para reconocerla al enlazarla — el id sigue siendo &quot;{scene.id}&quot;)
+            </span>
+            <input
+              type="text"
+              value={scene.title ?? ''}
+              onChange={(event) => onChangeSceneTitle(event.target.value)}
+              placeholder={scene.id}
+              className={inputClassName}
+            />
+          </label>
           <label className="mb-3 flex flex-col border-b border-graphite-800 pb-3">
             <span className="text-[9px] text-graphite-500 uppercase">Tipo de escena</span>
             <select
@@ -1959,9 +2055,12 @@ export function SceneEditorPanel({
             onBackgroundColorChange={onBackgroundColorChange}
             onImageWidthChange={onBackgroundImageWidthChange}
             onCaptionChange={onBackgroundCaptionChange}
+            onTitleChange={onChangeBackgroundTitle}
             backgroundCacheBust={backgroundCacheBust}
             editingBackgroundPath={editingBackgroundPath}
             onEditBackgroundWithAi={onEditBackgroundWithAi}
+            editingZonesBackgroundId={editingZonesBackgroundId}
+            onSelectForZones={onChangeEditingZonesBackground}
           />
 
           {scene.kind === 'intro' ? (
@@ -2001,25 +2100,19 @@ export function SceneEditorPanel({
                 aprietes Guardar.
               </p>
 
-              {scene.backgrounds.length > 1 && (
-                <label className="mb-3 flex flex-col">
-                  <span className="text-[9px] text-graphite-500 uppercase">
-                    Editando zonas del fondo (cada fondo tiene las suyas)
-                  </span>
-                  <select
-                    value={editingZonesBackgroundId ?? scene.backgrounds[0]?.id ?? ''}
-                    onChange={(event) => onChangeEditingZonesBackground(event.target.value)}
-                    className={inputClassName}
-                  >
-                    {scene.backgrounds.map((bg, index) => (
-                      <option key={bg.id} value={bg.id}>
-                        BG {index + 1}
-                        {bg.caption ? ` — ${bg.caption.slice(0, 30)}` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
+              {scene.backgrounds.length > 1 &&
+                (() => {
+                  const editingBackground =
+                    scene.backgrounds.find((bg) => bg.id === editingZonesBackgroundId) ?? scene.backgrounds[0];
+                  const editingIndex = scene.backgrounds.findIndex((bg) => bg.id === editingBackground?.id);
+                  return (
+                    <p className="mb-3 rounded border border-sky-400/40 bg-graphite-900/60 p-2 text-[9px] text-sky-300">
+                      Mostrando zonas de{' '}
+                      <strong>{editingBackground?.title || `BG ${editingIndex + 1}`}</strong> — clickeá otro fondo
+                      arriba (borde celeste) para ver/editar sus zonas.
+                    </p>
+                  );
+                })()}
 
               {polygonDraftPointCount !== null ? (
                 <PolygonDraftStatus pointCount={polygonDraftPointCount} onCancel={onCancelPolygonDraft} />
