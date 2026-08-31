@@ -3,6 +3,7 @@ import { basename, dirname, join } from 'node:path';
 import { app, ipcMain } from 'electron';
 import { formatApiError } from './apiErrors';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
+import { NO_TEXT_INSTRUCTION } from './comfyuiImageProvider';
 
 const ID_PATTERN = /^[a-z0-9-]+$/;
 
@@ -126,7 +127,9 @@ export function registerImageEditHandlers(): void {
             ? ' Any additional images provided after the first one are ONLY reference material for the instruction ' +
               "above (e.g. a pose, a style, a detail to copy) — they are NOT part of the scene and shouldn't be " +
               'inserted into it wholesale, use them only the way the instruction describes.'
-            : '');
+            : '') +
+          ` Do not add any text, letters, or writing anywhere in the image as part of this edit, even if it seems ` +
+          `natural for the change requested (e.g. a sign, a screen, a label). ${NO_TEXT_INSTRUCTION}`;
         const response = await fetchWithRetry('https://fal.run/fal-ai/nano-banana/edit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Key ${config.falApiKey}` },

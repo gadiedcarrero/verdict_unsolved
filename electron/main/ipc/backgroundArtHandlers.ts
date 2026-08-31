@@ -4,7 +4,7 @@ import { app, ipcMain } from 'electron';
 import type { AiIntegrationsConfig } from '../../../shared/ai-integrations';
 import { formatApiError } from './apiErrors';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
-import { generateComfyUIImage } from './comfyuiImageProvider';
+import { generateComfyUIImage, NO_TEXT_INSTRUCTION } from './comfyuiImageProvider';
 
 const ID_PATTERN = /^[a-z0-9-]+$/;
 
@@ -51,7 +51,7 @@ async function fetchWithRetry(url: string, init?: RequestInit): Promise<Response
 }
 
 const BACKGROUND_STYLE_PROMPT =
-  'Wide point-and-click adventure game background/establishing shot. Plain, cinematic, dramatic lighting matching a moody detective-thriller graphic novel aesthetic — stylized illustrated digital painting, clean linework, painterly shading. No text, no watermark, no UI, no border.';
+  `Wide point-and-click adventure game background/establishing shot. Plain, cinematic, dramatic lighting matching a moody detective-thriller graphic novel aesthetic — stylized illustrated digital painting, clean linework, painterly shading. No watermark, no UI, no border. ${NO_TEXT_INSTRUCTION}`;
 
 type CharacterReference = { name: string; description: string; portraitPath: string };
 type GenerateResult = { ok: true; bytes: Buffer } | { ok: false; error: string };

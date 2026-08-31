@@ -5,7 +5,12 @@ import sharp from 'sharp';
 import type { AiIntegrationsConfig } from '../../../shared/ai-integrations';
 import { formatApiError } from './apiErrors';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
-import { chromaKeyToTransparent, generateComfyUIImage, GREEN_SCREEN_INSTRUCTION } from './comfyuiImageProvider';
+import {
+  chromaKeyToTransparent,
+  generateComfyUIImage,
+  GREEN_SCREEN_INSTRUCTION,
+  NO_TEXT_INSTRUCTION,
+} from './comfyuiImageProvider';
 
 const ID_PATTERN = /^[a-z0-9-]+$/;
 
@@ -43,14 +48,14 @@ const POSE_GUIDE_INSTRUCTION =
 // transparencia real se logra con un recorte de fondo aparte (ver
 // removeBackground más abajo), no con el modelo de generación.
 const PORTRAIT_STYLE_PROMPT =
-  'Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Plain, simple, softly lit background — no scenery, no props, no other characters. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No text, no watermark, no border or frame, no checkerboard/transparency pattern drawn as an image.';
+  `Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Plain, simple, softly lit background — no scenery, no props, no other characters. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No watermark, no border or frame, no checkerboard/transparency pattern drawn as an image. ${NO_TEXT_INSTRUCTION}`;
 
 // Mismo encuadre que la versión de Nano Banana, pero con fondo transparente
 // nativo (gpt-image-1 sí produce alfa real cuando se le pide "background:
 // transparent" en la request, a diferencia de Nano Banana) — no hace falta
 // un paso de recorte aparte para este proveedor.
 const PORTRAIT_STYLE_PROMPT_OPENAI =
-  'Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Fully transparent background — no scenery, no backdrop, no ground. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No text, no watermark, no border or frame.';
+  `Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Fully transparent background — no scenery, no backdrop, no ground. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No watermark, no border or frame. ${NO_TEXT_INSTRUCTION}`;
 
 async function fetchBytes(url: string): Promise<Buffer> {
   const response = await fetch(url);

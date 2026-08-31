@@ -18,10 +18,26 @@ import sharp from 'sharp';
 
 const NEGATIVE_PROMPT =
   'lowres, bad anatomy, bad hands, extra fingers, missing fingers, deformed, mutated, blurry, watermark, text, ' +
-  'signature, logo, cartoon, 3d render, cgi, disfigured, extra limbs, cloned face, duplicate, ugly, jpeg artifacts';
+  'letters, words, writing, readable text, sign, label, subtitles, signature, logo, cartoon, 3d render, cgi, ' +
+  'disfigured, extra limbs, cloned face, duplicate, ugly, jpeg artifacts';
 
 export const GREEN_SCREEN_INSTRUCTION =
   'Solid flat pure chroma-key green background (#00FF00), completely uniform, no gradient, no shadow, no texture, no vignette.';
+
+/** El juego es multi-idioma y todo el texto que ve el jugador se agrega
+ * aparte, por código (diálogo, subtítulos de panel, etc.) — nunca puede
+ * quedar HORNEADO dentro de una imagen generada, porque no hay forma de
+ * traducirlo después. "No text/no watermark" solo no alcanza de forma
+ * confiable: los modelos meten letras gratis en carteles, pantallas,
+ * papeles o tapas de libro aunque no se les haya pedido — por eso esto
+ * nombra cada superficie típica donde se cuela texto, no solo "no text" en
+ * general. Se usa en el prompt POSITIVO de los tres proveedores; para
+ * ComfyUI además se refuerza en el negativo (ver NEGATIVE_PROMPT). */
+export const NO_TEXT_INSTRUCTION =
+  'Absolutely no text, letters, numbers, or readable characters anywhere in the image, in any language — no ' +
+  'signs, no screens or monitor displays showing text, no papers or documents with visible writing, no labels, ' +
+  'no book covers or spines with titles, no UI elements, no logos. All in-game text is added separately by the ' +
+  'game engine and must never be baked into the artwork.';
 
 type ComfyNode = { class_type: string; inputs: Record<string, unknown> };
 type ComfyWorkflow = Record<string, ComfyNode>;
