@@ -273,7 +273,7 @@ export const SceneBackgroundSchema = z.object({
   hotspots: z.array(HotspotSchema).default([]),
 });
 
-export const SceneKindSchema = z.enum(['standard', 'intro', 'menu', 'cinematica']);
+export const SceneKindSchema = z.enum(['standard', 'intro', 'menu', 'cinematica', 'minigame']);
 
 /** Solo `kind: "cinematica"`. "fade" ya está implementado (cross-fade
  * simple entre paneles). "comic" queda como opción seleccionable pero sin
@@ -408,6 +408,23 @@ const SceneObjectSchema = z.object({
     fontColor: '#e6eaef',
     hoverColor: '#e0a636',
   }),
+  /** Solo `kind: "minigame"`: la escena ENTERA es este minijuego a pantalla
+   * completa, sin fondo/zonas propios — distinto del minijuego de zona
+   * (Hotspot.onInteract → openMinigame, un overlay sobre una escena
+   * interactiva ya existente). `undefined` = todavía sin configurar, la
+   * escena no hace nada al entrar. */
+  minigameTemplate: MinigameTemplateSchema.optional(),
+  /** Solo `template: "sequence"` por ahora — mismo campo y mismo caveat que
+   * el minijuego de zona (ver SceneActionSchema, caso "openMinigame"). */
+  minigameSequenceLength: z.number().default(4),
+  /** Acciones al resolver con éxito — típicamente un `transitionTo` (con o
+   * sin `backgroundId`) de vuelta a la escena desde la que se entró, o a
+   * la que sigue narrativamente. Mismo subconjunto que el `onSuccess` de un
+   * `openMinigame` de zona (ver OUTCOME_ACTION_VARIANTS) — nunca otro
+   * `openMinigame`/`continueGame`/`quitApp` anidado ahí. */
+  onMinigameSuccess: z.array(MinigameOutcomeActionSchema).default([]),
+  /** Acciones al fracasar — mismo criterio que onMinigameSuccess. */
+  onMinigameFail: z.array(MinigameOutcomeActionSchema).default([]),
 });
 
 export const SceneSchema = z.preprocess(migrateLegacySceneHotspots, SceneObjectSchema);

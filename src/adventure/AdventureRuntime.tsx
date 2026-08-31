@@ -25,6 +25,7 @@ import type {
   InteractWithTarget,
   MenuAppearance,
   MinigameOutcomeAction,
+  MinigameTemplate,
   PolygonPoint,
   Scene,
   SceneAction,
@@ -41,6 +42,7 @@ import { CinematicScene } from './CinematicScene';
 import { IntroScene } from './IntroScene';
 import { MENU_BUTTON_ACTION_CONTINUE, MENU_BUTTON_ACTION_QUIT } from './menuButtonActions';
 import { MenuScene } from './MenuScene';
+import { MinigameScene } from './MinigameScene';
 import { MinigameHost } from './minigames/MinigameHost';
 import { resizeCursorImage } from './resizeCursorImage';
 import { SceneViewer } from './SceneViewer';
@@ -1172,6 +1174,76 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
   }
 
+  // "minigame": la escena entera es un minijuego a pantalla completa — ver
+  // MinigameScene.tsx. Mismo patrón que el minijuego de zona
+  // (setMinigameEnabled/updateMinigameOutcome más abajo), pero con nombres
+  // "Scene" para no pisarse con esos (una escena y una de sus zonas pueden
+  // tener cada una lo suyo).
+  function updateSceneMinigameTemplate(template: MinigameTemplate): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({ ...base, minigameTemplate: template });
+  }
+
+  function updateSceneMinigameSequenceLength(sequenceLength: number): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene({ ...base, minigameSequenceLength: sequenceLength });
+  }
+
+  function sceneMinigameComposerValue(base: Scene, outcome: 'onMinigameSuccess' | 'onMinigameFail'): ActionComposerValue {
+    const actions = base[outcome];
+    const backgroundAction = actions.find((a) => a.type === 'toggleBackground');
+    const sceneAction = actions.find((a) => a.type === 'transitionTo');
+    const dialogueAction = actions.find((a) => a.type === 'dialogue');
+    const node = dialogueAction?.type === 'dialogue' ? base.dialogueNodes[dialogueAction.nodeId] : undefined;
+    return {
+      backgroundIdA: backgroundAction?.type === 'toggleBackground' ? backgroundAction.backgroundIdA : '',
+      backgroundIdB: backgroundAction?.type === 'toggleBackground' ? backgroundAction.backgroundIdB : '',
+      sceneId: sceneAction?.type === 'transitionTo' ? sceneAction.sceneId : '',
+      backgroundId: sceneAction?.type === 'transitionTo' ? (sceneAction.backgroundId ?? '') : '',
+      characterId: node?.speaker ?? '',
+      dialogueText: node ? (strings[node.line] ?? '') : '',
+      portraitExpression: node?.portraitExpression ?? '',
+    };
+  }
+
+  function updateSceneMinigameOutcome(outcome: 'onMinigameSuccess' | 'onMinigameFail', patch: Partial<ActionComposerValue>): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    const next = { ...sceneMinigameComposerValue(base, outcome), ...patch };
+    const nodeId = `dialogue.${base.id}.minigame.${outcome}`;
+
+    const actions: MinigameOutcomeAction[] = [];
+    if (next.backgroundIdA && next.backgroundIdB) {
+      actions.push({ type: 'toggleBackground', backgroundIdA: next.backgroundIdA, backgroundIdB: next.backgroundIdB });
+    }
+    if (next.sceneId) {
+      actions.push({
+        type: 'transitionTo',
+        sceneId: next.sceneId,
+        fade: 'fade',
+        backgroundId: next.backgroundId || undefined,
+      });
+    }
+    if (next.characterId) actions.push({ type: 'dialogue', nodeId });
+
+    const dialogueNodes: Record<string, DialogueNode> = { ...base.dialogueNodes };
+    if (next.characterId) {
+      dialogueNodes[nodeId] = {
+        id: nodeId,
+        speaker: next.characterId,
+        line: nodeId,
+        portraitExpression: next.portraitExpression || undefined,
+      };
+      setPendingStrings((prev) => ({ ...prev, [nodeId]: next.dialogueText }));
+    } else {
+      delete dialogueNodes[nodeId];
+    }
+
+    setEditedScene({ ...base, dialogueNodes, [outcome]: actions });
+  }
+
   function updateIntroSkippable(introSkippable: boolean): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
@@ -1298,6 +1370,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       menuTitle: null,
       menuButtons: [],
       menuAppearance: DEFAULT_MENU_APPEARANCE,
+      minigameSequenceLength: 4,
+      onMinigameSuccess: [],
+      onMinigameFail: [],
     };
     setCreatingScene(true);
     setSaveMessage(null);
@@ -1343,6 +1418,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       menuTitle: null,
       menuButtons: [],
       menuAppearance: DEFAULT_MENU_APPEARANCE,
+      minigameSequenceLength: 4,
+      onMinigameSuccess: [],
+      onMinigameFail: [],
     };
     setCreatingScene(true);
     setSaveMessage(null);
@@ -2222,6 +2300,10 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onChangeIntroCompleteTarget={updateIntroCompleteTarget}
                   onChangeCinematicTransition={updateCinematicTransition}
                   onChangeCinematicCompleteTarget={updateCinematicCompleteTarget}
+                  onChangeSceneMinigameTemplate={updateSceneMinigameTemplate}
+                  onChangeSceneMinigameSequenceLength={updateSceneMinigameSequenceLength}
+                  onSceneMinigameSuccessChange={(patch) => updateSceneMinigameOutcome('onMinigameSuccess', patch)}
+                  onSceneMinigameFailChange={(patch) => updateSceneMinigameOutcome('onMinigameFail', patch)}
                   onChangeMenuAppearance={updateMenuAppearance}
                   onSetMenuTitleEnabled={setMenuTitleEnabled}
                   onMenuTitleTextChange={setLabelText}
@@ -2569,6 +2651,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           strings={strings}
           siteSettings={displaySiteSettings}
         />
+      ) : displayScene?.kind === 'minigame' ? (
+        <MinigameScene key={displayScene.id} scene={displayScene} />
       ) : displayScene ? (
         // Modo juego: la escena vuelve a ocupar toda la pantalla, como
         // siempre — el editor no deja rastro.

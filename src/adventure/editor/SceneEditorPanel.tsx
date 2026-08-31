@@ -12,6 +12,7 @@ import type {
   MenuButtonStyle,
   MenuPosition,
   MenuTitle,
+  MinigameTemplate,
   Scene,
   SceneAction,
   SceneKind,
@@ -94,6 +95,7 @@ function SceneSwitcher({
               <option value="intro">Intro (secuencia de fondos por tiempo)</option>
               <option value="menu">Menú (fondo con botones)</option>
               <option value="cinematica">Cinemática (secuencia con texto)</option>
+              <option value="minigame">Minijuego (pantalla completa)</option>
             </select>
           </label>
           <div className="flex gap-1">
@@ -1446,6 +1448,82 @@ function MinigameSection({
   );
 }
 
+/** `kind: "minigame"` — ver comentario de MinigameScene.tsx. Mismo formato
+ * que MinigameSection (el minijuego de zona) arriba, sin el checkbox de
+ * "activar" porque acá el minijuego ES la escena entera, no una alternativa
+ * a otra cosa. */
+function MinigameSettings({
+  scene,
+  dialogueNodes,
+  strings,
+  sceneOptions,
+  characters,
+  onChangeTemplate,
+  onChangeSequenceLength,
+  onSuccessChange,
+  onFailChange,
+}: {
+  scene: Scene;
+  dialogueNodes: Record<string, DialogueNode>;
+  strings: Record<string, string>;
+  sceneOptions: SceneOption[];
+  characters: Character[];
+  onChangeTemplate: (template: MinigameTemplate) => void;
+  onChangeSequenceLength: (length: number) => void;
+  onSuccessChange: (patch: Partial<ActionComposerValue>) => void;
+  onFailChange: (patch: Partial<ActionComposerValue>) => void;
+}): JSX.Element {
+  return (
+    <div className="mb-3 border-b border-graphite-800 pb-3">
+      <p className="mb-2 text-[10px] font-semibold tracking-widest text-graphite-300 uppercase">Minijuego</p>
+      <label className="mb-2 flex flex-col">
+        <span className="text-[9px] text-graphite-500 uppercase">Plantilla</span>
+        <select
+          value={scene.minigameTemplate ?? ''}
+          onChange={(event) => onChangeTemplate(event.target.value as MinigameTemplate)}
+          className={inputClassName}
+        >
+          <option value="" disabled>
+            (elegir)
+          </option>
+          <option value="sequence">Memoria de secuencia</option>
+        </select>
+      </label>
+      <label className="mb-2 flex flex-col">
+        <span className="text-[9px] text-graphite-500 uppercase">Largo de la secuencia</span>
+        <input
+          type="number"
+          min={2}
+          max={9}
+          value={scene.minigameSequenceLength}
+          onChange={(event) => onChangeSequenceLength(Number(event.target.value))}
+          className={inputClassName}
+        />
+      </label>
+      <ActionComposer
+        label="Si gana"
+        actions={scene.onMinigameSuccess}
+        dialogueNodes={dialogueNodes}
+        strings={strings}
+        sceneOptions={sceneOptions}
+        characters={characters}
+        backgroundOptions={[]}
+        onChange={onSuccessChange}
+      />
+      <ActionComposer
+        label="Si pierde"
+        actions={scene.onMinigameFail}
+        dialogueNodes={dialogueNodes}
+        strings={strings}
+        sceneOptions={sceneOptions}
+        characters={characters}
+        backgroundOptions={[]}
+        onChange={onFailChange}
+      />
+    </div>
+  );
+}
+
 function ActionMenuFields({
   enabled,
   onExamine,
@@ -1898,6 +1976,10 @@ export function SceneEditorPanel({
   onChangeIntroCompleteTarget,
   onChangeCinematicTransition,
   onChangeCinematicCompleteTarget,
+  onChangeSceneMinigameTemplate,
+  onChangeSceneMinigameSequenceLength,
+  onSceneMinigameSuccessChange,
+  onSceneMinigameFailChange,
   onChangeMenuAppearance,
   onSetMenuTitleEnabled,
   onMenuTitleTextChange,
@@ -1962,6 +2044,10 @@ export function SceneEditorPanel({
   onChangeIntroCompleteTarget: (sceneId: string) => void;
   onChangeCinematicTransition: (transition: CinematicTransition) => void;
   onChangeCinematicCompleteTarget: (sceneId: string) => void;
+  onChangeSceneMinigameTemplate: (template: MinigameTemplate) => void;
+  onChangeSceneMinigameSequenceLength: (length: number) => void;
+  onSceneMinigameSuccessChange: (patch: Partial<ActionComposerValue>) => void;
+  onSceneMinigameFailChange: (patch: Partial<ActionComposerValue>) => void;
   onChangeMenuAppearance: (patch: Partial<MenuAppearance>) => void;
   onSetMenuTitleEnabled: (enabled: boolean) => void;
   onMenuTitleTextChange: (labelKey: string, text: string) => void;
@@ -2035,6 +2121,7 @@ export function SceneEditorPanel({
               <option value="intro">Intro (secuencia de fondos por tiempo)</option>
               <option value="menu">Menú (fondo con botones)</option>
               <option value="cinematica">Cinemática (secuencia con texto)</option>
+              <option value="minigame">Minijuego (pantalla completa)</option>
             </select>
           </label>
 
@@ -2091,6 +2178,18 @@ export function SceneEditorPanel({
               onRemoveButton={onRemoveMenuButton}
               onButtonLabelTextChange={onMenuButtonLabelTextChange}
               onButtonTargetChange={onMenuButtonTargetChange}
+            />
+          ) : scene.kind === 'minigame' ? (
+            <MinigameSettings
+              scene={scene}
+              dialogueNodes={scene.dialogueNodes}
+              strings={strings}
+              sceneOptions={sceneOptions}
+              characters={characters}
+              onChangeTemplate={onChangeSceneMinigameTemplate}
+              onChangeSequenceLength={onChangeSceneMinigameSequenceLength}
+              onSuccessChange={onSceneMinigameSuccessChange}
+              onFailChange={onSceneMinigameFailChange}
             />
           ) : (
             <>
