@@ -24,6 +24,26 @@ import type { EditableObject } from './editableObjects';
 import { buildEditableObjects } from './editableObjects';
 import type { EditableRect } from './EditableBox';
 
+// SDXL/ComfyUI (y en menor medida los demás proveedores) casi siempre
+// interpretan "una lista", "una pantalla mostrando X" o "el nombre resaltado"
+// como "dibujame una página de escritura" — el "no text" del prompt general
+// pierde contra eso. Aviso no bloqueante, no un filtro: la descripción puede
+// seguir generándose tal cual, pero avisa ANTES de gastar el tiempo de
+// generación en algo que casi seguro sale con garabatos ilegibles encima.
+const READABLE_TEXT_RISK_PATTERN =
+  /\b(list|text|written|writing|words?|letters?|screens? showing|display(ing)? (a|the)|document|newspaper|headline|caption|subtitles?|sign(s)? (with|showing)|label(s|ed)?|page(s)? of|book with|handwriting|highlighting the (name|word)|reveal(ing|s)? the (name|word))\b/i;
+
+function TextRiskHint({ prompt }: { prompt: string }): JSX.Element | null {
+  if (!READABLE_TEXT_RISK_PATTERN.test(prompt)) return null;
+  return (
+    <p className="mb-2 text-[9px] text-amber-accent/80">
+      ⚠ Esta descripción pide texto legible (lista, pantalla con nombre, cartel...) — el generador casi siempre lo
+      dibuja como garabatos ilegibles en vez de letras reales. Mejor describir la reacción, un primer plano
+      desenfocado de la pantalla, o el brillo de la pantalla sobre la cara, sin pedir que se lea nada.
+    </p>
+  );
+}
+
 const inputClassName =
   'w-full rounded border border-graphite-700 bg-graphite-900 px-1.5 py-1 text-[10px] text-graphite-100';
 
@@ -419,6 +439,7 @@ function GenerateBackgroundForm({
         placeholder='Narrá la escena (ej. "Pepe y Juan sentados de espaldas en un banco de un parque, de noche")...'
         className={`${inputClassName} mb-2`}
       />
+      <TextRiskHint prompt={prompt} />
       {characters.length > 0 && (
         <div className="mb-2">
           <p className="mb-1 text-[8px] tracking-widest text-graphite-500 uppercase">
@@ -517,6 +538,7 @@ function RegenerateBackgroundForm({
         placeholder='Narrá la escena de nuevo (ej. "Pepe y Juan sentados de espaldas en un banco de un parque, de noche")...'
         className={`${inputClassName} mb-2`}
       />
+      <TextRiskHint prompt={prompt} />
       {characters.length > 0 && (
         <div className="mb-2">
           <p className="mb-1 text-[8px] tracking-widest text-graphite-500 uppercase">
@@ -624,6 +646,7 @@ function PendingPanelQueue({
         placeholder="Descripción visual (en inglés, para el generador de imagen)..."
         className={`${inputClassName} mb-1`}
       />
+      <TextRiskHint prompt={prompt} />
       <textarea
         value={caption}
         onChange={(event) => setCaption(event.target.value)}
