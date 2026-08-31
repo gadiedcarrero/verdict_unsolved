@@ -10,11 +10,13 @@ import sharp from 'sharp';
  * ControlNet condiciona el encuadre a partir de la posición/escala de la
  * cara en la referencia, así que forzarlo en un fondo con varios
  * personajes de cuerpo entero termina arrastrando la composición entera a
- * un primer plano de esa cara), IP-Adapter (preset "PLUS FACE", que recorta
- * la referencia a solo la cara y descarta su composición) cuando hay una o
- * más referencias de SUJETO/estilo general (fondos con varios personajes —
- * tolera mejor una composición ancha, a costa de fidelidad de cara más
- * débil que InstantID), plano txt2img cuando no hay ninguna referencia. No
+ * un primer plano de esa cara), IP-Adapter (con start_at retrasado para
+ * que la composición ancha del prompt se establezca antes de que la
+ * identidad de la referencia empiece a influir — ver comentario en
+ * ipAdapterWorkflow) cuando hay una o más referencias de SUJETO/estilo
+ * general (fondos con varios personajes — tolera mejor una composición
+ * ancha, a costa de fidelidad de cara más débil que InstantID), plano
+ * txt2img cuando no hay ninguna referencia. No
  * usa ninguna API paga ni tiene moderación de contenido propia — corre
  * contra un servidor ComfyUI ya abierto en esta máquina (ver
  * AiIntegrationsConfig.comfyuiBaseUrl).
@@ -174,26 +176,30 @@ function ipAdapterWorkflow(
       imgRef = [batchId, 0];
     }
   });
-  // "PLUS (high strength)" transfiere identidad Y COMPOSICIÓN de la
-  // referencia — con retratos de busto de referencia, eso arrastra ese
-  // mismo encuadre de busto al fondo entero sin importar lo que diga el
-  // prompt (bug real: "sala de reuniones, cinco personas" seguía saliendo
-  // como un solo primer plano). "PLUS FACE (portraits)" recorta la
-  // referencia a solo la cara y descarta el resto de la composición —
-  // pensado justo para este caso, sacar identidad de un retrato para
-  // meterla en una escena distinta.
-  nodes['20'] = { class_type: 'IPAdapterUnifiedLoader', inputs: { model, preset: 'PLUS FACE (portraits)' } };
+  // El preset "PLUS FACE (portraits)" sería lo ideal acá (recorta la
+  // referencia a solo la cara, sin arrastrar su composición) pero necesita
+  // un archivo de modelo (ip-adapter-plus-face_sdxl_vit-h.safetensors) que
+  // esta instalación de ComfyUI no tiene descargado — solo está el de
+  // "PLUS (high strength)", que sí transfiere identidad Y composición de
+  // la referencia (con retratos de busto como referencia, eso arrastraba
+  // ese mismo encuadre de busto al fondo entero, ignorando el prompt).
+  // Mitigación sin depender de un archivo nuevo: retrasar cuándo empieza a
+  // influir IP-Adapter (start_at) para que la composición ancha del prompt
+  // de texto ya esté establecida en los primeros pasos de denoise antes de
+  // que la identidad de la referencia empiece a pesar, y bajar el peso —
+  // sacrifica algo de fidelidad de cara a cambio de respetar el encuadre.
+  nodes['20'] = { class_type: 'IPAdapterUnifiedLoader', inputs: { model, preset: 'PLUS (high strength)' } };
   nodes['21'] = {
     class_type: 'IPAdapterAdvanced',
     inputs: {
       model: ['20', 0],
       ipadapter: ['20', 1],
       image: imgRef,
-      weight: 0.55,
+      weight: 0.45,
       weight_type: 'linear',
       combine_embeds: 'average',
-      start_at: 0.0,
-      end_at: 1.0,
+      start_at: 0.3,
+      end_at: 0.85,
       embeds_scaling: 'V only',
     },
   };
