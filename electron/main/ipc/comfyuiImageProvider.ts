@@ -4,11 +4,19 @@ import sharp from 'sharp';
  * Generación 100% local vía ComfyUI (SDXL) — puerto a TypeScript del mismo
  * workflow ya probado y en uso real en PressForge
  * (~/Desktop/PressForge Studio/pressforge/providers/comfyui_image.py):
- * InstantID cuando hay una imagen de referencia de CARA (mantiene la misma
- * identidad entre retratos/expresiones de un personaje), plano txt2img
- * cuando no hay referencia. No usa ninguna API paga ni tiene moderación de
- * contenido propia — corre contra un servidor ComfyUI ya abierto en esta
- * máquina (ver AiIntegrationsConfig.comfyuiBaseUrl).
+ * InstantID cuando hay una imagen de referencia de CARA en primer plano
+ * (mantiene la misma identidad entre retratos/expresiones de un
+ * personaje — pensado para bustos, no sirve para escenas anchas: su
+ * ControlNet condiciona el encuadre a partir de la posición/escala de la
+ * cara en la referencia, así que forzarlo en un fondo con varios
+ * personajes de cuerpo entero termina arrastrando la composición entera a
+ * un primer plano de esa cara), IP-Adapter cuando hay una o más
+ * referencias de SUJETO/estilo general (fondos con varios personajes —
+ * tolera mejor una composición ancha, a costa de fidelidad de cara más
+ * débil que InstantID), plano txt2img cuando no hay ninguna referencia. No
+ * usa ninguna API paga ni tiene moderación de contenido propia — corre
+ * contra un servidor ComfyUI ya abierto en esta máquina (ver
+ * AiIntegrationsConfig.comfyuiBaseUrl).
  *
  * A diferencia de fal.ai/OpenAI, esto nunca produce canal alfa real —
  * `chromaKeyToTransparent` recorta a mano un fondo verde puro pedido en el
@@ -16,10 +24,16 @@ import sharp from 'sharp';
  * externo de recorte de fondo.
  */
 
+// SDXL-family checkpoints (RealVisXL incluido) alucinan letras/pseudo-texto
+// gratis con muchísima frecuencia — la negativa en texto plano no alcanza
+// de forma confiable. El peso entre paréntesis (sintaxis nativa de
+// ComfyUI/CLIPTextEncode) sube la atención sobre esos tokens puntuales sin
+// tocar el resto de la negativa.
 const NEGATIVE_PROMPT =
-  'lowres, bad anatomy, bad hands, extra fingers, missing fingers, deformed, mutated, blurry, watermark, text, ' +
-  'letters, words, writing, readable text, sign, label, subtitles, signature, logo, cartoon, 3d render, cgi, ' +
-  'disfigured, extra limbs, cloned face, duplicate, ugly, jpeg artifacts';
+  'lowres, bad anatomy, bad hands, extra fingers, missing fingers, deformed, mutated, blurry, ' +
+  '(watermark:1.3), (text:1.5), (letters:1.4), (words:1.4), (writing:1.4), (readable text:1.5), ' +
+  '(typography:1.3), (caption:1.3), (subtitles:1.3), (sign:1.3), (label:1.3), (logo:1.3), signature, ' +
+  'cartoon, 3d render, cgi, disfigured, extra limbs, cloned face, duplicate, ugly, jpeg artifacts';
 
 export const GREEN_SCREEN_INSTRUCTION =
   'Solid flat pure chroma-key green background (#00FF00), completely uniform, no gradient, no shadow, no texture, no vignette.';
@@ -50,9 +64,12 @@ export type ComfyUIGenerateOptions = {
   height: number;
   steps?: number;
   cfg?: number;
-  /** Bytes de la imagen de referencia (cara de un personaje ya generado) —
-   * si se pasa, usa InstantID para mantener esa identidad. */
-  faceReferenceBytes?: Buffer | undefined;
+  /** 'face': UNA referencia, cara en primer plano (retratos) — usa
+   * InstantID. 'subject': una o más referencias de sujeto/estilo general
+   * (fondos, escenas anchas con varios personajes) — usa IP-Adapter, que
+   * no fuerza el encuadre de la composición como InstantID. Sin esto,
+   * txt2img plano. */
+  reference?: { mode: 'face'; bytes: Buffer } | { mode: 'subject'; bytes: Buffer[] } | undefined;
 };
 
 function baseNodes(checkpoint: string): { nodes: ComfyWorkflow; model: [string, number]; clip: [string, number]; vae: [string, number] } {
@@ -127,6 +144,54 @@ function instantIdWorkflow(
   };
   nodes['5'] = { class_type: 'EmptyLatentImage', inputs: { width: opts.width, height: opts.height, batch_size: 1 } };
   nodes['3'] = samplerNode(seed, opts.steps, opts.cfg, ['60', 0] as [string, number], ['60', 1], ['60', 2]);
+  nodes['8'] = { class_type: 'VAEDecode', inputs: { samples: ['3', 0], vae } };
+  nodes['9'] = { class_type: 'SaveImage', inputs: { images: ['8', 0], filename_prefix: 'narradros' } };
+  return nodes;
+}
+
+// A diferencia de InstantID (una sola cara, ControlNet que fija el
+// encuadre), IP-Adapter transfiere "look" general (rasgos/estilo, no
+// landmarks de cara) y admite combinar varias referencias en una sola
+// imagen batcheada — por eso es la opción correcta para un fondo ancho con
+// varios personajes, aunque la fidelidad de cara por personaje sea menor.
+// Puerto directo de `_ipadapter` en el comfyui_image.py de PressForge.
+function ipAdapterWorkflow(
+  opts: Required<Pick<ComfyUIGenerateOptions, 'checkpoint' | 'prompt' | 'width' | 'height' | 'steps' | 'cfg'>>,
+  refNames: string[],
+  seed: number,
+): ComfyWorkflow {
+  const { nodes, model, clip, vae } = baseNodes(opts.checkpoint);
+  let imgRef: [string, number] | null = null;
+  refNames.forEach((name, i) => {
+    const loadId = `30${i}`;
+    nodes[loadId] = { class_type: 'LoadImage', inputs: { image: name } };
+    if (imgRef === null) {
+      imgRef = [loadId, 0];
+    } else {
+      const batchId = `31${i}`;
+      nodes[batchId] = { class_type: 'ImageBatch', inputs: { image1: imgRef, image2: [loadId, 0] } };
+      imgRef = [batchId, 0];
+    }
+  });
+  nodes['20'] = { class_type: 'IPAdapterUnifiedLoader', inputs: { model, preset: 'PLUS (high strength)' } };
+  nodes['21'] = {
+    class_type: 'IPAdapterAdvanced',
+    inputs: {
+      model: ['20', 0],
+      ipadapter: ['20', 1],
+      image: imgRef,
+      weight: 0.6,
+      weight_type: 'linear',
+      combine_embeds: 'average',
+      start_at: 0.0,
+      end_at: 1.0,
+      embeds_scaling: 'V only',
+    },
+  };
+  nodes['6'] = { class_type: 'CLIPTextEncode', inputs: { text: opts.prompt, clip } };
+  nodes['7'] = { class_type: 'CLIPTextEncode', inputs: { text: NEGATIVE_PROMPT, clip } };
+  nodes['5'] = { class_type: 'EmptyLatentImage', inputs: { width: opts.width, height: opts.height, batch_size: 1 } };
+  nodes['3'] = samplerNode(seed, opts.steps, opts.cfg, ['21', 0] as [string, number], ['6', 0], ['7', 0]);
   nodes['8'] = { class_type: 'VAEDecode', inputs: { samples: ['3', 0], vae } };
   nodes['9'] = { class_type: 'SaveImage', inputs: { images: ['8', 0], filename_prefix: 'narradros' } };
   return nodes;
@@ -214,9 +279,12 @@ export async function generateComfyUIImage(opts: ComfyUIGenerateOptions): Promis
   const shared = { checkpoint: opts.checkpoint, prompt: opts.prompt, width: opts.width, height: opts.height, steps, cfg };
   try {
     let workflow: ComfyWorkflow;
-    if (opts.faceReferenceBytes) {
-      const refName = await uploadReferenceImage(baseUrl, opts.faceReferenceBytes);
+    if (opts.reference?.mode === 'face') {
+      const refName = await uploadReferenceImage(baseUrl, opts.reference.bytes);
       workflow = instantIdWorkflow(shared, refName, seed);
+    } else if (opts.reference?.mode === 'subject' && opts.reference.bytes.length > 0) {
+      const refNames = await Promise.all(opts.reference.bytes.map((bytes) => uploadReferenceImage(baseUrl, bytes)));
+      workflow = ipAdapterWorkflow(shared, refNames, seed);
     } else {
       workflow = txt2imgWorkflow(shared, seed);
     }

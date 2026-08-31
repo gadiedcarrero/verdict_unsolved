@@ -164,7 +164,7 @@ async function requestImageBytesComfyUI(
       prompt: fullPrompt,
       width: 832,
       height: 1216,
-      faceReferenceBytes: faceReferenceBytes ?? undefined,
+      reference: faceReferenceBytes ? { mode: 'face', bytes: faceReferenceBytes } : undefined,
     });
     const transparent = await chromaKeyToTransparent(raw);
     return { ok: true, bytes: transparent };

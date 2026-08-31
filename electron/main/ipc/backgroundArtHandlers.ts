@@ -157,11 +157,18 @@ async function generateOpenAI(
   return { ok: true, bytes: Buffer.from(b64, 'base64') };
 }
 
-// Local con ComfyUI: IP-Adapter cuando hay referencias (mantiene el look
-// general de los personajes elegidos, combinados — pensado en PressForge
-// para objetos/sujetos, no caras puntuales, así que la fidelidad por
-// personaje es menor que Nano Banana/InstantID para escenas con varios a
-// la vez), txt2img plano si no hay ninguna.
+// Local con ComfyUI: IP-Adapter cuando hay referencias, combinando TODAS
+// las elegidas en una sola imagen batcheada (mantiene el look general de
+// los personajes de la escena — pensado en PressForge para
+// objetos/sujetos, no caras puntuales, así que la fidelidad por personaje
+// es menor que Nano Banana). A propósito NO usa InstantID acá aunque haya
+// una sola referencia: su ControlNet fija el encuadre a partir de la
+// posición/escala de la cara en la referencia, así que en un fondo ancho
+// (el caso típico — una escena, no un retrato) termina forzando la
+// composición entera a un primer plano de esa cara en vez de respetar el
+// prompt (bug real detectado: pidiendo "sala de reuniones, cinco
+// personas" con InstantID salía un solo primer plano). txt2img plano si
+// no hay ninguna referencia.
 async function generateComfyUI(
   config: AiIntegrationsConfig,
   prompt: string,
@@ -169,17 +176,16 @@ async function generateComfyUI(
 ): Promise<GenerateResult> {
   try {
     const fullPrompt = `${prompt.trim()}\n\n${BACKGROUND_STYLE_PROMPT}`;
-    // ComfyUI no tiene un modo "IP-Adapter para varias caras a la vez" tan
-    // confiable como InstantID por personaje — se manda la PRIMERA
-    // referencia elegida como ancla de estilo general de la escena, en vez
-    // de arriesgar que el modelo mezcle rasgos de varias caras en una sola.
     const bytes = await generateComfyUIImage({
       baseUrl: config.comfyuiBaseUrl,
       checkpoint: config.comfyuiCheckpoint,
       prompt: fullPrompt,
       width: 1216,
       height: 832,
-      faceReferenceBytes: referenceEntries[0]?.bytes,
+      reference:
+        referenceEntries.length > 0
+          ? { mode: 'subject', bytes: referenceEntries.map((entry) => entry.bytes) }
+          : undefined,
     });
     return { ok: true, bytes };
   } catch (error) {

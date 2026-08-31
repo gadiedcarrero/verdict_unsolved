@@ -72,7 +72,7 @@ Reglas conceptuales para decidir cuándo crear un panel NUEVO (y cuándo NO):
 - No te saltees ninguna oración/línea de diálogo del texto original — cada una tiene que quedar reflejada en el displayText de algún panel, aunque compartan panel con otras.
 
 Para cada panel devolvé un objeto con estos campos exactos:
-- "imageDescription": qué debe mostrar la imagen, en inglés, descriptivo y concreto (esto se manda a un generador de imágenes) — sin diálogo ni texto dentro de la imagen.
+- "imageDescription": qué debe mostrar la imagen, en inglés, descriptivo y concreto (esto se manda a un generador de imágenes) — sin diálogo ni texto dentro de la imagen. Esto incluye revelaciones de nombres/datos/palabras clave (regla de arriba): la imagen NUNCA puede mostrar ese nombre/dato escrito y legible (ni en una pantalla, cartel, papel, ni nada) porque el generador de imágenes casi siempre lo renderiza como garabatos ilegibles. Traducí la revelación a algo filmable sin texto: la reacción de los personajes al verlo, un plano cerrado de la pantalla/papel DESDE ATRÁS o desenfocado de forma que no se lea nada, una silueta, un gesto, la luz de la pantalla iluminando una cara. El texto real de la revelación va en "displayText", no en la imagen.
 - "displayText": el texto en español que aparece debajo del panel — literal, tal cual se muestra al jugador.
 - "narrativePurpose": uno de "establishing", "character_intro", "dialogue", "revelation", "action", "reaction", "transition", "cliffhanger".
 - "characters": array de nombres de personajes visiblemente presentes en ESTA imagen puntual (no todos los de la escena, solo los que aparecen en este panel).

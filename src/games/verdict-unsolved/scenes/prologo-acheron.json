@@ -2,38 +2,73 @@
   "id": "prologo-acheron",
   "act": 1,
   "kind": "cinematica",
-  "backgrounds": [
-    {
-      "id": "bg-1",
-      "assetPath": "backgrounds/prologo-acheron-bg-1.png",
-      "durationMs": 4500,
-      "caption": "Tres terminales encendidos, líneas de código y barras de progreso. June conecta módulos y fragmenta archivos."
-    },
-    {
-      "id": "bg-2",
-      "assetPath": "backgrounds/prologo-acheron-bg-2.png",
-      "durationMs": 4500,
-      "caption": "Cinco jóvenes en un patio, con Voss al fondo. En el reverso: \"UNIDAD CERO — QUE NADIE QUEDE ATRÁS.\""
-    },
-    {
-      "id": "bg-3",
-      "assetPath": "backgrounds/prologo-acheron-bg-3.png",
-      "durationMs": 4500,
-      "caption": "Descubren que el sistema los ha estado estudiando y que la operación es una trampa."
-    },
-    {
-      "id": "bg-4",
-      "assetPath": "backgrounds/prologo-acheron-bg-4.png",
-      "durationMs": 4500,
-      "caption": "Una serie de explosiones destruye el piso, separando al equipo y provocando la aparente muerte de todos."
-    }
-  ],
+  "backgrounds": [],
   "layers": [],
   "hotspots": [],
-  "dialogueNodes": {},
+  "dialogueNodes": {
+    "dialogue.prologo-acheron.panel-1": {
+      "id": "dialogue.prologo-acheron.panel-1",
+      "speaker": "sistema",
+      "line": "Tres terminales encendidos, líneas de código y barras de progreso. June conecta módulos y fragmenta archivos.",
+      "next": "dialogue.prologo-acheron.panel-2",
+      "onShow": [
+        {
+          "type": "setBackground",
+          "backgroundId": "bg-1"
+        }
+      ]
+    },
+    "dialogue.prologo-acheron.panel-2": {
+      "id": "dialogue.prologo-acheron.panel-2",
+      "speaker": "sistema",
+      "line": "Cinco jóvenes en un patio, con Voss al fondo. En el reverso: \"UNIDAD CERO — QUE NADIE QUEDE ATRÁS.\"",
+      "next": "dialogue.prologo-acheron.panel-3",
+      "onShow": [
+        {
+          "type": "setBackground",
+          "backgroundId": "bg-2"
+        }
+      ]
+    },
+    "dialogue.prologo-acheron.panel-3": {
+      "id": "dialogue.prologo-acheron.panel-3",
+      "speaker": "sistema",
+      "line": "Descubren que el sistema los ha estado estudiando y que la operación es una trampa.",
+      "next": "dialogue.prologo-acheron.panel-4",
+      "onShow": [
+        {
+          "type": "setBackground",
+          "backgroundId": "bg-3"
+        }
+      ]
+    },
+    "dialogue.prologo-acheron.panel-4": {
+      "id": "dialogue.prologo-acheron.panel-4",
+      "speaker": "sistema",
+      "line": "Una serie de explosiones destruye el piso, separando al equipo y provocando la aparente muerte de todos.",
+      "onShow": [
+        {
+          "type": "setBackground",
+          "backgroundId": "bg-4"
+        }
+      ]
+    }
+  },
+  "onEnter": [
+    {
+      "type": "dialogue",
+      "nodeId": "dialogue.prologo-acheron.panel-1"
+    }
+  ],
   "introSkippable": true,
   "cinematicTransition": "fade",
-  "onCinematicComplete": [],
+  "onCinematicComplete": [
+    {
+      "type": "transitionTo",
+      "sceneId": "escena-1",
+      "fade": "fade"
+    }
+  ],
   "menuTitle": null,
   "menuButtons": [],
   "menuAppearance": {
