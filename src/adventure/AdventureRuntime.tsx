@@ -1090,7 +1090,17 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       if (result.ok) {
         setEditedScene({
           ...base,
-          backgrounds: [...base.backgrounds, { id: bgId, assetPath: result.path, caption, hotspots: [] }],
+          backgrounds: [
+            ...base.backgrounds,
+            {
+              id: bgId,
+              assetPath: result.path,
+              caption,
+              hotspots: [],
+              generationPrompt: prompt,
+              generationCharacterIds: characterIds,
+            },
+          ],
         });
       } else {
         setBackgroundGenError(result.error);
@@ -1123,6 +1133,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       const result = await window.api.generateBackground(gameId, `${base.id}-${bgId}`, prompt, characterRefs);
       if (result.ok) {
         setPortraitCacheBust((prev) => ({ ...prev, [result.path]: (prev[result.path] ?? 0) + 1 }));
+        setEditedScene({
+          ...base,
+          backgrounds: base.backgrounds.map((bg) =>
+            bg.id === bgId ? { ...bg, generationPrompt: prompt, generationCharacterIds: characterIds } : bg,
+          ),
+        });
         setRegeneratingBackgroundId(null);
       } else {
         setBackgroundGenError(result.error);

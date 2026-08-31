@@ -183,8 +183,6 @@ function BackgroundThumb({
   onTitleChange,
   onEditWithAi,
   onSelectForZones,
-  isRegenerating,
-  onRegenerateWithAi,
 }: {
   gameId: string;
   assetPath: string;
@@ -216,10 +214,6 @@ function BackgroundThumb({
    * en cuanto a zonas (canvas + lista de "Zonas" pasan a mostrar las suyas)
    * — la edición con IA quedó en un botón aparte para no pisarse. */
   onSelectForZones: () => void;
-  /** True si el formulario de "regenerar desde cero" está abierto para
-   * ESTE fondo puntual (ver RegenerateBackgroundForm/regeneratingBackgroundId). */
-  isRegenerating: boolean;
-  onRegenerateWithAi: () => void;
 }): JSX.Element {
   const [failed, setFailed] = useState(false);
   const src = gameAssetUrl(gameId, assetPath);
@@ -269,16 +263,6 @@ function BackgroundThumb({
           }`}
         >
           🪄
-        </button>
-        <button
-          type="button"
-          onClick={onRegenerateWithAi}
-          title="Regenerar esta imagen desde cero (prompt y personajes nuevos)"
-          className={`absolute bottom-0.5 left-0.5 rounded bg-graphite-950/80 px-1 text-[9px] ${
-            isRegenerating ? 'text-sky-300' : 'text-graphite-300 hover:text-sky-300'
-          }`}
-        >
-          🔄
         </button>
       </div>
       <input
@@ -457,6 +441,8 @@ function GenerateBackgroundForm({
  * pero apuntando al fondo puntual que lo disparó. */
 function RegenerateBackgroundForm({
   label,
+  initialPrompt,
+  initialCharacterIds,
   characters,
   strings,
   generating,
@@ -465,6 +451,12 @@ function RegenerateBackgroundForm({
   onCancel,
 }: {
   label: string;
+  /** Prompt/personajes con los que se generó esta imagen la última vez
+   * (ver SceneBackground.generationPrompt) — precargados acá para no
+   * arrancar de un cuadro vacío al regenerar. '' / [] si esta imagen se
+   * subió a mano o se generó antes de que esto se guardara. */
+  initialPrompt: string;
+  initialCharacterIds: string[];
   characters: Character[];
   strings: Record<string, string>;
   generating: boolean;
@@ -472,8 +464,8 @@ function RegenerateBackgroundForm({
   onGenerate: (prompt: string, characterIds: string[]) => void;
   onCancel: () => void;
 }): JSX.Element {
-  const [prompt, setPrompt] = useState('');
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [prompt, setPrompt] = useState(initialPrompt);
+  const [selectedIds, setSelectedIds] = useState<string[]>(initialCharacterIds);
 
   function toggleCharacter(id: string): void {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -731,18 +723,39 @@ function BackgroundsSection({
             onTitleChange={(title) => onTitleChange(bg.id, title)}
             onEditWithAi={() => onEditBackgroundWithAi(bg.assetPath)}
             onSelectForZones={() => onSelectForZones(bg.id)}
-            isRegenerating={regeneratingBackgroundId === bg.id}
-            onRegenerateWithAi={() => onStartRegenerate(bg.id)}
           />
         ))}
       </div>
+      {scene.backgrounds.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1">
+          {scene.backgrounds.map((bg, index) => (
+            <button
+              key={bg.id}
+              type="button"
+              title={bg.title || `BG ${index + 1}`}
+              onClick={() => onStartRegenerate(regeneratingBackgroundId === bg.id ? '' : bg.id)}
+              className={`flex h-6 w-6 items-center justify-center rounded border text-[10px] ${
+                regeneratingBackgroundId === bg.id
+                  ? 'border-sky-400 text-sky-300'
+                  : 'border-graphite-700 text-graphite-400 hover:border-sky-400 hover:text-sky-300'
+              }`}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
+      )}
       {regeneratingBackgroundId &&
         (() => {
           const index = scene.backgrounds.findIndex((bg) => bg.id === regeneratingBackgroundId);
-          if (index === -1) return null;
+          const selected = scene.backgrounds[index];
+          if (!selected) return null;
           return (
             <RegenerateBackgroundForm
-              label={scene.backgrounds[index]?.title || `BG ${index + 1}`}
+              key={selected.id}
+              label={selected.title || `BG ${index + 1}`}
+              initialPrompt={selected.generationPrompt ?? ''}
+              initialCharacterIds={selected.generationCharacterIds ?? []}
               characters={characters}
               strings={strings}
               generating={generatingBackground}

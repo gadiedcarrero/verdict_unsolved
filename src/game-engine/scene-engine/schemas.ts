@@ -271,6 +271,15 @@ export const SceneBackgroundSchema = z.object({
    * migrateLegacySceneHotspots más abajo): sus `hotspots` de escena pasan
    * al primer fondo. */
   hotspots: z.array(HotspotSchema).default([]),
+  /** Prompt que se usó para generar esta imagen con IA — `undefined` si se
+   * subió a mano o se generó antes de que este campo existiera. Se guarda
+   * para poder mostrarlo precargado (y editable) al regenerar esta misma
+   * imagen desde cero, en vez de arrancar de un cuadro de texto vacío. */
+  generationPrompt: z.string().optional(),
+  /** Ids de personajes cuyo retrato se mandó como referencia al generar
+   * esta imagen — mismo criterio que `generationPrompt`, para precargar la
+   * selección al regenerar. */
+  generationCharacterIds: z.array(z.string()).optional(),
 });
 
 export const SceneKindSchema = z.enum(['standard', 'intro', 'menu', 'cinematica', 'minigame']);
