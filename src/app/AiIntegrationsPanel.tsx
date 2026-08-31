@@ -1,5 +1,10 @@
 import { useEffect, useState, type JSX } from 'react';
-import { createEmptyAiIntegrationsConfig, type AiIntegrationsConfig } from '../../shared/ai-integrations';
+import {
+  createEmptyAiIntegrationsConfig,
+  IMAGE_PROVIDERS,
+  type AiIntegrationsConfig,
+  type ImageProvider,
+} from '../../shared/ai-integrations';
 
 const inputClassName =
   'w-full rounded border border-graphite-700 bg-graphite-900 px-1.5 py-1 text-[10px] text-graphite-100';
@@ -9,6 +14,19 @@ const FIELDS: { key: keyof AiIntegrationsConfig; label: string; hint: string }[]
   { key: 'elevenLabsApiKey', label: 'ElevenLabs', hint: 'Voz premium de personajes' },
   { key: 'falApiKey', label: 'fal.ai', hint: 'Imagen (Nano Banana y otros) y video (Seedance y otros) — fal.ai/dashboard/keys' },
 ];
+
+const IMAGE_PROVIDER_LABEL: Record<ImageProvider, string> = {
+  'nano-banana': 'Nano Banana (fal.ai)',
+  openai: 'OpenAI (gpt-image-1)',
+  comfyui: 'Local (ComfyUI, sin key)',
+};
+
+const IMAGE_PROVIDER_HINT: Record<ImageProvider, string> = {
+  'nano-banana': 'Buena consistencia multi-personaje en una sola escena. Necesita la key de fal.ai arriba.',
+  openai: 'Necesita la key de OpenAI arriba. Con varios personajes en un fondo, solo el primero ancla identidad.',
+  comfyui:
+    'Corre en tu máquina (SDXL + InstantID) — sin key, sin límite de contenido propio del proveedor, pero necesita ComfyUI abierto acá mismo y consistencia multi-personaje más débil que Nano Banana.',
+};
 
 /**
  * Keys de proveedores de IA para todo el pipeline de producción (ver
@@ -76,6 +94,53 @@ export function AiIntegrationsPanel({ onClose }: { onClose: () => void }): JSX.E
                 />
               </label>
             ))}
+
+            <label className="mb-1 flex flex-col">
+              <span className="text-[9px] text-graphite-500 uppercase">Generación de imagen — retratos y fondos</span>
+              <select
+                value={config.imageProvider}
+                onChange={(event) =>
+                  setConfig((prev) => ({ ...prev, imageProvider: event.target.value as ImageProvider }))
+                }
+                className={inputClassName}
+              >
+                {IMAGE_PROVIDERS.map((provider) => (
+                  <option key={provider} value={provider}>
+                    {IMAGE_PROVIDER_LABEL[provider]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="mb-2 text-[9px] text-graphite-500">{IMAGE_PROVIDER_HINT[config.imageProvider]}</p>
+
+            {config.imageProvider === 'comfyui' && (
+              <div className="mb-2 rounded border border-graphite-800 bg-graphite-900/40 p-2">
+                <label className="mb-2 flex flex-col">
+                  <span className="text-[9px] text-graphite-500 uppercase">Servidor ComfyUI</span>
+                  <input
+                    type="text"
+                    value={config.comfyuiBaseUrl}
+                    onChange={(event) => setConfig((prev) => ({ ...prev, comfyuiBaseUrl: event.target.value }))}
+                    placeholder="http://127.0.0.1:8188"
+                    className={inputClassName}
+                  />
+                </label>
+                <label className="flex flex-col">
+                  <span className="text-[9px] text-graphite-500 uppercase">Checkpoint SDXL</span>
+                  <input
+                    type="text"
+                    value={config.comfyuiCheckpoint}
+                    onChange={(event) => setConfig((prev) => ({ ...prev, comfyuiCheckpoint: event.target.value }))}
+                    placeholder="RealVisXL_V5.0_fp16.safetensors"
+                    className={inputClassName}
+                  />
+                </label>
+                <p className="mt-1 text-[8px] text-graphite-600">
+                  Tiene que estar corriendo en esta máquina antes de generar — abrí ComfyUI y dejalo abierto.
+                </p>
+              </div>
+            )}
+
             <button
               type="button"
               onClick={() => void handleSave()}

@@ -2,8 +2,10 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { app, ipcMain } from 'electron';
 import sharp from 'sharp';
+import type { AiIntegrationsConfig } from '../../../shared/ai-integrations';
 import { formatApiError } from './apiErrors';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
+import { chromaKeyToTransparent, generateComfyUIImage, GREEN_SCREEN_INSTRUCTION } from './comfyuiImageProvider';
 
 const ID_PATTERN = /^[a-z0-9-]+$/;
 
@@ -43,6 +45,13 @@ const POSE_GUIDE_INSTRUCTION =
 const PORTRAIT_STYLE_PROMPT =
   'Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Plain, simple, softly lit background — no scenery, no props, no other characters. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No text, no watermark, no border or frame, no checkerboard/transparency pattern drawn as an image.';
 
+// Mismo encuadre que la versión de Nano Banana, pero con fondo transparente
+// nativo (gpt-image-1 sí produce alfa real cuando se le pide "background:
+// transparent" en la request, a diferencia de Nano Banana) — no hace falta
+// un paso de recorte aparte para este proveedor.
+const PORTRAIT_STYLE_PROMPT_OPENAI =
+  'Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Fully transparent background — no scenery, no backdrop, no ground. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No text, no watermark, no border or frame.';
+
 async function fetchBytes(url: string): Promise<Buffer> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`No se pudo descargar ${url} (${response.status})`);
@@ -69,11 +78,13 @@ async function removeBackground(apiKey: string, imageUrl: string): Promise<strin
   return url;
 }
 
-async function requestImageBytes(
+type ImageBytesResult = { ok: true; bytes: Buffer } | { ok: false; error: string };
+
+async function requestImageBytesNanoBanana(
   apiKey: string,
   prompt: string,
   referenceImageDataUri: string,
-): Promise<{ ok: true; bytes: Buffer } | { ok: false; error: string }> {
+): Promise<ImageBytesResult> {
   const fullPrompt = `${prompt}\n\n${PORTRAIT_STYLE_PROMPT}`;
   const response = await fetch('https://fal.run/fal-ai/nano-banana/edit', {
     method: 'POST',
@@ -91,6 +102,67 @@ async function requestImageBytes(
   try {
     const transparentUrl = await removeBackground(apiKey, rawUrl);
     return { ok: true, bytes: await fetchBytes(transparentUrl) };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+async function requestImageBytesOpenAI(
+  apiKey: string,
+  prompt: string,
+  referenceImageBytes: Buffer,
+): Promise<ImageBytesResult> {
+  const fullPrompt = `${prompt}\n\n${PORTRAIT_STYLE_PROMPT_OPENAI}`;
+  const form = new FormData();
+  form.append('model', 'gpt-image-1');
+  form.append('image', new Blob([new Uint8Array(referenceImageBytes)], { type: 'image/png' }), 'reference.png');
+  form.append('prompt', fullPrompt);
+  form.append('size', '1024x1024');
+  form.append('quality', 'high');
+  // Sin esto, /edits deja que el modelo decida el fondo por su cuenta — el
+  // texto del prompt ("fondo transparente") no alcanza de forma confiable,
+  // a veces sale RGBA (transparente) y a veces RGB plano.
+  form.append('background', 'transparent');
+  const response = await fetch('https://api.openai.com/v1/images/edits', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}` },
+    body: form,
+  });
+  if (!response.ok) {
+    return { ok: false, error: await formatApiError('OpenAI', response) };
+  }
+  const data = (await response.json()) as { data?: { b64_json?: string }[] };
+  const b64 = data.data?.[0]?.b64_json;
+  if (!b64) {
+    return { ok: false, error: 'OpenAI no devolvió una imagen.' };
+  }
+  return { ok: true, bytes: Buffer.from(b64, 'base64') };
+}
+
+// Local con ComfyUI (ver comfyuiImageProvider.ts) — no tiene canal alfa
+// real tampoco, así que pide fondo verde puro (chroma key) y lo recorta a
+// mano acá mismo, sin depender de ningún servicio externo. Si hay una
+// imagen de referencia (retrato ya existente del MISMO personaje: otra
+// expresión o variante), usa InstantID para mantener la misma cara — para
+// el retrato base de un personaje nuevo (sin referencia todavía) no hay
+// forma de fijar identidad, así que sale plano por texto nada más.
+async function requestImageBytesComfyUI(
+  config: AiIntegrationsConfig,
+  prompt: string,
+  faceReferenceBytes: Buffer | null,
+): Promise<ImageBytesResult> {
+  try {
+    const fullPrompt = `${prompt}\n\n${PORTRAIT_STYLE_PROMPT}\n\n${GREEN_SCREEN_INSTRUCTION}`;
+    const raw = await generateComfyUIImage({
+      baseUrl: config.comfyuiBaseUrl,
+      checkpoint: config.comfyuiCheckpoint,
+      prompt: fullPrompt,
+      width: 832,
+      height: 1216,
+      faceReferenceBytes: faceReferenceBytes ?? undefined,
+    });
+    const transparent = await chromaKeyToTransparent(raw);
+    return { ok: true, bytes: transparent };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   }
@@ -128,17 +200,17 @@ export function registerCharacterArtHandlers(): void {
         return { ok: false, error: 'Ruta de referencia inválida.' };
       }
       const config = await getStoredAiIntegrationsConfig();
-      if (!config.falApiKey) {
-        return { ok: false, error: 'Falta la API key de fal.ai en Ajustes → Integraciones IA.' };
-      }
       try {
         // Con referenceImagePath: retrato/expresión de un personaje que ya
         // tiene imagen propia — se manda tal cual, el modelo mantiene esa
         // identidad. Sin referenceImagePath (retrato base de un personaje
         // nuevo): se manda la imagen de pose genérica de arriba con
         // POSE_GUIDE_INSTRUCTION, que le pide ignorar su identidad y copiar
-        // solo la orientación/encuadre.
-        let referenceImageBytes: Buffer;
+        // solo la orientación/encuadre. Solo aplica a Nano Banana/OpenAI —
+        // ComfyUI/InstantID necesita una CARA de referencia, no una guía de
+        // pose genérica, así que en ese caso el retrato base sale sin
+        // referencia (plano por texto).
+        let referenceImageBytes: Buffer | null;
         let effectivePrompt: string;
         if (referenceImagePath) {
           try {
@@ -147,13 +219,31 @@ export function registerCharacterArtHandlers(): void {
             return { ok: false, error: `No se pudo leer la imagen de referencia: ${referenceImagePath}` };
           }
           effectivePrompt = prompt.trim();
+        } else if (config.imageProvider === 'comfyui') {
+          referenceImageBytes = null;
+          effectivePrompt = prompt.trim();
         } else {
           referenceImageBytes = await readFile(poseReferencePath());
           effectivePrompt = `${POSE_GUIDE_INSTRUCTION}${prompt.trim()}`;
         }
-        const referenceImageDataUri = `data:image/png;base64,${referenceImageBytes.toString('base64')}`;
-        const result = await requestImageBytes(config.falApiKey, effectivePrompt, referenceImageDataUri);
+
+        let result: ImageBytesResult;
+        if (config.imageProvider === 'openai') {
+          if (!config.openaiApiKey) {
+            return { ok: false, error: 'Falta la API key de OpenAI en Ajustes → Integraciones IA.' };
+          }
+          result = await requestImageBytesOpenAI(config.openaiApiKey, effectivePrompt, referenceImageBytes!);
+        } else if (config.imageProvider === 'comfyui') {
+          result = await requestImageBytesComfyUI(config, effectivePrompt, referenceImageBytes);
+        } else {
+          if (!config.falApiKey) {
+            return { ok: false, error: 'Falta la API key de fal.ai en Ajustes → Integraciones IA.' };
+          }
+          const referenceImageDataUri = `data:image/png;base64,${referenceImageBytes!.toString('base64')}`;
+          result = await requestImageBytesNanoBanana(config.falApiKey, effectivePrompt, referenceImageDataUri);
+        }
         if (!result.ok) return result;
+
         const dir = join(app.getAppPath(), portraitsDir(gameId));
         await mkdir(dir, { recursive: true });
         const fileName = expressionKey ? `${characterId}-${expressionKey}` : characterId;
@@ -167,31 +257,27 @@ export function registerCharacterArtHandlers(): void {
     },
   );
 
-  // Ningún proveedor de imagen probado (OpenAI, y ahora fal.ai/Nano Banana)
-  // acierta siempre la orientación del retrato — se probaron varias
-  // estrategias (texto, imagen de referencia, verificación con IA aparte) y
-  // todas fallan alguna vez. En vez de perseguir el 100% automático, este
-  // botón deja arreglarlo a mano en un click: espeja horizontalmente el
-  // archivo YA guardado, en el mismo path (no genera de nuevo, no gasta
-  // crédito de ningún proveedor).
-  ipcMain.handle(
-    'ai:flip-character-portrait',
-    async (_event, gameId: unknown, relativePath: unknown) => {
-      if (!isValidId(gameId)) {
-        return { ok: false, error: `Id de juego inválido: ${String(gameId)}` };
-      }
-      if (typeof relativePath !== 'string' || !relativePath.startsWith('portraits/')) {
-        return { ok: false, error: 'Ruta de retrato inválida.' };
-      }
-      try {
-        const filePath = join(app.getAppPath(), assetsDir(gameId), relativePath);
-        const bytes = await readFile(filePath);
-        const flipped = await sharp(bytes).flop().png().toBuffer();
-        await writeFile(filePath, flipped);
-        return { ok: true };
-      } catch (error) {
-        return { ok: false, error: error instanceof Error ? error.message : String(error) };
-      }
-    },
-  );
+  // Ningún proveedor de imagen probado acierta siempre la orientación —
+  // se probaron varias estrategias (texto, imagen de referencia,
+  // verificación con IA aparte) y todas fallan alguna vez. En vez de
+  // perseguir el 100% automático, este botón deja arreglarlo a mano en un
+  // click: espeja horizontalmente el archivo YA guardado, en el mismo path
+  // (no genera de nuevo, no gasta crédito de ningún proveedor).
+  ipcMain.handle('ai:flip-character-portrait', async (_event, gameId: unknown, relativePath: unknown) => {
+    if (!isValidId(gameId)) {
+      return { ok: false, error: `Id de juego inválido: ${String(gameId)}` };
+    }
+    if (typeof relativePath !== 'string' || !relativePath.startsWith('portraits/')) {
+      return { ok: false, error: 'Ruta de retrato inválida.' };
+    }
+    try {
+      const filePath = join(app.getAppPath(), assetsDir(gameId), relativePath);
+      const bytes = await readFile(filePath);
+      const flipped = await sharp(bytes).flop().png().toBuffer();
+      await writeFile(filePath, flipped);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
 }
