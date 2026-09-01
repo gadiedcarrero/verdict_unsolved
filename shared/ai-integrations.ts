@@ -48,7 +48,11 @@ export function createEmptyAiIntegrationsConfig(): AiIntegrationsConfig {
     falApiKey: null,
     imageProvider: 'nano-banana',
     comfyuiBaseUrl: 'http://127.0.0.1:8188',
-    comfyuiCheckpoint: 'RealVisXL_V5.0_fp16.safetensors',
+    // realcartoonXL en vez de RealVisXL: el fotorreal se pelea contra el
+    // estilo "ilustración, línea limpia" que pide el prompt, un checkpoint
+    // pensado para look cartoon/ilustrado encaja mejor con lo que busca este
+    // juego (ver conversación en la que se decidió esto).
+    comfyuiCheckpoint: 'realcartoonXL_v6.safetensors',
   };
 }
 

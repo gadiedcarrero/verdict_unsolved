@@ -18,6 +18,7 @@ export type ScriptBreakdownScenePanelsResult =
   | { ok: false; error: string };
 export type ComfyUIStatusResult = { running: boolean };
 export type ComfyUILaunchResult = { ok: true } | { ok: false; error: string };
+export type ComfyUIListCheckpointsResult = { ok: true; files: string[] } | { ok: false; error: string };
 
 export type DesktopApi = {
   /** Un archivo de guardado por juego (save-<gameId>.json en userData). */
@@ -157,4 +158,8 @@ export type DesktopApi = {
    * llamarlo si el semáforo ya está en verde (un segundo `python main.py`
    * no puede tomar el mismo puerto y se cierra solo sin avisar nada útil). */
   launchComfyUI: () => Promise<ComfyUILaunchResult>;
+  /** Lista los checkpoints SDXL instalados en ~/ComfyUI/models/checkpoints —
+   * para que Ajustes ofrezca un selector en vez de un campo de texto libre
+   * donde había que escribir a mano el nombre exacto del archivo. */
+  listComfyUICheckpoints: () => Promise<ComfyUIListCheckpointsResult>;
 };

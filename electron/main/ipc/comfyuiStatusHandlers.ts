@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { readdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { ipcMain } from 'electron';
@@ -7,9 +8,13 @@ import { ipcMain } from 'electron';
 /** Arranca/consulta el servidor ComfyUI local (ver comfyuiImageProvider.ts)
  * — no la generación en sí, solo "¿está prendido?" y "prendelo" para que el
  * editor pueda mostrar un semáforo y ahorrarle al usuario ir a buscar el
- * .command a mano cada vez. */
+ * .command a mano cada vez. También lista qué checkpoints hay instalados,
+ * para que Ajustes ofrezca un selector en vez de un campo de texto libre
+ * donde había que saber a mano el nombre exacto del archivo. */
 
 const COMFYUI_DIR = join(homedir(), 'ComfyUI');
+const CHECKPOINTS_DIR = join(COMFYUI_DIR, 'models', 'checkpoints');
+const CHECKPOINT_EXT_PATTERN = /\.(safetensors|ckpt)$/i;
 
 // Corto a propósito — esto se llama seguido desde un polling en el editor,
 // no puede quedarse colgado esperando un timeout largo si el server está
@@ -54,6 +59,22 @@ export function registerComfyUIStatusHandlers(): void {
       });
       child.unref();
       return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle('comfyui:list-checkpoints', async () => {
+    if (!existsSync(CHECKPOINTS_DIR)) {
+      return { ok: false, error: `No encontré ${CHECKPOINTS_DIR}.` };
+    }
+    try {
+      const entries = await readdir(CHECKPOINTS_DIR, { withFileTypes: true });
+      const files = entries
+        .filter((entry) => entry.isFile() && CHECKPOINT_EXT_PATTERN.test(entry.name))
+        .map((entry) => entry.name)
+        .sort((a, b) => a.localeCompare(b));
+      return { ok: true, files };
     } catch (error) {
       return { ok: false, error: error instanceof Error ? error.message : String(error) };
     }

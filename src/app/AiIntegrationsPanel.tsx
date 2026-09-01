@@ -41,11 +41,18 @@ export function AiIntegrationsPanel({ onClose }: { onClose: () => void }): JSX.E
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  // null = todavía no se intentó listar / falló (ComfyUI no está instalado
+  // en esta máquina, o la carpeta de checkpoints no existe) — en ese caso
+  // el campo cae a texto libre en vez de mostrar un selector vacío.
+  const [checkpointFiles, setCheckpointFiles] = useState<string[] | null>(null);
 
   useEffect(() => {
     void window.api.readAiIntegrations().then((data) => {
       setConfig(data);
       setLoaded(true);
+    });
+    void window.api.listComfyUICheckpoints().then((result) => {
+      if (result.ok) setCheckpointFiles(result.files);
     });
   }, []);
 
@@ -128,13 +135,34 @@ export function AiIntegrationsPanel({ onClose }: { onClose: () => void }): JSX.E
                 </label>
                 <label className="flex flex-col">
                   <span className="text-[9px] text-graphite-500 uppercase">Checkpoint SDXL</span>
-                  <input
-                    type="text"
-                    value={config.comfyuiCheckpoint}
-                    onChange={(event) => setConfig((prev) => ({ ...prev, comfyuiCheckpoint: event.target.value }))}
-                    placeholder="RealVisXL_V5.0_fp16.safetensors"
-                    className={inputClassName}
-                  />
+                  {checkpointFiles && checkpointFiles.length > 0 ? (
+                    <select
+                      value={config.comfyuiCheckpoint}
+                      onChange={(event) => setConfig((prev) => ({ ...prev, comfyuiCheckpoint: event.target.value }))}
+                      className={inputClassName}
+                    >
+                      {/* Si el valor guardado ya no está en la carpeta (se borró, o se
+                       * escribió a mano antes de que existiera este selector), lo
+                       * dejamos como opción igual — cambiar de proveedor y volver no
+                       * debería perder silenciosamente lo que había guardado. */}
+                      {!checkpointFiles.includes(config.comfyuiCheckpoint) && (
+                        <option value={config.comfyuiCheckpoint}>{config.comfyuiCheckpoint} (no encontrado)</option>
+                      )}
+                      {checkpointFiles.map((file) => (
+                        <option key={file} value={file}>
+                          {file}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={config.comfyuiCheckpoint}
+                      onChange={(event) => setConfig((prev) => ({ ...prev, comfyuiCheckpoint: event.target.value }))}
+                      placeholder="realcartoonXL_v6.safetensors"
+                      className={inputClassName}
+                    />
+                  )}
                 </label>
                 <p className="mb-2 text-[8px] text-graphite-600">
                   Tiene que estar corriendo en esta máquina antes de generar.

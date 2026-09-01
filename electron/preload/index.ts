@@ -36,6 +36,7 @@ const api: DesktopApi = {
   listElevenLabsVoices: () => ipcRenderer.invoke('ai:list-elevenlabs-voices'),
   checkComfyUIStatus: (baseUrl) => ipcRenderer.invoke('comfyui:status', baseUrl),
   launchComfyUI: () => ipcRenderer.invoke('comfyui:launch'),
+  listComfyUICheckpoints: () => ipcRenderer.invoke('comfyui:list-checkpoints'),
 };
 
 contextBridge.exposeInMainWorld('api', api);
