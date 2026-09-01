@@ -268,7 +268,7 @@ export const SceneBackgroundSchema = z.object({
    * responder en varios fondos (una puerta que siempre está ahí) se repite
    * a mano en cada uno — no hay "zona compartida" implícita. Escenas
    * viejas guardadas antes de este campo migran solas al cargar (ver
-   * migrateLegacySceneHotspots más abajo): sus `hotspots` de escena pasan
+   * migrateLegacySceneFields más abajo): sus `hotspots` de escena pasan
    * al primer fondo. */
   hotspots: z.array(HotspotSchema).default([]),
   /** Prompt que se usó para generar esta imagen con IA — `undefined` si se
@@ -280,6 +280,15 @@ export const SceneBackgroundSchema = z.object({
    * esta imagen — mismo criterio que `generationPrompt`, para precargar la
    * selección al regenerar. */
   generationCharacterIds: z.array(z.string()).optional(),
+  /** Personajes (u otro arte con posición/tamaño propios) superpuestos a
+   * ESTE fondo puntual — no de la escena entera, mismo motivo que
+   * `hotspots`: un personaje que sale en un panel de una secuencia
+   * cinemática no tiene por qué seguir ahí en el siguiente. Antes vivían en
+   * `Scene.layers`, compartidas por todos los fondos de la escena. Escenas
+   * viejas guardadas antes de este campo migran solas al cargar (ver
+   * migrateLegacySceneFields más abajo): sus `layers` de escena pasan al
+   * primer fondo. */
+  layers: z.array(SceneLayerSchema).default([]),
 });
 
 export const SceneKindSchema = z.enum(['standard', 'intro', 'menu', 'cinematica', 'minigame']);
@@ -323,20 +332,16 @@ export const MenuTitleSchema = z.object({
   color: z.string().default('#e6eaef'),
 });
 
-/** Antes de que existiera `SceneBackground.hotspots`, todas las zonas de
- * una escena vivían juntas en `Scene.hotspots`, compartidas por todos sus
- * fondos. Las escenas guardadas con ese formato viejo siguen teniendo ese
- * campo en su JSON — esto corre ANTES de la validación de Zod (que ya no
- * conoce `Scene.hotspots` y lo descartaría en silencio) y mueve esas zonas
- * al primer fondo, para no perder ninguna zona ya trazada a mano. Si el
- * fondo ya tiene sus propias `hotspots` (escena migrada o creada después
- * de este cambio), no se toca nada. */
-function migrateLegacySceneHotspots(raw: unknown): unknown {
-  if (!raw || typeof raw !== 'object') return raw;
-  const r = raw as Record<string, unknown>;
-  const legacyHotspots = r['hotspots'];
-  if (!Array.isArray(legacyHotspots) || legacyHotspots.length === 0) return raw;
-  const backgroundsRaw = r['backgrounds'];
+/** Mueve un campo-arreglo que antes vivía a nivel Scene (compartido por
+ * todos los fondos) al primer fondo, bajo el mismo nombre — usada para
+ * `hotspots` (ver SceneBackground.hotspots) y `layers` (ver
+ * SceneBackground.layers), los dos campos que pasaron de "por escena" a
+ * "por fondo". Si el primer fondo ya tiene ese campo (escena migrada o
+ * creada después del cambio), no se toca nada. */
+function migrateLegacySceneArrayField(raw: Record<string, unknown>, field: string): Record<string, unknown> {
+  const legacyValue = raw[field];
+  if (!Array.isArray(legacyValue) || legacyValue.length === 0) return raw;
+  const backgroundsRaw = raw['backgrounds'];
   if (!Array.isArray(backgroundsRaw) || backgroundsRaw.length === 0) return raw;
   // `Array.isArray` narrows a lib.es5 `unknown` value to `any[]`, no `unknown[]`
   // — el cast explícito evita que el resto del bloque quede "any" sin querer.
@@ -344,12 +349,26 @@ function migrateLegacySceneHotspots(raw: unknown): unknown {
   const [firstBackground, ...restBackgrounds] = backgrounds;
   const firstBackgroundObj =
     firstBackground && typeof firstBackground === 'object' ? (firstBackground as Record<string, unknown>) : {};
-  if (Array.isArray(firstBackgroundObj['hotspots'])) return raw;
-  const { hotspots: _legacyHotspots, ...rest } = r;
+  if (Array.isArray(firstBackgroundObj[field])) return raw;
+  const { [field]: _legacyValue, ...rest } = raw;
   return {
     ...rest,
-    backgrounds: [{ ...firstBackgroundObj, hotspots: legacyHotspots }, ...restBackgrounds],
+    backgrounds: [{ ...firstBackgroundObj, [field]: legacyValue }, ...restBackgrounds],
   };
+}
+
+/** Antes de que existieran `SceneBackground.hotspots`/`SceneBackground.layers`,
+ * esos dos campos vivían juntos a nivel Scene, compartidos por todos sus
+ * fondos. Las escenas guardadas con ese formato viejo siguen teniendo esos
+ * campos en su JSON — esto corre ANTES de la validación de Zod (que ya no
+ * los conoce a nivel Scene y los descartaría en silencio) y los mueve al
+ * primer fondo, para no perder ninguna zona/capa ya trazada a mano. */
+function migrateLegacySceneFields(raw: unknown): unknown {
+  if (!raw || typeof raw !== 'object') return raw;
+  let r = raw as Record<string, unknown>;
+  r = migrateLegacySceneArrayField(r, 'hotspots');
+  r = migrateLegacySceneArrayField(r, 'layers');
+  return r;
 }
 
 const SceneObjectSchema = z.object({
@@ -374,7 +393,6 @@ const SceneObjectSchema = z.object({
    * Cada fondo trae sus propias zonas interactivas (ver
    * SceneBackground.hotspots) — no hay una lista de zonas a nivel escena. */
   backgrounds: z.array(SceneBackgroundSchema),
-  layers: z.array(SceneLayerSchema),
   /** Nodos de diálogo de una sola línea, generados por el editor visual al
    * definir qué dice un personaje en una acción de un objeto (Examinar/
    * Interactuar/Interactuar con) — clave = id autogenerado
@@ -436,7 +454,7 @@ const SceneObjectSchema = z.object({
   onMinigameFail: z.array(MinigameOutcomeActionSchema).default([]),
 });
 
-export const SceneSchema = z.preprocess(migrateLegacySceneHotspots, SceneObjectSchema);
+export const SceneSchema = z.preprocess(migrateLegacySceneFields, SceneObjectSchema);
 
 export const AdventureCaseMetaSchema = z.object({
   id: z.string(),

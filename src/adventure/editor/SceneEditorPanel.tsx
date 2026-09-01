@@ -1879,6 +1879,7 @@ function ObjectFields({
   onLabelStyleChange,
   onResetShape,
   onRemoveZone,
+  onRemoveLayer,
   onSetActionMenuEnabled,
   onExamineActionChange,
   onInteractActionChange,
@@ -1903,6 +1904,9 @@ function ObjectFields({
   onLabelStyleChange: (patch: Partial<TextStyleOverride> | null) => void;
   onResetShape: () => void;
   onRemoveZone: () => void;
+  /** Solo para objetos `kind: 'sprite'` — saca la imagen, deja la zona
+   * clickeable si tenía una. `undefined` en objetos `kind: 'zone'`. */
+  onRemoveLayer: (() => void) | undefined;
   onSetActionMenuEnabled: (enabled: boolean) => void;
   onExamineActionChange: (patch: Partial<ActionComposerValue>) => void;
   onInteractActionChange: (patch: Partial<ActionComposerValue>) => void;
@@ -1935,6 +1939,16 @@ function ObjectFields({
             />
             interactuable
           </label>
+          {onRemoveLayer && (
+            <button
+              type="button"
+              onClick={onRemoveLayer}
+              title="Saca la imagen, la zona clickeable queda (si tenía una)"
+              className="text-[9px] text-graphite-500 uppercase hover:text-red-400"
+            >
+              quitar imagen
+            </button>
+          )}
           {object.labelKey && (
             <button
               type="button"
@@ -2130,6 +2144,75 @@ function CreateZoneForm({
   );
 }
 
+// Poner un personaje sobre el fondo en vez de pedirle a la IA que lo
+// componga adentro de la imagen (ver addCharacterLayer en
+// AdventureRuntime.tsx) — usa el retrato YA generado tal cual, sin gastar
+// una generación nueva. Solo ofrece personajes/expresiones que ya tienen
+// imagen: uno sin retrato todavía no tiene nada que poner en pantalla.
+function CreateCharacterLayerForm({
+  characters,
+  strings,
+  onAdd,
+}: {
+  characters: Character[];
+  strings: Record<string, string>;
+  onAdd: (characterId: string, expressionKey: string | null) => void;
+}): JSX.Element | null {
+  const withPortrait = characters.filter((c) => c.portrait);
+  const [characterId, setCharacterId] = useState(withPortrait[0]?.id ?? '');
+  const [expressionKey, setExpressionKey] = useState('');
+
+  if (withPortrait.length === 0) return null;
+
+  const selected = withPortrait.find((c) => c.id === characterId) ?? withPortrait[0]!;
+  const expressionOptions = Object.entries(selected.expressions).filter(([, e]) => e.path);
+
+  return (
+    <div className="mb-3 rounded border border-amber-accent/40 bg-graphite-900/60 p-2">
+      <p className="mb-2 text-[10px] font-semibold tracking-widest text-amber-accent uppercase">
+        + Poner personaje en pantalla
+      </p>
+      <label className="mb-1 flex flex-col">
+        <span className="text-[9px] text-graphite-500 uppercase">Personaje</span>
+        <select
+          value={selected.id}
+          onChange={(event) => {
+            setCharacterId(event.target.value);
+            setExpressionKey('');
+          }}
+          className={inputClassName}
+        >
+          {withPortrait.map((character) => (
+            <option key={character.id} value={character.id}>
+              {translate(strings, character.name)}
+            </option>
+          ))}
+        </select>
+      </label>
+      {expressionOptions.length > 0 && (
+        <label className="mb-2 flex flex-col">
+          <span className="text-[9px] text-graphite-500 uppercase">Expresión</span>
+          <select value={expressionKey} onChange={(event) => setExpressionKey(event.target.value)} className={inputClassName}>
+            <option value="">(retrato por defecto)</option>
+            {expressionOptions.map(([key]) => (
+              <option key={key} value={key}>
+                {key}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      <button
+        type="button"
+        onClick={() => onAdd(selected.id, expressionKey || null)}
+        className="w-full rounded border border-amber-accent px-2 py-1 text-[10px] font-semibold tracking-widest text-amber-accent uppercase transition-colors hover:bg-amber-accent hover:text-graphite-950"
+      >
+        Agregar
+      </button>
+    </div>
+  );
+}
+
 function PolygonDraftStatus({ pointCount, onCancel }: { pointCount: number; onCancel: () => void }): JSX.Element {
   return (
     <div className="mb-3 rounded border border-amber-accent/40 bg-graphite-900/60 p-2">
@@ -2198,6 +2281,8 @@ export function SceneEditorPanel({
   onLabelTextChange,
   onLabelStyleChange,
   onCreateZone,
+  onAddCharacterLayer,
+  onRemoveLayer,
   editingZonesBackgroundId,
   onChangeEditingZonesBackground,
   regeneratingBackgroundId,
@@ -2270,6 +2355,14 @@ export function SceneEditorPanel({
   onLabelTextChange: (labelKey: string, text: string) => void;
   onLabelStyleChange: (objectId: string, patch: Partial<TextStyleOverride> | null) => void;
   onCreateZone: (name: string, labelText: string, interactable: boolean, shape: HotspotShape) => void;
+  /** Agrega el retrato ya generado de un personaje (o una de sus
+   * expresiones, `expressionKey` null = el retrato por defecto) como capa
+   * sobre el fondo que se está editando ahora — ver comentario en
+   * addCharacterLayer en AdventureRuntime.tsx. */
+  onAddCharacterLayer: (characterId: string, expressionKey: string | null) => void;
+  /** Saca la imagen (capa) de un objeto, dejando su zona clickeable si
+   * tenía una — simétrico de onRemoveZone. */
+  onRemoveLayer: (objectId: string) => void;
   /** Fondo cuyas zonas se están viendo/editando ahora mismo — cada fondo
    * tiene las suyas (ver SceneBackground.hotspots). Ya resuelto por el
    * llamador (nunca null si la escena tiene al menos un fondo). */
@@ -2375,14 +2468,6 @@ export function SceneEditorPanel({
               onChangeIntroSkippable={onChangeIntroSkippable}
               onChangeIntroCompleteTarget={onChangeIntroCompleteTarget}
             />
-          ) : scene.kind === 'cinematica' ? (
-            <CinematicSettings
-              scene={scene}
-              sceneOptions={sceneOptions}
-              onChangeIntroSkippable={onChangeIntroSkippable}
-              onChangeCinematicTransition={onChangeCinematicTransition}
-              onChangeCinematicCompleteTarget={onChangeCinematicCompleteTarget}
-            />
           ) : scene.kind === 'menu' ? (
             <MenuSettings
               scene={scene}
@@ -2411,10 +2496,20 @@ export function SceneEditorPanel({
             />
           ) : (
             <>
+              {scene.kind === 'cinematica' && (
+                <CinematicSettings
+                  scene={scene}
+                  sceneOptions={sceneOptions}
+                  onChangeIntroSkippable={onChangeIntroSkippable}
+                  onChangeCinematicTransition={onChangeCinematicTransition}
+                  onChangeCinematicCompleteTarget={onChangeCinematicCompleteTarget}
+                />
+              )}
               <p className="mb-3 text-[10px] text-graphite-400">
-                <span className="text-amber-accent">Ámbar</span> = objeto con imagen propia.{' '}
-                <span className="text-sky-400">Celeste</span> = zona sin imagen aparte. Nada cambia hasta que
-                aprietes Guardar.
+                <span className="text-amber-accent">Ámbar</span> = objeto con imagen propia (zona o personaje).{' '}
+                <span className="text-sky-400">Celeste</span> = zona sin imagen aparte.
+                {scene.kind === 'cinematica' && ' Cada panel (fondo) tiene sus propios personajes.'} Nada cambia
+                hasta que aprietes Guardar.
               </p>
 
               {scene.backgrounds.length > 1 &&
@@ -2434,13 +2529,19 @@ export function SceneEditorPanel({
               {polygonDraftPointCount !== null ? (
                 <PolygonDraftStatus pointCount={polygonDraftPointCount} onCancel={onCancelPolygonDraft} />
               ) : (
-                <CreateZoneForm onCreate={onCreateZone} />
+                <>
+                  <CreateCharacterLayerForm characters={characters} strings={strings} onAdd={onAddCharacterLayer} />
+                  <CreateZoneForm onCreate={onCreateZone} />
+                </>
               )}
 
               {(() => {
                 const editingBackground =
                   scene.backgrounds.find((bg) => bg.id === editingZonesBackgroundId) ?? scene.backgrounds[0];
-                const editableObjects = buildEditableObjects(scene, editingBackground?.hotspots ?? []);
+                const editableObjects = buildEditableObjects(
+                  editingBackground?.hotspots ?? [],
+                  editingBackground?.layers ?? [],
+                );
                 const otherObjects = editableObjects
                   .filter((o) => o.labelKey)
                   .map((o) => ({ id: o.id, label: o.labelKey ? translate(strings, o.labelKey) : o.id }));
@@ -2463,6 +2564,7 @@ export function SceneEditorPanel({
                     onLabelStyleChange={(patch) => onLabelStyleChange(object.id, patch)}
                     onResetShape={() => onResetShape(object.id)}
                     onRemoveZone={() => onRemoveZone(object.id)}
+                    onRemoveLayer={object.kind === 'sprite' ? () => onRemoveLayer(object.id) : undefined}
                     onSetActionMenuEnabled={(enabled) => onSetActionMenuEnabled(object.id, enabled)}
                     onExamineActionChange={(patch) => onExamineActionChange(object.id, patch)}
                     onInteractActionChange={(patch) => onInteractActionChange(object.id, patch)}

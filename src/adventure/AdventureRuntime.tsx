@@ -30,6 +30,7 @@ import type {
   Scene,
   SceneAction,
   SceneKind,
+  SceneLayer,
   SiteSettings,
   TextStyle,
   TextStyleOverride,
@@ -515,6 +516,23 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     };
   }
 
+  // Mismo criterio que getEditingHotspots/withEditingHotspots, para las
+  // capas (personajes u otro arte con posición propia) de ESE mismo fondo —
+  // ver SceneBackground.layers.
+  function getEditingLayers(base: Scene): SceneLayer[] {
+    const bgId = getEditingBackgroundId(base);
+    return base.backgrounds.find((bg) => bg.id === bgId)?.layers ?? [];
+  }
+
+  function withEditingLayers(base: Scene, updater: (layers: SceneLayer[]) => SceneLayer[]): Scene {
+    const bgId = getEditingBackgroundId(base);
+    if (!bgId) return base;
+    return {
+      ...base,
+      backgrounds: base.backgrounds.map((bg) => (bg.id === bgId ? { ...bg, layers: updater(bg.layers) } : bg)),
+    };
+  }
+
   // Un "objeto" del editor es una capa y su hotspot (si existe) con el mismo
   // id — se mueven juntos porque representan la misma cosa en pantalla. Ver
   // editor/editableObjects.ts.
@@ -522,13 +540,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setEditedScene((prev) => {
       const base = prev ?? baseScene;
       if (!base) return prev;
-      const hasLayer = base.layers.some((layer) => layer.id === objectId);
-      const withLayers: Scene = {
-        ...base,
-        layers: hasLayer
-          ? base.layers.map((layer) => (layer.id === objectId ? { ...layer, ...rect } : layer))
-          : base.layers,
-      };
+      const hasLayer = getEditingLayers(base).some((layer) => layer.id === objectId);
+      const withLayers = hasLayer
+        ? withEditingLayers(base, (layers) =>
+            layers.map((layer) => (layer.id === objectId ? { ...layer, ...rect } : layer)),
+          )
+        : base;
       return withEditingHotspots(withLayers, (hotspots) =>
         hotspots.map((hotspot) => (hotspot.id === objectId ? { ...hotspot, area: rect } : hotspot)),
       );
@@ -549,7 +566,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       );
       return;
     }
-    const layer = base.layers.find((l) => l.id === objectId);
+    const layer = getEditingLayers(base).find((l) => l.id === objectId);
     if (!layer) return;
     const labelKey = `hotspot.${base.id}.${objectId}`;
     setEditedScene(
@@ -578,7 +595,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   function createZone(name: string, labelText: string, interactable: boolean, shape: HotspotShape): void {
     const base = editedScene ?? baseScene;
     if (!base) return;
-    const taken = new Set([...getEditingHotspots(base).map((h) => h.id), ...base.layers.map((l) => l.id)]);
+    const taken = new Set([...getEditingHotspots(base).map((h) => h.id), ...getEditingLayers(base).map((l) => l.id)]);
     const id = uniqueId(slugify(name), taken);
     const labelKey = `hotspot.${base.id}.${id}`;
 
@@ -618,6 +635,53 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       ]),
     );
     setPendingStrings((prev) => ({ ...prev, [labelKey]: labelText }));
+  }
+
+  // Personajes puestos "en capas" sobre un fondo, en vez de que la IA
+  // componga varios personajes dentro de una sola imagen (inconsistente:
+  // cambia el vestuario, rompe el encuadre, mezcla rasgos entre caras —
+  // ver conversación sobre por qué se abandonó ese enfoque). Cada
+  // personaje se agrega como su propio retrato YA generado (consistente
+  // porque siempre es la misma imagen, no una reinterpretación) posicionado
+  // encima del fondo. `expressionKey` null = retrato por defecto del
+  // personaje. Decorativa por default (sin hotspot) — el checkbox
+  // "interactuable" del objeto crea uno si hace falta (ver toggleInteractable).
+  function addCharacterLayer(characterId: string, expressionKey: string | null): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    const character = displayCharacters.find((c) => c.id === characterId);
+    if (!character) return;
+    const assetPath = expressionKey ? (character.expressions[expressionKey]?.path ?? null) : character.portrait;
+    if (!assetPath) {
+      setSaveMessage(`${translate(strings, character.name)} todavía no tiene ese retrato generado.`);
+      return;
+    }
+    const taken = new Set([...getEditingHotspots(base).map((h) => h.id), ...getEditingLayers(base).map((l) => l.id)]);
+    const id = uniqueId(slugify(expressionKey ? `${characterId}-${expressionKey}` : characterId), taken);
+    const existingCount = getEditingLayers(base).length;
+    setEditedScene(
+      withEditingLayers(base, (layers) => [
+        ...layers,
+        {
+          id,
+          assetPath,
+          x: 10 + (existingCount % 4) * 20,
+          y: 15,
+          width: 22,
+          height: 75,
+          zIndex: existingCount,
+        },
+      ]),
+    );
+  }
+
+  // Simétrico de removeHotspot: saca la imagen (capa) pero deja la zona
+  // clickeable si tenía una — coherente con que "eliminar" en una zona con
+  // imagen deja la imagen (ver el botón "eliminar" en ObjectFields).
+  function removeLayer(objectId: string): void {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    setEditedScene(withEditingLayers(base, (layers) => layers.filter((l) => l.id !== objectId)));
   }
 
   function setLabelText(labelKey: string, text: string): void {
@@ -1060,7 +1124,10 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       const buffer = new Uint8Array(await file.arrayBuffer());
       const result = await window.api.saveSceneBackground(gameId, `${base.id}-${bgId}`, ext, buffer);
       if (result.ok) {
-        setEditedScene({ ...base, backgrounds: [...base.backgrounds, { id: bgId, assetPath: result.path, hotspots: [] }] });
+        setEditedScene({
+          ...base,
+          backgrounds: [...base.backgrounds, { id: bgId, assetPath: result.path, hotspots: [], layers: [] }],
+        });
       } else {
         setSaveMessage(`Error subiendo fondo: ${result.error}`);
       }
@@ -1098,6 +1165,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
               assetPath: result.path,
               caption,
               hotspots: [],
+              layers: [],
               generationPrompt: prompt,
               generationCharacterIds: characterIds,
             },
@@ -1419,7 +1487,6 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       act,
       kind,
       backgrounds: [],
-      layers: [],
       dialogueNodes: {},
       introSkippable: true,
       cinematicTransition: 'fade',
@@ -1467,7 +1534,6 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       act: 1,
       kind: breakdownScene?.scriptKind === 'interactiva' ? 'standard' : 'cinematica',
       backgrounds: [],
-      layers: [],
       dialogueNodes: {},
       introSkippable: true,
       cinematicTransition: 'fade',
@@ -2376,6 +2442,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onLabelTextChange={setLabelText}
                   onLabelStyleChange={updateHotspotLabelStyle}
                   onCreateZone={createZone}
+                  onAddCharacterLayer={addCharacterLayer}
+                  onRemoveLayer={removeLayer}
                   editingZonesBackgroundId={displayScene ? getEditingBackgroundId(displayScene) : undefined}
                   onChangeEditingZonesBackground={setEditingZonesBackgroundId}
                   regeneratingBackgroundId={regeneratingBackgroundId}

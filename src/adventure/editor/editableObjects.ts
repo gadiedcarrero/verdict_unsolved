@@ -3,8 +3,8 @@ import type {
   HotspotShape,
   InteractWithTarget,
   PolygonPoint,
-  Scene,
   SceneAction,
+  SceneLayer,
   TextStyleOverride,
 } from '../../game-engine/scene-engine/schemas';
 import { resolveLabelPosition } from '../hotspotLabel';
@@ -44,15 +44,16 @@ export type EditableObject = {
  * cuando una capa y un hotspot comparten id, se editan como una sola caja
  * (misma posición para el arte y la zona clicable) en vez de dos separadas.
  * Los hotspots sin capa (zonas puras sobre el fondo, creadas a mano en el
- * editor) aparecen igual, marcados como 'zone'. `hotspots` es el del fondo
- * que se está editando ahora mismo (ver SceneBackground.hotspots) — no de
- * la escena entera, ya que cada fondo tiene las suyas.
+ * editor) aparecen igual, marcados como 'zone'. `hotspots`/`layers` son los
+ * del fondo que se está editando ahora mismo (ver SceneBackground.hotspots/
+ * SceneBackground.layers) — no de la escena entera, ya que cada fondo
+ * tiene los suyos.
  */
-export function buildEditableObjects(scene: Scene, hotspots: Hotspot[]): EditableObject[] {
+export function buildEditableObjects(hotspots: Hotspot[], layers: SceneLayer[]): EditableObject[] {
   const hotspotById = new Map(hotspots.map((h) => [h.id, h]));
-  const layerIds = new Set(scene.layers.map((l) => l.id));
+  const layerIds = new Set(layers.map((l) => l.id));
 
-  const spriteObjects: EditableObject[] = scene.layers.map((layer) => {
+  const spriteObjects: EditableObject[] = layers.map((layer) => {
     const hotspot = hotspotById.get(layer.id);
     return {
       id: layer.id,

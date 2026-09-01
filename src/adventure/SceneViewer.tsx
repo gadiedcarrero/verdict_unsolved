@@ -127,7 +127,7 @@ export function SceneViewer({
           </div>
         )}
 
-        {[...scene.layers]
+        {[...(activeBackground?.layers ?? [])]
           .sort((a, b) => a.zIndex - b.zIndex)
           .map((layer) => (
             <PlaceholderLayer
@@ -196,7 +196,7 @@ export function SceneViewer({
 
         {editMode &&
           onObjectRectChange &&
-          buildEditableObjects(scene, activeBackground?.hotspots ?? []).map((object) => {
+          buildEditableObjects(activeBackground?.hotspots ?? [], activeBackground?.layers ?? []).map((object) => {
             const label = `${object.labelKey ? translate(strings, object.labelKey) : object.id}${object.interactable ? '' : ' · no interactuable'}`;
             return (
               <div key={object.id} className="contents">
