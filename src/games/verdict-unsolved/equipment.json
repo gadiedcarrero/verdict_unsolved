@@ -1,8 +1,0 @@
-[
-  { "id": "camara-corporal", "name": "Cámara corporal", "price": 120, "function": "Transmisión visual", "riskLabel": "Medio" },
-  { "id": "telefono-cifrado", "name": "Teléfono cifrado", "price": 90, "function": "Comunicación segura", "riskLabel": "Alto: compromete contactos" },
-  { "id": "inyector-red", "name": "Inyector de red", "price": 160, "function": "Acceso a cámaras internas", "riskLabel": "Alto" },
-  { "id": "kit-medico", "name": "Kit médico", "price": 100, "function": "Estabiliza heridas", "riskLabel": "Medio" },
-  { "id": "chaleco-ligero", "name": "Chaleco ligero", "price": 140, "function": "Reduce lesión grave", "riskLabel": "Medio" },
-  { "id": "ganzua-electronica", "name": "Ganzúa electrónica", "price": 110, "function": "Abre accesos", "riskLabel": "Medio" }
-]

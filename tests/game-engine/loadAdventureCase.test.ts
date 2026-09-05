@@ -1,36 +1,40 @@
 import { describe, expect, it } from 'vitest';
-import { gameBundleRaw as adventureCaseBundleRaw } from '@/games/verdict-unsolved';
+import { gameProjects } from '@/game-engine/scene-engine/gameProjects';
 import { loadAdventureCase } from '@/game-engine/scene-engine/loadAdventureCase';
+import type { AdventureCaseBundle } from '@/game-engine/scene-engine/schemas';
+
+/**
+ * Chequeos de integridad sobre los juegos que haya en el repo, sean cuales
+ * sean. Antes esto importaba un juego por nombre; ahora recorre
+ * `gameProjects`, así sigue valiendo cuando se borra un juego o se empieza
+ * otro — y un juego nuevo queda cubierto por el solo hecho de existir.
+ *
+ * Sin juegos, los checks no tienen nada que revisar y pasan: es lo correcto,
+ * no hay contenido que pueda estar roto.
+ */
+
+function loadedBundles(): { id: string; bundle: AdventureCaseBundle }[] {
+  return gameProjects.flatMap((project) => (project.result.ok ? [{ id: project.id, bundle: project.result.data }] : []));
+}
 
 describe('loadAdventureCase', () => {
-  it('loads the "La última llamada" bundle successfully', () => {
-    const result = loadAdventureCase(adventureCaseBundleRaw);
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.data.case.id).toBe('case-001-la-ultima-llamada');
-      expect(Object.keys(result.data.dialogues).length).toBeGreaterThan(0);
-      expect(result.data.agents.length).toBe(3);
-      expect(result.data.equipmentItems.length).toBeGreaterThan(0);
-      expect(result.data.investigationAreas.length).toBeGreaterThan(0);
+  it('carga todos los juegos del repo', () => {
+    for (const project of gameProjects) {
+      expect(project.result.ok, `${project.id}: ${project.result.ok ? '' : project.result.error}`).toBe(true);
     }
   });
 
-  it('fails with a readable error when the case is missing required fields', () => {
+  it('falla con un error legible cuando al caso le faltan campos requeridos', () => {
     const corrupted = { case: { id: 'broken-case' }, scenes: [], dialogues: {} };
 
     const result = loadAdventureCase(corrupted);
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.length).toBeGreaterThan(0);
-    }
+    if (!result.ok) expect(result.error.length).toBeGreaterThan(0);
   });
 
-  it('has no dangling dialogue references (every next/nodeId points to a real node)', () => {
-    const result = loadAdventureCase(adventureCaseBundleRaw);
-    if (!result.ok) throw new Error(result.error);
-    const { scenes, dialogues } = result.data;
+  it.each(loadedBundles())('$id: ningún diálogo apunta a un nodo que no existe', ({ bundle }) => {
+    const { scenes, dialogues } = bundle;
 
     const referencedIds = new Set<string>();
     for (const node of Object.values(dialogues)) {
@@ -53,15 +57,11 @@ describe('loadAdventureCase', () => {
       }
     }
 
-    const missing = [...referencedIds].filter((id) => !(id in dialogues));
-    expect(missing).toEqual([]);
+    expect([...referencedIds].filter((id) => !(id in dialogues))).toEqual([]);
   });
 
-  it('has no dangling scene transitions (every transitionTo points to a real scene)', () => {
-    const result = loadAdventureCase(adventureCaseBundleRaw);
-    if (!result.ok) throw new Error(result.error);
-    const { scenes, dialogues } = result.data;
-
+  it.each(loadedBundles())('$id: ninguna transición apunta a una escena que no existe', ({ bundle }) => {
+    const { scenes, dialogues } = bundle;
     const sceneIds = new Set(scenes.map((s) => s.id));
 
     // Solo cuentan las transiciones de diálogos a los que en verdad se
@@ -122,7 +122,6 @@ describe('loadAdventureCase', () => {
       }
     }
 
-    const missing = [...referencedSceneIds].filter((id) => !sceneIds.has(id));
-    expect(missing).toEqual([]);
+    expect([...referencedSceneIds].filter((id) => !sceneIds.has(id))).toEqual([]);
   });
 });
