@@ -1616,7 +1616,10 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       const taken = new Set(base.map((c) => c.id));
       const id = uniqueId(slugify(name), taken);
       createdNameKey = `character.${id}.name`;
-      return [...base, { id, name: createdNameKey, portrait: null, description: '', expressions: {}, voices: {}, color }];
+      return [
+        ...base,
+        { id, name: createdNameKey, portrait: null, description: '', expressions: {}, variants: {}, voices: {}, color },
+      ];
     });
     setPendingCharacterStrings((prev) => ({ ...prev, [createdNameKey]: nameText }));
   }
@@ -1962,6 +1965,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           portrait: result.path,
           description: transformationDescription,
           expressions: {},
+          variants: {},
           voices: {},
           color,
         },
@@ -2005,6 +2009,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
             portrait: null,
             description: bc.description,
             expressions: {},
+            variants: {},
             voices: {},
             color: bc.suggestedColor,
           });
@@ -2025,6 +2030,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
             portrait: null,
             description: look.description,
             expressions: {},
+            variants: {},
             voices: {},
             color: bc.suggestedColor,
           });

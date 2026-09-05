@@ -28,6 +28,16 @@ const api: DesktopApi = {
     ipcRenderer.invoke('script-breakdown:generate-scene-panels', sceneId, sceneTitle, sourceText),
   generateCharacterPortrait: (gameId, characterId, prompt, expressionKey, referenceImagePath) =>
     ipcRenderer.invoke('ai:generate-character-portrait', gameId, characterId, prompt, expressionKey, referenceImagePath),
+  generateCharacterBody: (gameId, characterId, variantId, prompt, expressionKey, referenceImagePath) =>
+    ipcRenderer.invoke(
+      'ai:generate-character-body',
+      gameId,
+      characterId,
+      variantId,
+      prompt,
+      expressionKey,
+      referenceImagePath,
+    ),
   flipCharacterPortrait: (gameId, relativePath) =>
     ipcRenderer.invoke('ai:flip-character-portrait', gameId, relativePath),
   editImage: (gameId, relativePath, instruction, referenceImages) =>

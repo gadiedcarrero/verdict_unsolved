@@ -122,6 +122,21 @@ export type DesktopApi = {
     expressionKey: string | null,
     referenceImagePath: string | null,
   ) => Promise<PortraitSaveResult>;
+  /** Cuerpo entero de una variante del personaje, para ponerlo EN la escena
+   * (ver `CharacterVariant` en schemas.ts) — hermano de
+   * `generateCharacterPortrait`, que sigue siendo el busto del círculo de
+   * diálogo. `expressionKey` null = el cuerpo neutral de la variante.
+   * `referenceImagePath` fija la identidad: el busto del personaje cuando se
+   * genera el cuerpo neutral, y ese cuerpo ya generado cuando se generan sus
+   * expresiones. */
+  generateCharacterBody: (
+    gameId: string,
+    characterId: string,
+    variantId: string,
+    prompt: string,
+    expressionKey: string | null,
+    referenceImagePath: string | null,
+  ) => Promise<PortraitSaveResult>;
   /** Ningún proveedor de imagen probado acierta siempre la orientación —
    * espeja horizontalmente el archivo YA guardado en `relativePath` (ej.
    * "portraits/adrian-cross.png"), en el mismo lugar. No genera de nuevo,

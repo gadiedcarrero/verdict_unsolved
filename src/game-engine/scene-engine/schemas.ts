@@ -19,6 +19,21 @@ export const SceneLayerSchema = z.object({
   width: z.number().optional(),
   height: z.number().optional(),
   zIndex: z.number().default(0),
+  /** Si esta capa es un personaje del roster (no un objeto suelto): de qué
+   * personaje/variante/expresión salió `assetPath`. `assetPath` sigue siendo
+   * la imagen concreta que se dibuja — esto es su procedencia, y sirve para
+   * dos cosas que con una ruta suelta no se pueden hacer: que el editor
+   * ofrezca un selector de personaje en vez de pedir la ruta a mano, y que
+   * el runtime cambie el sprite cuando ese personaje habla con otra emoción
+   * (reusando `layerOverrides` de SceneViewer, que ya existe para eso). */
+  character: z
+    .object({
+      characterId: z.string(),
+      variantId: z.string(),
+      /** Ausente = el sprite neutral de la variante (`CharacterVariant.body`). */
+      expression: z.string().optional(),
+    })
+    .optional(),
 });
 
 export const InterfaceIdSchema = z.enum(['mirror-investigation', 'agent-market', 'equipment-shop']);
@@ -182,6 +197,37 @@ export const CharacterExpressionSchema = z.object({
   description: z.string().default(''),
 });
 
+/** Una *variante* es una identidad visual completa del mismo personaje
+ * ("Adrián joven", "Adrián en silla de ruedas", "Adrián encapuchado"): una
+ * sola pose de cuerpo fija más sus propias expresiones faciales. Es un nivel
+ * aparte de `Character.expressions` a propósito — ese record es plano y mezcla
+ * emoción con look (ver la clave suelta `june-sato-cautiva`), así que no puede
+ * expresar "esta variante, con esta cara" sin escribir a mano cada
+ * combinación. Acá el costo de generación es variantes × expresiones, no
+ * variantes × poses × expresiones × escenas.
+ *
+ * Ojo con qué NO es una variante: un personaje que el jugador conoce como
+ * otra persona (Gray, Wraith) necesita nombre y color propios y no puede
+ * delatar el vínculo desde el dato mismo — eso son entradas separadas del
+ * roster, como ya están hoy. */
+export const CharacterVariantSchema = z.object({
+  /** Nombre legible para el editor ("Adrián joven"). Nunca se le muestra al
+   * jugador: el nombre que ve sigue siendo `Character.name`. */
+  label: z.string().default(''),
+  /** Descripción visual autocontenida de ESTA variante — mismo criterio que
+   * `CharacterExpression.description`: se manda tal cual al generador y no
+   * debe depender de `Character.description` ni de otras variantes. */
+  description: z.string().default(''),
+  /** Sprite de cuerpo entero en la pose fija de esta variante, o null si
+   * todavía no se generó. Cumple dos papeles: es la imagen por defecto en
+   * escena, y es la referencia de identidad con la que se generan sus
+   * expresiones (misma relación que `portrait` ↔ `expressions` en el busto). */
+  body: z.string().nullable().default(null),
+  /** Expresión → sprite de cuerpo entero de esta misma variante con ese
+   * gesto. La pose corporal no cambia entre expresiones, solo la cara. */
+  expressions: z.record(z.string(), CharacterExpressionSchema).default({}),
+});
+
 export const CharacterSchema = z.object({
   id: z.string(),
   /** Clave de traducción del nombre mostrado (ver locales/es.json). */
@@ -198,6 +244,13 @@ export const CharacterSchema = z.object({
    * alternativa completa como "wraith") → retrato adicional del mismo
    * personaje. Referenciada por `DialogueNode.portraitExpression`. */
   expressions: z.record(z.string(), CharacterExpressionSchema).default({}),
+  /** Identidad visual (clave libre, p. ej. "joven", "silla-de-ruedas") →
+   * cuerpo entero de esa versión del personaje, para ponerlo EN la escena
+   * (ver `CharacterVariantSchema`). `portrait`/`expressions` de arriba
+   * siguen siendo el busto del círculo de diálogo: son sistemas paralelos,
+   * no uno reemplaza al otro. Vacío = personaje que solo habla por retrato y
+   * nunca aparece de cuerpo entero. */
+  variants: z.record(z.string(), CharacterVariantSchema).default({}),
   /** Código de idioma corto (p. ej. "en", "es") → voice_id de ElevenLabs
    * asignado a este personaje en ese idioma. El juego arranca solo con
    * texto — esto queda guardado para cuando se genere el audio de diálogo
@@ -599,6 +652,7 @@ export type MenuAppearance = z.infer<typeof MenuAppearanceSchema>;
 export type MenuTitle = z.infer<typeof MenuTitleSchema>;
 export type Character = z.infer<typeof CharacterSchema>;
 export type CharacterExpression = z.infer<typeof CharacterExpressionSchema>;
+export type CharacterVariant = z.infer<typeof CharacterVariantSchema>;
 export type DialogueChoice = z.infer<typeof DialogueChoiceSchema>;
 export type DialogueNode = z.infer<typeof DialogueNodeSchema>;
 export type Scene = z.infer<typeof SceneSchema>;

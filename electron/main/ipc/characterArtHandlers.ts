@@ -24,6 +24,12 @@ function assetsDir(gameId: string): string {
 function portraitsDir(gameId: string): string {
   return `${assetsDir(gameId)}/portraits`;
 }
+// Cuerpos enteros de las variantes, aparte de `layers/` (objetos sueltos de
+// escena) porque esto se regenera desde el roster de personajes, no se dibuja
+// por escena.
+function charactersDir(gameId: string): string {
+  return `${assetsDir(gameId)}/characters`;
+}
 
 // Retrato de un personaje ya existente (guardado una sola vez acá) usado
 // SOLO como guía estructural de pose para el retrato base de personajes
@@ -57,6 +63,35 @@ const PORTRAIT_STYLE_PROMPT =
 const PORTRAIT_STYLE_PROMPT_OPENAI =
   `Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Fully transparent background — no scenery, no backdrop, no ground. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No watermark, no border or frame. ${NO_TEXT_INSTRUCTION}`;
 
+// Cuerpo entero para poner EN la escena (ver CharacterVariant en
+// schemas.ts), no el busto del círculo de diálogo. Dos decisiones de arte
+// deliberadas acá:
+//
+// 1. Caricatura de borde negro, a propósito en otro lenguaje visual que el
+//    fondo. Un recorte plano sobre un fondo generado se nota siempre; en vez
+//    de pelear por integrarlo (caro, frágil, nunca del todo logrado), el
+//    contraste se asume como estilo — el cerebro lo lee como decisión, no
+//    como error, igual que Ace Attorney o Danganronpa.
+// 2. Sin piso ni sombra proyectada: una sombra fija implica una dirección de
+//    luz que no va a coincidir con la del fondo sobre el que se pegue.
+//
+// La POSE no se dicta acá — viene en la descripción de la variante (de pie,
+// sentado en silla de ruedas, encapuchado). Esto solo garantiza que entre
+// entera en el cuadro sea cual sea.
+const BODY_STYLE_PROMPT =
+  `Full-body character sprite: the ENTIRE figure is visible from head to feet, centered, with a small margin on every side — nothing cropped at any edge. Keep the pose described above, seen straight on at eye level, with no dramatic perspective or foreshortening. Bold black outline around the figure and its main internal shapes, flat cel-shaded cartoon style, clean confident linework, simple solid colors, minimal texture, even neutral lighting. Plain, simple, flat background — no scenery, no props, no other characters, no floor, no cast shadow. No watermark, no border or frame, no checkerboard/transparency pattern drawn as an image. ${NO_TEXT_INSTRUCTION}`;
+
+const BODY_STYLE_PROMPT_OPENAI =
+  `Full-body character sprite: the ENTIRE figure is visible from head to feet, centered, with a small margin on every side — nothing cropped at any edge. Keep the pose described above, seen straight on at eye level, with no dramatic perspective or foreshortening. Bold black outline around the figure and its main internal shapes, flat cel-shaded cartoon style, clean confident linework, simple solid colors, minimal texture, even neutral lighting. Fully transparent background — no scenery, no backdrop, no floor, no cast shadow. No watermark, no border or frame. ${NO_TEXT_INSTRUCTION}`;
+
+/** Encuadre/estilo que se le agrega al prompt del personaje. Una entrada por
+ * proveedor con alfa nativo y otra para los que no lo tienen (ver el
+ * comentario de PORTRAIT_STYLE_PROMPT sobre el recorte de fondo). */
+type ArtStyle = { base: string; openai: string };
+
+const PORTRAIT_STYLE: ArtStyle = { base: PORTRAIT_STYLE_PROMPT, openai: PORTRAIT_STYLE_PROMPT_OPENAI };
+const BODY_STYLE: ArtStyle = { base: BODY_STYLE_PROMPT, openai: BODY_STYLE_PROMPT_OPENAI };
+
 async function fetchBytes(url: string): Promise<Buffer> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`No se pudo descargar ${url} (${response.status})`);
@@ -89,8 +124,9 @@ async function requestImageBytesNanoBanana(
   apiKey: string,
   prompt: string,
   referenceImageDataUri: string,
+  style: ArtStyle,
 ): Promise<ImageBytesResult> {
-  const fullPrompt = `${prompt}\n\n${PORTRAIT_STYLE_PROMPT}`;
+  const fullPrompt = `${prompt}\n\n${style.base}`;
   const response = await fetch('https://fal.run/fal-ai/nano-banana/edit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Key ${apiKey}` },
@@ -116,8 +152,9 @@ async function requestImageBytesOpenAI(
   apiKey: string,
   prompt: string,
   referenceImageBytes: Buffer,
+  style: ArtStyle,
 ): Promise<ImageBytesResult> {
-  const fullPrompt = `${prompt}\n\n${PORTRAIT_STYLE_PROMPT_OPENAI}`;
+  const fullPrompt = `${prompt}\n\n${style.openai}`;
   const form = new FormData();
   form.append('model', 'gpt-image-1');
   form.append('image', new Blob([new Uint8Array(referenceImageBytes)], { type: 'image/png' }), 'reference.png');
@@ -155,9 +192,10 @@ async function requestImageBytesComfyUI(
   config: AiIntegrationsConfig,
   prompt: string,
   faceReferenceBytes: Buffer | null,
+  style: ArtStyle,
 ): Promise<ImageBytesResult> {
   try {
-    const fullPrompt = `${prompt}\n\n${PORTRAIT_STYLE_PROMPT}\n\n${GREEN_SCREEN_INSTRUCTION}`;
+    const fullPrompt = `${prompt}\n\n${style.base}\n\n${GREEN_SCREEN_INSTRUCTION}`;
     const raw = await generateComfyUIImage({
       baseUrl: config.comfyuiBaseUrl,
       checkpoint: config.comfyuiCheckpoint,
@@ -171,6 +209,39 @@ async function requestImageBytesComfyUI(
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   }
+}
+
+/** Elige proveedor y le pasa el encuadre pedido. Compartido por el retrato de
+ * busto y el cuerpo entero: lo único que cambia entre los dos es `style` (y
+ * de dónde sale la referencia, que resuelve cada handler). */
+async function generateCharacterImage(
+  config: AiIntegrationsConfig,
+  prompt: string,
+  referenceImageBytes: Buffer | null,
+  style: ArtStyle,
+): Promise<ImageBytesResult> {
+  if (config.imageProvider === 'openai') {
+    if (!config.openaiApiKey) {
+      return { ok: false, error: 'Falta la API key de OpenAI en Ajustes → Integraciones IA.' };
+    }
+    // /images/edits exige una imagen de entrada; sin referencia no hay
+    // llamada posible con este proveedor.
+    if (!referenceImageBytes) {
+      return { ok: false, error: 'OpenAI necesita una imagen de referencia para este paso.' };
+    }
+    return requestImageBytesOpenAI(config.openaiApiKey, prompt, referenceImageBytes, style);
+  }
+  if (config.imageProvider === 'comfyui') {
+    return requestImageBytesComfyUI(config, prompt, referenceImageBytes, style);
+  }
+  if (!config.falApiKey) {
+    return { ok: false, error: 'Falta la API key de fal.ai en Ajustes → Integraciones IA.' };
+  }
+  if (!referenceImageBytes) {
+    return { ok: false, error: 'Nano Banana necesita una imagen de referencia para este paso.' };
+  }
+  const dataUri = `data:image/png;base64,${referenceImageBytes.toString('base64')}`;
+  return requestImageBytesNanoBanana(config.falApiKey, prompt, dataUri, style);
 }
 
 export function registerCharacterArtHandlers(): void {
@@ -232,21 +303,7 @@ export function registerCharacterArtHandlers(): void {
           effectivePrompt = `${POSE_GUIDE_INSTRUCTION}${prompt.trim()}`;
         }
 
-        let result: ImageBytesResult;
-        if (config.imageProvider === 'openai') {
-          if (!config.openaiApiKey) {
-            return { ok: false, error: 'Falta la API key de OpenAI en Ajustes → Integraciones IA.' };
-          }
-          result = await requestImageBytesOpenAI(config.openaiApiKey, effectivePrompt, referenceImageBytes!);
-        } else if (config.imageProvider === 'comfyui') {
-          result = await requestImageBytesComfyUI(config, effectivePrompt, referenceImageBytes);
-        } else {
-          if (!config.falApiKey) {
-            return { ok: false, error: 'Falta la API key de fal.ai en Ajustes → Integraciones IA.' };
-          }
-          const referenceImageDataUri = `data:image/png;base64,${referenceImageBytes!.toString('base64')}`;
-          result = await requestImageBytesNanoBanana(config.falApiKey, effectivePrompt, referenceImageDataUri);
-        }
+        const result = await generateCharacterImage(config, effectivePrompt, referenceImageBytes, PORTRAIT_STYLE);
         if (!result.ok) return result;
 
         const dir = join(app.getAppPath(), portraitsDir(gameId));
@@ -255,6 +312,75 @@ export function registerCharacterArtHandlers(): void {
         const relativePath = `portraits/${fileName}.png`;
         const filePath = join(app.getAppPath(), assetsDir(gameId), relativePath);
         await writeFile(filePath, result.bytes);
+        return { ok: true, path: relativePath };
+      } catch (error) {
+        return { ok: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    },
+  );
+
+  // Cuerpo entero de una variante (ver CharacterVariant en schemas.ts) —
+  // hermano del handler de arriba, mismo pipeline con otro encuadre.
+  // A diferencia del retrato, acá SIEMPRE hay una referencia de identidad
+  // natural y el llamador la pasa según qué se esté generando:
+  //   - el cuerpo neutral de una variante → el busto del personaje
+  //   - una expresión de esa variante     → el cuerpo neutral ya generado
+  // Por eso no hay guía de pose genérica como en el retrato: la pose la
+  // dicta la descripción de la variante, no una imagen de referencia.
+  ipcMain.handle(
+    'ai:generate-character-body',
+    async (
+      _event,
+      gameId: unknown,
+      characterId: unknown,
+      variantId: unknown,
+      prompt: unknown,
+      expressionKey: unknown,
+      referenceImagePath: unknown,
+    ) => {
+      if (app.isPackaged) {
+        return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
+      }
+      if (!isValidId(gameId)) {
+        return { ok: false, error: `Id de juego inválido: ${String(gameId)}` };
+      }
+      if (!isValidId(characterId)) {
+        return { ok: false, error: `Id de personaje inválido: ${String(characterId)}` };
+      }
+      if (!isValidId(variantId)) {
+        return { ok: false, error: `Id de variante inválido: ${String(variantId)}` };
+      }
+      if (typeof prompt !== 'string' || !prompt.trim()) {
+        return { ok: false, error: 'Falta la descripción de la variante.' };
+      }
+      // null = cuerpo neutral de la variante; una clave válida = esa misma
+      // variante con otra cara.
+      if (expressionKey !== null && !isValidId(expressionKey)) {
+        return { ok: false, error: `Id de expresión inválido: ${JSON.stringify(expressionKey)}` };
+      }
+      if (referenceImagePath !== null && typeof referenceImagePath !== 'string') {
+        return { ok: false, error: 'Ruta de referencia inválida.' };
+      }
+      const config = await getStoredAiIntegrationsConfig();
+      try {
+        let referenceImageBytes: Buffer | null = null;
+        if (referenceImagePath) {
+          try {
+            referenceImageBytes = await readFile(join(app.getAppPath(), assetsDir(gameId), referenceImagePath));
+          } catch {
+            return { ok: false, error: `No se pudo leer la imagen de referencia: ${referenceImagePath}` };
+          }
+        }
+
+        const result = await generateCharacterImage(config, prompt.trim(), referenceImageBytes, BODY_STYLE);
+        if (!result.ok) return result;
+
+        await mkdir(join(app.getAppPath(), charactersDir(gameId)), { recursive: true });
+        const fileName = expressionKey
+          ? `${characterId}-${variantId}-${expressionKey}`
+          : `${characterId}-${variantId}`;
+        const relativePath = `characters/${fileName}.png`;
+        await writeFile(join(app.getAppPath(), assetsDir(gameId), relativePath), result.bytes);
         return { ok: true, path: relativePath };
       } catch (error) {
         return { ok: false, error: error instanceof Error ? error.message : String(error) };

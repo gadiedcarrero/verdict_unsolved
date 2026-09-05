@@ -20,3 +20,30 @@ export const EMOTIONS: { code: EmotionCode; label: string; promptHint: string }[
   { code: 'asombrado', label: 'Asombrado', promptHint: 'surprised, astonished, shocked' },
   { code: 'triste', label: 'Triste', promptHint: 'sad, sorrowful, downcast' },
 ];
+
+/**
+ * Vocabulario aparte —y más chico— para los sprites de cuerpo entero de una
+ * variante (ver `CharacterVariant` en schemas.ts). Son menos que las
+ * emociones del busto a propósito: el costo de generación de una variante es
+ * variantes × expresiones, así que cada entrada que se agregue acá se paga
+ * multiplicada por cada variante de cada personaje. En escena el personaje se
+ * ve chico y de lejos — cuatro gestos legibles alcanzan; el matiz fino se lee
+ * en el retrato del círculo de diálogo, que sí tiene las seis.
+ *
+ * Los hints describen el GESTO de cuerpo entero, no solo la cara, porque
+ * acá se ve el cuerpo completo. La pose base (de pie, sentado, en silla de
+ * ruedas) NO se toca: la fija la descripción de la variante y tiene que
+ * mantenerse igual entre expresiones.
+ */
+export type BodyExpressionCode = 'conversando' | 'riendo' | 'serio' | 'tenso';
+
+export const BODY_EXPRESSIONS: { code: BodyExpressionCode; label: string; promptHint: string }[] = [
+  {
+    code: 'conversando',
+    label: 'Conversando',
+    promptHint: 'talking, mid-sentence, one hand raised in a natural explaining gesture',
+  },
+  { code: 'riendo', label: 'Riendo', promptHint: 'laughing openly, relaxed shoulders, head slightly back' },
+  { code: 'serio', label: 'Serio', promptHint: 'serious and composed, still, arms neutral at the sides' },
+  { code: 'tenso', label: 'Tenso', promptHint: 'tense and alert, shoulders tight, guarded body language' },
+];
