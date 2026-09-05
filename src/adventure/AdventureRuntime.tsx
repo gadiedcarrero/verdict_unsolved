@@ -411,18 +411,25 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setScriptBreakdown(null);
     setScriptBreakdownError(null);
     void window.api.readScriptBreakdown(gameId).then((result) => {
-      if (!result.ok) return;
-      setScriptBreakdown(result.breakdown);
-      // Promover también al ABRIR, no solo al generar. El borrador de
-      // personajes vive en memoria: si se generó el desglose y la app se
-      // recargó antes de Guardar, el roster propuesto quedaba encerrado en
-      // script-breakdown.json y la pestaña Personajes se veía vacía para
-      // siempre — la única salida era volver a correr la IA sobre el guion
-      // entero. Es idempotente (nunca pisa un personaje que ya existe), así
-      // que reabrir un proyecto ya guardado no cambia nada.
-      if (result.breakdown) promoteBreakdownCharacters(result.breakdown.characters);
+      if (result.ok) setScriptBreakdown(result.breakdown);
     });
   }, [gameId]);
+
+  // Promover el roster del desglose también al ABRIR, no solo al generarlo.
+  // El borrador de personajes vive en memoria: si se generó el desglose y la
+  // app se recargó antes de Guardar, el roster propuesto quedaba encerrado en
+  // script-breakdown.json y la pestaña Personajes se veía vacía para siempre
+  // — la única salida era volver a correr la IA sobre el guion entero.
+  //
+  // Espera al bundle: sin él no hay roster base contra el cual comparar qué
+  // personaje ya existe. Y va acá arriba, con el resto de los hooks, porque
+  // más abajo hay returns condicionales — un hook después de uno de esos
+  // cambia la cantidad de hooks entre renders y rompe React.
+  useEffect(() => {
+    if (bundle && scriptBreakdown) promoteBreakdownCharacters(scriptBreakdown.characters);
+    // Promover es idempotente (nunca pisa un personaje que ya existe), así
+    // que repetirlo cuando cambie el desglose no cambia nada.
+  }, [bundle, scriptBreakdown]);
 
   useEffect(() => {
     if (isLoaded && project?.result.ok && !bundle) {
@@ -2072,7 +2079,10 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   function promoteBreakdownCharacters(breakdownCharacters: ScriptBreakdownCharacter[]): void {
     const pendingNameStrings: Record<string, string> = {};
     setEditedCharacters((prev) => {
-      const base = prev ?? baseCharacters;
+      // `bundle.characters` y no `baseCharacters`: esta función se llama
+      // desde un efecto que existe también en renders que salen temprano
+      // (sin bundle), donde esa const nunca se inicializa.
+      const base = prev ?? bundle?.characters ?? [];
       const result = [...base];
       const takenIds = new Set(result.map((c) => c.id));
       let changed = false;
