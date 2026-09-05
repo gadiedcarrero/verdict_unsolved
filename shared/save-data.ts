@@ -45,6 +45,19 @@ export type AdventureCaseState = {
    * Puede faltar en partidas guardadas antes de que esto existiera: usar
    * siempre `normalizeAdventureCaseState` al leer de disco. */
   variables: Record<string, VariableValue>;
+  /** Pistas ya descubiertas, por id (ver `InvestigationSchema.clues`). Es una
+   * sola lista para todo el caso y no una por escena: el panel de pistas las
+   * muestra juntas, y una escena que vuelve a pedir una pista ya encontrada
+   * debe darla por encontrada. */
+  discoveredClueIds: string[];
+  /** Clave de traducción del objetivo visible ahora mismo, o null fuera de
+   * una escena de investigación. Se fija al entrar a la escena desde
+   * `Scene.investigation.objective` y lo puede cambiar `setObjective` sin
+   * salir de ella. */
+  objective: string | null;
+  /** Escenas cuya investigación ya se resolvió, por id — para no volver a
+   * ofrecer SOLUCIONAR al reentrar. */
+  solvedSceneIds: string[];
 };
 
 export type SaveData = {
@@ -76,6 +89,9 @@ export function createEmptyAdventureCaseState(startingSceneId: string): Adventur
     casePayment: 0,
     flags: [],
     variables: {},
+    discoveredClueIds: [],
+    objective: null,
+    solvedSceneIds: [],
   };
 }
 
@@ -92,7 +108,13 @@ function isVariableRecord(value: unknown): value is Record<string, VariableValue
  * `SAVE_SCHEMA_VERSION` a propósito — nada del formato viejo cambió de
  * significado, así que subirlo solo lograría descartar partidas válidas. */
 export function normalizeAdventureCaseState(state: AdventureCaseState): AdventureCaseState {
-  return { ...state, variables: state.variables ?? {} };
+  return {
+    ...state,
+    variables: state.variables ?? {},
+    discoveredClueIds: state.discoveredClueIds ?? [],
+    objective: state.objective ?? null,
+    solvedSceneIds: state.solvedSceneIds ?? [],
+  };
 }
 
 export function createEmptySave(): SaveData {
@@ -127,9 +149,12 @@ function isAdventureCaseState(value: unknown): value is AdventureCaseState {
     typeof v['mirrorHintsUsed'] === 'number' &&
     typeof v['casePayment'] === 'number' &&
     Array.isArray(v['flags']) &&
-    // Ausente = partida guardada antes de que existiera el campo; se rellena
-    // en normalizeAdventureCaseState, no se rechaza el save entero.
-    (v['variables'] === undefined || isVariableRecord(v['variables']))
+    // Ausentes = partida guardada antes de que existieran estos campos; se
+    // rellenan en normalizeAdventureCaseState, no se rechaza el save entero.
+    (v['variables'] === undefined || isVariableRecord(v['variables'])) &&
+    (v['discoveredClueIds'] === undefined || Array.isArray(v['discoveredClueIds'])) &&
+    (v['objective'] === undefined || v['objective'] === null || typeof v['objective'] === 'string') &&
+    (v['solvedSceneIds'] === undefined || Array.isArray(v['solvedSceneIds']))
   );
 }
 

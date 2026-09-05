@@ -2,11 +2,13 @@ import { create } from 'zustand';
 import { createEmptyAdventureCaseState, type AdventureCaseState, type VariableValue } from '@shared/save-data';
 import { useSaveStore } from '../game-engine/save-system/save.store';
 import { conditionContextOf, evaluateCondition } from '../game-engine/scene-engine/conditions';
+import { canSolve } from '../game-engine/scene-engine/investigation';
 import type {
   AdventureCaseBundle,
   DialogueNode,
   Hotspot,
   InterfaceId,
+  Investigation,
   MinigameTemplate,
   Scene,
   SceneAction,
@@ -58,6 +60,8 @@ type AdventureRuntimeState = {
    * (`interactWith.noMatch`) y las zonas bloqueadas por `enabledWhen`
    * (`Hotspot.disabledMessage`) — mismo aviso, no dos mecanismos iguales. */
   transientMessageKey: string | null;
+  /** True mientras está abierta la pregunta de deducción de SOLUCIONAR. */
+  deductionOpen: boolean;
   /** Id del fondo activo de la escena actual, o null = usar el default
    * (`scene.backgrounds[0]`) — ver acción `toggleBackground`. Se resetea a
    * null en cada cambio de escena, así el fondo alternado de una escena no
@@ -106,6 +110,22 @@ type AdventureRuntimeState = {
   addFlag: (flag: string) => void;
   /** Escribe una variable de guion (ver `AdventureCaseState.variables`). */
   setVariable: (name: string, value: VariableValue) => void;
+  /** Suma una pista al caso (idempotente) y avisa en pantalla cuál fue. */
+  discoverClue: (clueId: string) => void;
+  setObjective: (objective: string) => void;
+  /** La investigación de la escena actual, o null si no es una escena de
+   * investigación. */
+  getInvestigation: () => Investigation | null;
+  /** Si SOLUCIONAR está habilitado: hay investigación, no está ya resuelta, y
+   * están las pistas que pide. */
+  canSolveInvestigation: () => boolean;
+  /** Pulsar SOLUCIONAR: abre la deducción si la hay, o resuelve directo. */
+  solveInvestigation: () => void;
+  /** Elegir una conclusión. La incorrecta avisa y deja seguir intentando. */
+  answerDeduction: (answerId: string) => void;
+  closeDeduction: () => void;
+  /** Marca la investigación de la escena como resuelta y corre su `onSolved`. */
+  completeInvestigation: () => void;
   /** Si la zona se le muestra al jugador con el estado actual de la partida
    * (`Hotspot.visibleWhen`). El editor NO la usa: ahí se ven todas. */
   isHotspotVisible: (hotspot: Hotspot) => boolean;
@@ -144,6 +164,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   activeActionMenuHotspotId: null,
   combiningHotspotId: null,
   transientMessageKey: null,
+  deductionOpen: false,
   activeBackgroundId: null,
   activeMinigame: null,
 
@@ -160,6 +181,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       activeActionMenuHotspotId: null,
       combiningHotspotId: null,
       transientMessageKey: null,
+      deductionOpen: false,
       activeBackgroundId: null,
       activeMinigame: null,
     });
@@ -318,6 +340,12 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
         case 'setVariable':
           get().setVariable(action.name, action.value);
           break;
+        case 'discoverClue':
+          get().discoverClue(action.clueId);
+          break;
+        case 'setObjective':
+          get().setObjective(action.objective);
+          break;
         case 'transitionTo': {
           // Lo que venga después en la lista (p. ej. hacer hablar a un
           // personaje) se difiere hasta que la escena nueva termine de
@@ -403,6 +431,81 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   isHotspotVisible: (hotspot) =>
     evaluateCondition(hotspot.visibleWhen, conditionContextOf(get().caseState)),
 
+  discoverClue: (clueId) => {
+    const { caseState } = get();
+    if (caseState.discoveredClueIds.includes(clueId)) return;
+
+    set({
+      caseState: { ...caseState, discoveredClueIds: [...caseState.discoveredClueIds, clueId] },
+    });
+    persistIfRegistered(get().caseState);
+
+    // El aviso usa el texto de la pista, no un "pista descubierta" genérico:
+    // enterarse de QUÉ se descubrió es el momento de la escena.
+    const clue = get().getActiveScene()?.investigation?.clues.find((c) => c.id === clueId);
+    if (clue) get().showTransientMessage(clue.text);
+  },
+
+  setObjective: (objective) => {
+    set((state) => ({ caseState: { ...state.caseState, objective } }));
+    persistIfRegistered(get().caseState);
+  },
+
+  getInvestigation: () => get().getActiveScene()?.investigation ?? null,
+
+  canSolveInvestigation: () => {
+    const investigation = get().getInvestigation();
+    if (!investigation) return false;
+    if (get().caseState.solvedSceneIds.includes(get().currentSceneId)) return false;
+    return canSolve(investigation, get().caseState.discoveredClueIds);
+  },
+
+  solveInvestigation: () => {
+    const investigation = get().getInvestigation();
+    if (!investigation || !get().canSolveInvestigation()) return;
+
+    // Con deducción, SOLUCIONAR solo abre la pregunta — resolver de verdad es
+    // acertarla. Sin deducción es el "modo simple": se da por resuelta.
+    if (investigation.deduction) {
+      set({ deductionOpen: true });
+      return;
+    }
+    get().completeInvestigation();
+  },
+
+  answerDeduction: (answerId) => {
+    const investigation = get().getInvestigation();
+    const deduction = investigation?.deduction;
+    if (!deduction) return;
+
+    if (answerId !== deduction.correctAnswerId) {
+      // Fallar no cuesta progreso ni pistas: la pregunta queda abierta para
+      // volver a intentar. Lo que no pasa es avanzar.
+      get().showTransientMessage(deduction.wrongMessage);
+      return;
+    }
+    set({ deductionOpen: false });
+    get().completeInvestigation();
+  },
+
+  closeDeduction: () => {
+    set({ deductionOpen: false });
+  },
+
+  completeInvestigation: () => {
+    const investigation = get().getInvestigation();
+    if (!investigation) return;
+
+    const sceneId = get().currentSceneId;
+    set((state) => ({
+      caseState: state.caseState.solvedSceneIds.includes(sceneId)
+        ? state.caseState
+        : { ...state.caseState, solvedSceneIds: [...state.caseState.solvedSceneIds, sceneId] },
+    }));
+    persistIfRegistered(get().caseState);
+    get().runActions(investigation.onSolved);
+  },
+
   transitionToScene: (sceneId, fade, onComplete) => {
     set({
       activeDialogueNodeId: null,
@@ -410,6 +513,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       activeActionMenuHotspotId: null,
       combiningHotspotId: null,
       transientMessageKey: null,
+      deductionOpen: false,
       activeMinigame: null,
       transitioning: true,
     });
@@ -419,7 +523,14 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       set((state) => ({
         currentSceneId: sceneId,
         activeBackgroundId: null,
-        caseState: { ...state.caseState, currentSceneId: sceneId },
+        caseState: {
+          ...state.caseState,
+          currentSceneId: sceneId,
+          // El objetivo lo fija la escena a la que se entra; una escena sin
+          // investigación lo apaga, para que no quede colgado el de la
+          // anterior en el HUD.
+          objective: scene?.investigation?.objective ?? null,
+        },
       }));
       persistIfRegistered(get().caseState);
       if (scene?.onEnter) get().runActions(scene.onEnter);
@@ -442,6 +553,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       activeActionMenuHotspotId: null,
       combiningHotspotId: null,
       transientMessageKey: null,
+      deductionOpen: false,
       activeBackgroundId: null,
       activeMinigame: null,
       transitioning: false,
@@ -458,6 +570,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       activeActionMenuHotspotId: null,
       combiningHotspotId: null,
       transientMessageKey: null,
+      deductionOpen: false,
       activeBackgroundId: null,
       activeMinigame: null,
       caseState: createEmptyAdventureCaseState(''),

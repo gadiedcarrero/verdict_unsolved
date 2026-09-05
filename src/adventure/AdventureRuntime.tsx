@@ -37,7 +37,9 @@ import type {
 } from '../game-engine/scene-engine/schemas';
 import { useSaveStore } from '../game-engine/save-system/save.store';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
+import { DeductionPanel } from './DeductionPanel';
 import { DialogueOverlay } from './DialogueOverlay';
+import { InvestigationHud } from './InvestigationHud';
 import { InterfaceHost } from './interfaces/InterfaceHost';
 import { CinematicScene } from './CinematicScene';
 import { ComfyUIStatusIndicator } from '../components/ComfyUIStatusIndicator';
@@ -169,6 +171,14 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const combiningHotspotId = useAdventureRuntimeStore((s) => s.combiningHotspotId);
   const transientMessageKey = useAdventureRuntimeStore((s) => s.transientMessageKey);
   const isHotspotVisible = useAdventureRuntimeStore((s) => s.isHotspotVisible);
+  const caseState = useAdventureRuntimeStore((s) => s.caseState);
+  const deductionOpen = useAdventureRuntimeStore((s) => s.deductionOpen);
+  const getInvestigation = useAdventureRuntimeStore((s) => s.getInvestigation);
+  const canSolveInvestigation = useAdventureRuntimeStore((s) => s.canSolveInvestigation);
+  const solveInvestigation = useAdventureRuntimeStore((s) => s.solveInvestigation);
+  const answerDeduction = useAdventureRuntimeStore((s) => s.answerDeduction);
+  const closeDeduction = useAdventureRuntimeStore((s) => s.closeDeduction);
+  const investigation = getInvestigation();
   const activeBackgroundId = useAdventureRuntimeStore((s) => s.activeBackgroundId);
   const advance = useAdventureRuntimeStore((s) => s.advance);
   const selectChoice = useAdventureRuntimeStore((s) => s.selectChoice);
@@ -2810,6 +2820,18 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           hotspotVisible={isHotspotVisible}
           activeBackgroundId={activeBackgroundId}
         >
+          {/* El HUD va debajo del diálogo/interfaces a propósito: mientras
+              alguien habla, el objetivo no compite por la atención. */}
+          {investigation && (
+            <InvestigationHud
+              investigation={investigation}
+              discoveredClueIds={caseState.discoveredClueIds}
+              strings={strings}
+              solved={caseState.solvedSceneIds.includes(displayScene.id)}
+              canSolve={canSolveInvestigation()}
+              onSolve={solveInvestigation}
+            />
+          )}
           {activeInterfaceId ? (
             <InterfaceHost interfaceId={activeInterfaceId} />
           ) : (
@@ -2823,6 +2845,14 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 onChoose={selectChoice}
               />
             )
+          )}
+          {deductionOpen && investigation?.deduction && (
+            <DeductionPanel
+              deduction={investigation.deduction}
+              strings={strings}
+              onAnswer={answerDeduction}
+              onClose={closeDeduction}
+            />
           )}
           <MinigameHost />
         </SceneViewer>

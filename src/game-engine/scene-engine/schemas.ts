@@ -88,6 +88,13 @@ const OUTCOME_ACTION_VARIANTS = [
     name: z.string(),
     value: VariableValueSchema,
   }),
+  /** Suma una pista de las que declara la investigación de la escena (ver
+   * `InvestigationSchema.clues`). Descubrir dos veces la misma no cuenta
+   * doble: es lo que deja poner la acción en una zona repetible sin que el
+   * contador se dispare al volver a mirar lo mismo. */
+  z.object({ type: z.literal('discoverClue'), clueId: z.string() }),
+  /** Cambia el objetivo visible sin cambiar de escena. */
+  z.object({ type: z.literal('setObjective'), objective: z.string() }),
   z.object({
     type: z.literal('transitionTo'),
     sceneId: z.string(),
@@ -478,6 +485,51 @@ function migrateLegacySceneFields(raw: unknown): unknown {
   return r;
 }
 
+export const ClueSchema = z.object({
+  id: z.string(),
+  /** Clave de traducción del enunciado ("Daniel trabajó para Acheron") — se
+   * muestra al descubrirla y después en el panel de pistas. */
+  text: z.string(),
+});
+
+export const DeductionAnswerSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+});
+
+/** La pregunta que separa "junté las pruebas" de "entendí lo que significan".
+ * Sin esto, SOLUCIONAR valida solo — el "modo simple". */
+export const DeductionSchema = z.object({
+  question: z.string(),
+  answers: z.array(DeductionAnswerSchema).default([]),
+  correctAnswerId: z.string(),
+  /** Clave del aviso cuando la conclusión no se sostiene. Fallar no cuesta
+   * nada más que volver a intentar: el castigo es no avanzar, no perder. */
+  wrongMessage: z.string().default('deduction.wrong'),
+});
+
+/** El loop de una escena de investigación: un objetivo visible, N pistas por
+ * encontrar, y un botón que solo se habilita cuando están.
+ *
+ * El objetivo se declara acá y vive en el estado de la partida a partir de
+ * que se entra a la escena, porque puede cambiar sin cambiar de escena (la
+ * acción `setObjective`) — "Familiarízate con Zero Network" pasa a "Contesta
+ * la llamada" cuando suena el teléfono, en el mismo cuarto. */
+export const InvestigationSchema = z.object({
+  /** Clave de traducción del objetivo con el que arranca la escena. */
+  objective: z.string(),
+  clues: z.array(ClueSchema).default([]),
+  /** Cuántas pistas habilitan SOLUCIONAR. 0 = todas las de `clues`. Se deja
+   * configurable porque una escena puede ofrecer pistas opcionales de más
+   * (el doc distingue INFORMACIÓN de PISTA: si todo lo que se clickea diera
+   * progreso, encontrar la pista correcta dejaría de tener valor). */
+  requiredClues: z.number().default(0),
+  deduction: DeductionSchema.optional(),
+  /** Qué pasa al resolver: con deducción, al acertar; sin ella, al pulsar
+   * SOLUCIONAR con las pistas completas. */
+  onSolved: z.array(SceneActionSchema).default([]),
+});
+
 const SceneObjectSchema = z.object({
   id: z.string(),
   /** Nombre legible para el editor (ej. "Oficina de Gray") — el `id` sigue
@@ -511,6 +563,10 @@ const SceneObjectSchema = z.object({
   dialogueNodes: z.record(z.string(), DialogueNodeSchema).default({}),
   /** Acciones que corren automáticamente al entrar a la escena (p. ej. abrir un diálogo). */
   onEnter: z.array(SceneActionSchema).optional(),
+  /** Convierte esta escena en una escena de investigación: objetivo visible,
+   * contador de pistas y botón SOLUCIONAR (ver `InvestigationSchema`).
+   * Ausente = escena normal, sin HUD de investigación. */
+  investigation: InvestigationSchema.optional(),
   /** `kind: "intro"` o `"cinematica"`: si se puede saltar la secuencia con
    * un botón en vez de esperar a que termine sola. El nombre quedó de
    * cuando solo existía "intro" — se reutiliza tal cual para "cinematica"
@@ -688,6 +744,9 @@ export type MinigameOutcomeAction = z.infer<typeof MinigameOutcomeActionSchema>;
 export type MinigameTemplate = z.infer<typeof MinigameTemplateSchema>;
 export type Hotspot = z.infer<typeof HotspotSchema>;
 export type Condition = z.infer<typeof ConditionSchema>;
+export type Clue = z.infer<typeof ClueSchema>;
+export type Deduction = z.infer<typeof DeductionSchema>;
+export type Investigation = z.infer<typeof InvestigationSchema>;
 export type Comparison = z.infer<typeof ComparisonSchema>;
 export type InteractWithTarget = z.infer<typeof InteractWithTargetSchema>;
 export type HotspotShape = z.infer<typeof HotspotShapeSchema>;
