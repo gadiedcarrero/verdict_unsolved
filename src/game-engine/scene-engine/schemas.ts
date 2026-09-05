@@ -628,8 +628,11 @@ export const SceneSchema = z.preprocess(migrateLegacySceneFields, SceneObjectSch
 export const AdventureCaseMetaSchema = z.object({
   id: z.string(),
   title: z.string(),
-  clientName: z.string(),
-  premise: z.string(),
+  /** Quién encarga el caso y de qué va. Vienen del planteo de VERDICT
+   * (una agencia con clientes) — un juego que no sea de encargos los deja
+   * vacíos, por eso no se piden. */
+  clientName: z.string().default(''),
+  premise: z.string().default(''),
   startingSceneId: z.string(),
 });
 
@@ -725,17 +728,35 @@ export const SiteSettingsSchema = z.object({
   actionMenu: ActionMenuSettingsSchema.default(DEFAULT_ACTION_MENU_SETTINGS),
 });
 
+/**
+ * Lo que un juego entrega para que la plataforma lo cargue.
+ *
+ * Solo `case` y `scenes` son obligatorios: es lo mínimo con lo que existe un
+ * juego (una identidad y una escena por la cual empezar). Todo lo demás tiene
+ * default, así que un juego nuevo arranca con dos archivos y va sumando lo
+ * que necesite desde el editor.
+ *
+ * Los cuatro campos de abajo (`investigationAreas`, `mirrorHints`, `agents`,
+ * `equipmentItems`) son sistemas de VERDICT: UNSOLVED, no de la plataforma —
+ * la tienda de equipo, el mercado de agentes y los avisos de MIRROR. Estaban
+ * obligatorios de cuando había un solo juego, lo que forzaba a cualquier
+ * juego nuevo a entregar cuatro archivos vacíos de mecánicas que no tiene.
+ * Siguen acá (VERDICT los usa y sus paneles los leen) pero ya no se piden.
+ */
 export const AdventureCaseBundleSchema = z.object({
   case: AdventureCaseMetaSchema,
   scenes: z.array(SceneSchema),
-  dialogues: z.record(z.string(), DialogueNodeSchema),
-  investigationAreas: z.array(InvestigationAreaSchema),
-  mirrorHints: z.array(MirrorHintSchema),
-  agents: z.array(AgentDefSchema),
-  equipmentItems: z.array(EquipmentItemSchema),
+  /** Diálogo del guion armado a mano. Un juego hecho entero desde el editor
+   * no tiene ninguno: sus líneas viven en `Scene.dialogueNodes` y se funden
+   * con esto al cargar (ver loadAdventureCase). */
+  dialogues: z.record(z.string(), DialogueNodeSchema).default({}),
+  investigationAreas: z.array(InvestigationAreaSchema).default([]),
+  mirrorHints: z.array(MirrorHintSchema).default([]),
+  agents: z.array(AgentDefSchema).default([]),
+  equipmentItems: z.array(EquipmentItemSchema).default([]),
   /** Diccionario clave → texto en español. Ver docs sobre i18n en el editor. */
-  strings: z.record(z.string(), z.string()),
-  characters: z.array(CharacterSchema),
+  strings: z.record(z.string(), z.string()).default({}),
+  characters: z.array(CharacterSchema).default([]),
   siteSettings: SiteSettingsSchema.default({
     hotspotLabelStyle: { fontFamily: 'sans', fontSize: 10, color: '#e6eaef' },
     cursor: { defaultCursorPath: null, hoverCursorPath: null },
