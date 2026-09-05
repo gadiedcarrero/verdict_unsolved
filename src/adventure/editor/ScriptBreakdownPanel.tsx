@@ -154,6 +154,7 @@ function SceneCard({
   onPanelImageDescriptionChange,
   onRetryPanels,
   onCreateGameScene,
+  onGenerateGameScene,
 }: {
   scene: ScriptBreakdownScene;
   characters: ScriptBreakdownCharacter[];
@@ -169,6 +170,9 @@ function SceneCard({
   onPanelImageDescriptionChange: (panelId: string, text: string) => void;
   onRetryPanels: (sourceText: string) => void;
   onCreateGameScene: () => void;
+  /** Solo escenas interactivas: arma la escena jugable entera desde el texto
+   * del guion, en vez de crear una vacía. */
+  onGenerateGameScene: () => void;
 }): JSX.Element {
   const [panelsOpen, setPanelsOpen] = useState(false);
   const sceneCharacters = scene.characterIds
@@ -252,6 +256,19 @@ function SceneCard({
       >
         {panelsOpen ? '▾' : '▸'} Paneles cinemáticos ({scene.panels.length})
       </button>
+      {/* Solo cuando el guion marcó la escena como interactiva: una
+          cinemática no tiene objetivo, pistas ni deducción que derivar. */}
+      {scene.scriptKind === 'interactiva' && !gameSceneExists && (
+        <button
+          type="button"
+          onClick={onGenerateGameScene}
+          disabled={creatingScene || scene.sourceText.trim().length < 20}
+          title="Arma la escena jugable (objetivo, pistas, zonas y deducción) desde el texto del guion."
+          className="mb-1 w-full rounded border border-amber-accent/60 px-1.5 py-1 text-[9px] tracking-widest text-amber-accent uppercase transition-colors hover:border-amber-accent disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {creatingScene ? 'Generando…' : 'Generar escena jugable'}
+        </button>
+      )}
       <button
         type="button"
         onClick={onCreateGameScene}
@@ -304,6 +321,7 @@ export function ScriptBreakdownPanel({
   existingSceneIds,
   creatingScene,
   onCreateGameScene,
+  onGenerateGameScene,
 }: {
   breakdown: ScriptBreakdown | null;
   generating: boolean;
@@ -324,6 +342,7 @@ export function ScriptBreakdownPanel({
   scenePanelsRetrying: Record<string, boolean>;
   scenePanelsRetryError: Record<string, string>;
   onRetryScenePanels: (sceneId: string, sceneTitle: string, sourceText: string) => void;
+  onGenerateGameScene: (sceneId: string) => void;
   /** Ids de las escenas de juego que ya existen (pestaña ESCENA) — decide si
    * el botón dice "Crear" o "Abrir" para cada escena del desglose. */
   existingSceneIds: string[];
@@ -457,6 +476,7 @@ export function ScriptBreakdownPanel({
                 onPanelImageDescriptionChange(scene.id, panelId, text)
               }
               onRetryPanels={(sourceText) => onRetryScenePanels(scene.id, scene.title, sourceText)}
+              onGenerateGameScene={() => onGenerateGameScene(scene.id)}
               onCreateGameScene={() => onCreateGameScene(scene.id)}
             />
           ))}

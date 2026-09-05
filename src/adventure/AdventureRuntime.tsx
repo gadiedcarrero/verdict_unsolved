@@ -37,6 +37,7 @@ import type {
 } from '../game-engine/scene-engine/schemas';
 import { useSaveStore } from '../game-engine/save-system/save.store';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
+import { buildSceneFromScript } from '../game-engine/scene-engine/buildSceneFromScript';
 import { CharacterHud } from './CharacterHud';
 import { CluePanel } from './CluePanel';
 import { DeductionPanel } from './DeductionPanel';
@@ -1582,6 +1583,44 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     }
   }
 
+  // Hermana de createSceneFromBreakdown, para escenas interactivas: en vez de
+  // crear una escena vacía para llenar a mano, arma la escena entera desde el
+  // texto del guion —objetivo, pistas, zonas, deducción— y la deja abierta en
+  // el editor para acomodar las zonas, que es lo único que no se puede
+  // derivar del texto (ver buildSceneFromScript).
+  async function generateSceneFromScript(breakdownSceneId: string): Promise<void> {
+    const breakdownScene = scriptBreakdown?.scenes.find((s) => s.id === breakdownSceneId);
+    if (!breakdownScene) return;
+
+    setCreatingScene(true);
+    setSaveMessage(null);
+    try {
+      const draft = await window.api.generateSceneDraft(
+        breakdownScene.title,
+        breakdownScene.sourceText,
+        (editedCharacters ?? baseCharacters).map((character) => character.id),
+      );
+      if (!draft.ok) {
+        setSaveMessage(`Error generando escena: ${draft.error}`);
+        return;
+      }
+
+      const { scene, strings } = buildSceneFromScript(draft.parsed, breakdownSceneId);
+      const result = await window.api.saveSceneLayout(gameId, breakdownSceneId, scene, strings);
+      if (!result.ok) {
+        setSaveMessage(`Error guardando escena: ${result.error}`);
+        return;
+      }
+      setEditorSceneId(breakdownSceneId);
+      setEditorTab('scene');
+      reloadAfterSave();
+    } catch (error) {
+      setSaveMessage(`Error generando escena: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setCreatingScene(false);
+    }
+  }
+
   async function handleSave(): Promise<void> {
     if (!editedScene) return;
     setSaving(true);
@@ -2562,6 +2601,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   existingSceneIds={allScenes.map((s) => s.id)}
                   creatingScene={creatingScene}
                   onCreateGameScene={(sceneId) => void createSceneFromBreakdown(sceneId)}
+                  onGenerateGameScene={(sceneId) => void generateSceneFromScript(sceneId)}
                 />
               )}
             </div>

@@ -11,6 +11,7 @@ import type {
   ScriptBreakdownScene,
   ScriptSceneKindTag,
 } from '../../../shared/script-breakdown';
+import { isParsedScene, type ParsedScene } from '../../../shared/parsed-scene';
 import { formatApiError } from './apiErrors';
 import { getStoredAiIntegrationsConfig } from './aiIntegrationsHandlers';
 
@@ -510,6 +511,100 @@ async function generateSceneMetadata(
   }
 }
 
+// El modelo solo decide lo que hay que leer del guion. Ids, claves de
+// traducción, coordenadas y acciones las calcula buildSceneFromScript en el
+// renderer — por eso este prompt no las menciona: pedírselas sería pedirle que
+// acierte cosas que se derivan solas.
+const SCENE_DRAFT_SYSTEM_PROMPT = `Sos un asistente que convierte UNA escena de un guion de aventura gráfica de investigación en primera persona a una estructura de datos.
+
+Te doy el texto de la escena y la lista de ids de personajes que ya existen en el juego. Devolvés JSON con esta forma:
+
+{
+  "title": "título corto de la escena",
+  "characterId": "id del roster con el que se juega esta escena, o null",
+  "objective": "el objetivo de la misión, tal como lo dice el guion, o null si la escena no plantea uno",
+  "requiredClues": número de pistas que el guion exige para habilitar SOLUCIONAR, o null si son todas las que listás,
+  "images": [
+    {
+      "title": "nombre de la imagen tal como aparece en el guion",
+      "description": "descripción visual del lugar/documento, para generar la imagen después",
+      "hotspots": [
+        {
+          "name": "nombre de la zona como la nombra el guion",
+          "kind": "info" | "clue" | "navigate" | "action",
+          "text": "lo que se le dice al jugador al interactuar, o null",
+          "clue": "solo si kind=clue: el enunciado de la pista",
+          "globalClue": true solo si el guion la marca como pista/evidencia GLOBAL,
+          "targetImage": "solo si kind=navigate: el title exacto de otra imagen de esta misma escena",
+          "becomesImage": "solo si kind=action y la escena cambia de estado visual: el title exacto de otra imagen de esta escena",
+          "requiredCapabilities": ["fuerza"] si la zona solo la puede usar un personaje con cierta capacidad, si no null,
+          "blockedText": "lo que contesta cuando el personaje activo no puede, si el guion lo trae"
+        }
+      ]
+    }
+  ],
+  "deduction": {
+    "question": "la pregunta de SOLUCIONAR",
+    "answers": ["opción A", "opción B", "opción C"],
+    "correctIndex": índice (base 0) de la correcta según el guion
+  } o null si la escena no tiene deducción
+}
+
+Reglas que importan:
+
+- **"characterId" tiene que ser uno de los ids que te paso, nunca uno inventado.** Si el guion dice "PERSONAJE: GRAY" y en la lista está "director-gray", usá "director-gray". Si no encontrás correspondencia clara, poné null.
+- **Distinguí INFORMACIÓN de PISTA.** Solo es "clue" lo que el guion marca explícitamente como PISTA/PISTA DESCUBIERTA/evidencia que suma al contador. Una zona que solo aporta contexto o sabor es "info". Si convertís todo en pista, el contador deja de significar algo y la escena pierde su mecánica.
+- **"navigate" es ir a mirar otra imagen** (un primer plano, un documento que se abre). **"action" es que la escena cambie de estado** (mover una caja y que aparezca lo que tapaba). En los dos casos "targetImage"/"becomesImage" tienen que coincidir EXACTAMENTE con el "title" de una imagen que estés listando en "images" — si la imagen destino no existe en el guion, agregala a "images" o dejá el campo en null.
+- Todo texto que lee el jugador va en español, tal como lo escribió el guion. No lo reescribas ni lo mejores.
+- No inventes zonas que el guion no nombra, ni pistas que no existen.
+
+Devolvé ÚNICAMENTE el objeto JSON.`;
+
+async function generateSceneDraft(
+  apiKey: string,
+  sceneTitle: string,
+  sourceText: string,
+  characterIds: string[],
+): Promise<{ parsed: ParsedScene } | { error: string }> {
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-4.1',
+        temperature: 0.2,
+        max_tokens: 8192,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: SCENE_DRAFT_SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content: JSON.stringify({ sceneTitle, characterIds, sceneText: sourceText }),
+          },
+        ],
+      }),
+    });
+    if (!response.ok) return { error: await formatApiError('OpenAI', response) };
+
+    const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) return { error: 'OpenAI no devolvió contenido al generar la escena.' };
+
+    const parsed: unknown = JSON.parse(content);
+    if (!isParsedScene(parsed)) {
+      return { error: 'La respuesta de OpenAI no tiene la forma esperada (faltan "title" o "images").' };
+    }
+    // Un personaje inventado rompería la escena en silencio: el HUD mostraría
+    // a alguien que no está en el roster y sus capacidades saldrían vacías.
+    if (parsed.characterId && !characterIds.includes(parsed.characterId)) {
+      delete parsed.characterId;
+    }
+    return { parsed };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
 /** Pipeline completo para el formato con etiquetas — reemplaza tanto la
  * IA-adivina-dónde-empieza-cada-escena (parseTaggedScenes ya lo sabe) como
  * el roster de personajes inferido de la prosa (parseCharactersBlock ya lo
@@ -785,6 +880,32 @@ export function registerScriptBreakdownHandlers(): void {
         return { ok: false, error: result.error };
       }
       return { ok: true, sourceText, panels: result.panels };
+    },
+  );
+
+  // Paso 4 del pipeline (ver docs/plataforma/00-vision-ia.md): una escena del
+  // desglose ya aprobado se convierte en escena jugable. Lo que sale de acá es
+  // un ParsedScene, no una escena del motor — el renderer lo pasa por
+  // buildSceneFromScript, que es determinista (ver el comentario de cabecera
+  // de shared/parsed-scene.ts sobre por qué el modelo no emite Scene).
+  ipcMain.handle(
+    'script-breakdown:generate-scene-draft',
+    async (_event, sceneTitle: unknown, sourceText: unknown, characterIds: unknown) => {
+      if (typeof sceneTitle !== 'string' || typeof sourceText !== 'string') {
+        return { ok: false, error: 'Datos inválidos.' };
+      }
+      if (!sourceText.trim()) {
+        return { ok: false, error: 'Pegá el texto de la escena antes de generar.' };
+      }
+      const roster = Array.isArray(characterIds) ? characterIds.filter((id): id is string => typeof id === 'string') : [];
+
+      const config = await getStoredAiIntegrationsConfig();
+      if (!config.openaiApiKey) {
+        return { ok: false, error: 'Falta la API key de OpenAI en Ajustes → Integraciones IA.' };
+      }
+      const result = await generateSceneDraft(config.openaiApiKey, sceneTitle, sourceText, roster);
+      if ('error' in result) return { ok: false, error: result.error };
+      return { ok: true, parsed: result.parsed };
     },
   );
 

@@ -1,5 +1,6 @@
 import type { AiIntegrationsConfig } from './ai-integrations';
 import type { ElevenLabsVoicesResult } from './elevenlabs';
+import type { ParsedScene } from './parsed-scene';
 import type { SaveData } from './save-data';
 import type { ScriptBreakdown, ScriptBreakdownPanel } from './script-breakdown';
 
@@ -105,6 +106,15 @@ export type DesktopApi = {
     sceneTitle: string,
     sourceText: string,
   ) => Promise<ScriptBreakdownScenePanelsResult>;
+  /** Convierte el texto de UNA escena del guion en un `ParsedScene` — la
+   * forma intermedia que `buildSceneFromScript` traduce a escena del motor.
+   * `characterIds` es el roster ya existente: el modelo tiene que elegir de
+   * ahí y no inventar personajes. */
+  generateSceneDraft: (
+    sceneTitle: string,
+    sourceText: string,
+    characterIds: string[],
+  ) => Promise<{ ok: true; parsed: ParsedScene } | { ok: false; error: string }>;
   /** Genera un retrato (busto 3/4, fondo transparente) con OpenAI y lo
    * guarda en portraits/<characterId>.png (o
    * portraits/<characterId>-<expressionKey>.png con expressionKey) — usa la
