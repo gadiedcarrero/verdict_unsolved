@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { translate } from '../../i18n/translate';
+import { CapabilityFields } from './CapabilityFields';
 import type { Character } from '../../game-engine/scene-engine/schemas';
 import type { ElevenLabsVoice } from '../../../shared/elevenlabs';
 import { EMOTIONS } from '../../../shared/emotions';
@@ -562,6 +563,9 @@ function CharacterFields({
   onNameTextChange,
   onColorChange,
   onDescriptionChange,
+  onCapabilitiesChange,
+  capabilityVocabulary,
+  unreachableCapabilities,
   onUploadPortrait,
   onGeneratePortrait,
   uploading,
@@ -587,6 +591,11 @@ function CharacterFields({
   onNameTextChange: (text: string) => void;
   onColorChange: (color: string) => void;
   onDescriptionChange: (description: string) => void;
+  onCapabilitiesChange: (capabilities: string[]) => void;
+  /** Vocabulario de capacidades del juego (ver capabilities.ts). */
+  capabilityVocabulary: string[];
+  /** Las que alguna zona pide y nadie tiene. */
+  unreachableCapabilities: string[];
   onUploadPortrait: (file: File) => void;
   onGeneratePortrait: (description: string) => void;
   uploading: boolean;
@@ -712,6 +721,12 @@ function CharacterFields({
           onRemoveExpression={onRemoveExpression}
           onGenerateEmotion={onGenerateEmotion}
         />
+        <CapabilityFields
+          character={character}
+          vocabulary={capabilityVocabulary}
+          unreachable={unreachableCapabilities}
+          onChange={onCapabilitiesChange}
+        />
         <VoicesFields character={character} voices={voices} onVoiceChange={onVoiceChange} onRemoveVoice={onRemoveVoice} />
         <CreateVariantForm hasSourcePortrait={Boolean(character.portrait)} onCreate={onCreateVariant} />
       </div>
@@ -786,6 +801,9 @@ export function CharacterEditorPanel({
   onNameTextChange,
   onColorChange,
   onDescriptionChange,
+  onCapabilitiesChange,
+  capabilityVocabulary,
+  unreachableCapabilities,
   onUploadPortrait,
   onUploadExpression,
   onRemoveExpression,
@@ -823,6 +841,9 @@ export function CharacterEditorPanel({
   onNameTextChange: (characterId: string, nameKey: string, text: string) => void;
   onColorChange: (characterId: string, color: string) => void;
   onDescriptionChange: (characterId: string, description: string) => void;
+  onCapabilitiesChange: (characterId: string, capabilities: string[]) => void;
+  capabilityVocabulary: string[];
+  unreachableCapabilities: string[];
   onUploadPortrait: (characterId: string, file: File) => void;
   onUploadExpression: (characterId: string, expressionKey: string, file: File) => void;
   onRemoveExpression: (characterId: string, expressionKey: string) => void;
@@ -894,6 +915,9 @@ export function CharacterEditorPanel({
           onNameTextChange={(text) => onNameTextChange(character.id, character.name, text)}
           onColorChange={(color) => onColorChange(character.id, color)}
           onDescriptionChange={(description) => onDescriptionChange(character.id, description)}
+          onCapabilitiesChange={(capabilities) => onCapabilitiesChange(character.id, capabilities)}
+          capabilityVocabulary={capabilityVocabulary}
+          unreachableCapabilities={unreachableCapabilities}
           onUploadPortrait={(file) => onUploadPortrait(character.id, file)}
           onGeneratePortrait={(description) => onGeneratePortrait(character.id, description)}
           onUploadExpression={(expressionKey, file) => onUploadExpression(character.id, expressionKey, file)}

@@ -38,6 +38,7 @@ import type {
 import { useSaveStore } from '../game-engine/save-system/save.store';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
 import { buildSceneFromScript } from '../game-engine/scene-engine/buildSceneFromScript';
+import { capabilityVocabulary, unreachableCapabilities } from '../game-engine/scene-engine/capabilities';
 import { CharacterHud } from './CharacterHud';
 import { CluePanel } from './CluePanel';
 import { DeductionPanel } from './DeductionPanel';
@@ -1599,6 +1600,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         breakdownScene.title,
         breakdownScene.sourceText,
         (editedCharacters ?? baseCharacters).map((character) => character.id),
+        capabilityVocabulary(editedCharacters ?? baseCharacters, allScenes),
       );
       if (!draft.ok) {
         setSaveMessage(`Error generando escena: ${draft.error}`);
@@ -2540,6 +2542,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   gameId={gameId}
                   characters={displayCharacters}
                   strings={strings}
+                  onCapabilitiesChange={(id, capabilities) => updateCharacter(id, { capabilities })}
+                  capabilityVocabulary={capabilityVocabulary(displayCharacters, allScenes)}
+                  unreachableCapabilities={unreachableCapabilities(displayCharacters, allScenes)}
                   uploadingId={uploadingPortraitId}
                   uploadingExpressionKey={uploadingExpressionKey}
                   generatingArtIds={generatingCharacterArtIds}

@@ -116,11 +116,14 @@ export type DesktopApi = {
   /** Convierte el texto de UNA escena del guion en un `ParsedScene` — la
    * forma intermedia que `buildSceneFromScript` traduce a escena del motor.
    * `characterIds` es el roster ya existente: el modelo tiene que elegir de
-   * ahí y no inventar personajes. */
+   * ahí y no inventar personajes. `knownCapabilities` es el vocabulario de
+   * capacidades que ya usa el juego, para que reuse la palabra exacta en vez
+   * de un sinónimo que dejaría la zona sin responder. */
   generateSceneDraft: (
     sceneTitle: string,
     sourceText: string,
     characterIds: string[],
+    knownCapabilities: string[],
   ) => Promise<{ ok: true; parsed: ParsedScene } | { ok: false; error: string }>;
   /** Genera un retrato (busto 3/4, fondo transparente) con OpenAI y lo
    * guarda en portraits/<characterId>.png (o

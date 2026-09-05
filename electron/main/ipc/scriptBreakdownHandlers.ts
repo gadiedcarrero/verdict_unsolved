@@ -552,6 +552,7 @@ Te doy el texto de la escena y la lista de ids de personajes que ya existen en e
 
 Reglas que importan:
 
+- **Reusá el vocabulario de capacidades que te paso en "knownCapabilities".** Si una zona necesita fuerza y en la lista ya está "fuerza", escribí exactamente "fuerza" — no "fortaleza" ni "ser fuerte". Una capacidad es una palabra exacta que tiene que coincidir con la del personaje; un sinónimo deja la zona sin responder para siempre. Solo inventá una nueva si de verdad no hay ninguna que sirva.
 - **"characterId" tiene que ser uno de los ids que te paso, nunca uno inventado.** Si el guion dice "PERSONAJE: GRAY" y en la lista está "director-gray", usá "director-gray". Si no encontrás correspondencia clara, poné null.
 - **Distinguí INFORMACIÓN de PISTA.** Solo es "clue" lo que el guion marca explícitamente como PISTA/PISTA DESCUBIERTA/evidencia que suma al contador. Una zona que solo aporta contexto o sabor es "info". Si convertís todo en pista, el contador deja de significar algo y la escena pierde su mecánica.
 - **"navigate" es ir a mirar otra imagen** (un primer plano, un documento que se abre). **"action" es que la escena cambie de estado** (mover una caja y que aparezca lo que tapaba). En los dos casos "targetImage"/"becomesImage" tienen que coincidir EXACTAMENTE con el "title" de una imagen que estés listando en "images" — si la imagen destino no existe en el guion, agregala a "images" o dejá el campo en null.
@@ -565,6 +566,7 @@ async function generateSceneDraft(
   sceneTitle: string,
   sourceText: string,
   characterIds: string[],
+  knownCapabilities: string[],
 ): Promise<{ parsed: ParsedScene } | { error: string }> {
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -579,7 +581,7 @@ async function generateSceneDraft(
           { role: 'system', content: SCENE_DRAFT_SYSTEM_PROMPT },
           {
             role: 'user',
-            content: JSON.stringify({ sceneTitle, characterIds, sceneText: sourceText }),
+            content: JSON.stringify({ sceneTitle, characterIds, knownCapabilities, sceneText: sourceText }),
           },
         ],
       }),
@@ -890,7 +892,7 @@ export function registerScriptBreakdownHandlers(): void {
   // de shared/parsed-scene.ts sobre por qué el modelo no emite Scene).
   ipcMain.handle(
     'script-breakdown:generate-scene-draft',
-    async (_event, sceneTitle: unknown, sourceText: unknown, characterIds: unknown) => {
+    async (_event, sceneTitle: unknown, sourceText: unknown, characterIds: unknown, knownCapabilities: unknown) => {
       if (typeof sceneTitle !== 'string' || typeof sourceText !== 'string') {
         return { ok: false, error: 'Datos inválidos.' };
       }
@@ -898,12 +900,15 @@ export function registerScriptBreakdownHandlers(): void {
         return { ok: false, error: 'Pegá el texto de la escena antes de generar.' };
       }
       const roster = Array.isArray(characterIds) ? characterIds.filter((id): id is string => typeof id === 'string') : [];
+      const capabilities = Array.isArray(knownCapabilities)
+        ? knownCapabilities.filter((c): c is string => typeof c === 'string')
+        : [];
 
       const config = await getStoredAiIntegrationsConfig();
       if (!config.openaiApiKey) {
         return { ok: false, error: 'Falta la API key de OpenAI en Ajustes → Integraciones IA.' };
       }
-      const result = await generateSceneDraft(config.openaiApiKey, sceneTitle, sourceText, roster);
+      const result = await generateSceneDraft(config.openaiApiKey, sceneTitle, sourceText, roster, capabilities);
       if ('error' in result) return { ok: false, error: result.error };
       return { ok: true, parsed: result.parsed };
     },
