@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { app, ipcMain } from 'electron';
 import {
@@ -123,6 +123,36 @@ export function registerSceneEditorHandlers(): void {
       }
     },
   );
+
+  // Borra un proyecto entero: su carpeta de código/datos y su carpeta de
+  // arte. Es irreversible en disco — lo que lo hace recuperable es git, no
+  // esto, así que la UI avisa antes de llamar acá (ver DeleteGameDialog).
+  //
+  // `confirmId` tiene que venir igual a `gameId`: quien llama ya escribió el
+  // id a mano para confirmar, y repetirlo acá deja el handler seguro por sí
+  // mismo en vez de depender de que la UI haya preguntado.
+  ipcMain.handle('scene-editor:delete-game', async (_event, gameId: unknown, confirmId: unknown) => {
+    if (app.isPackaged) {
+      return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
+    }
+    if (!isValidId(gameId)) {
+      return { ok: false, error: `Id de juego inválido: ${String(gameId)}` };
+    }
+    if (confirmId !== gameId) {
+      return { ok: false, error: 'La confirmación no coincide con el id del juego.' };
+    }
+    try {
+      const root = app.getAppPath();
+      // `force` para que borrar un juego al que le falta la carpeta de arte
+      // (nunca se generó nada) no falle a mitad de camino dejando el proyecto
+      // a medio borrar.
+      await rm(join(root, gameDir(gameId)), { recursive: true, force: true });
+      await rm(join(root, assetsDir(gameId)), { recursive: true, force: true });
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
 
   ipcMain.handle(
     'scene-editor:save',

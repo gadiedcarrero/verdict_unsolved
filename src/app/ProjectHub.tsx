@@ -1,6 +1,7 @@
 import { useState, type JSX } from 'react';
 import { gameProjects } from '../game-engine/scene-engine/gameProjects';
 import { AiIntegrationsPanel } from './AiIntegrationsPanel';
+import { DeleteGameDialog } from './DeleteGameDialog';
 import { NewGameDialog } from './NewGameDialog';
 
 function prettifyId(id: string): string {
@@ -13,6 +14,8 @@ function prettifyId(id: string): string {
 export function ProjectHub({ onOpenGame }: { onOpenGame: (gameId: string) => void }): JSX.Element {
   const [showIntegrations, setShowIntegrations] = useState(false);
   const [showNewGame, setShowNewGame] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const deletingProject = gameProjects.find((project) => project.id === deletingId);
 
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center gap-10 bg-graphite-950 p-8">
@@ -24,6 +27,22 @@ export function ProjectHub({ onOpenGame }: { onOpenGame: (gameId: string) => voi
         ⚙ Integraciones IA
       </button>
       {showIntegrations && <AiIntegrationsPanel onClose={() => setShowIntegrations(false)} />}
+      {deletingProject && (
+        <DeleteGameDialog
+          gameId={deletingProject.id}
+          title={deletingProject.result.ok ? deletingProject.result.data.case.title : deletingProject.id}
+          sceneCount={deletingProject.result.ok ? deletingProject.result.data.scenes.length : null}
+          characterCount={deletingProject.result.ok ? deletingProject.result.data.characters.length : null}
+          onClose={() => setDeletingId(null)}
+          onDelete={async () => {
+            const result = await window.api.deleteGame(deletingProject.id, deletingProject.id);
+            // Mismo motivo que al crear: el glob de juegos se resuelve al
+            // cargar el módulo, así que la lista solo se actualiza recargando.
+            if (result.ok) window.location.reload();
+            return result;
+          }}
+        />
+      )}
       {showNewGame && (
         <NewGameDialog
           existingIds={gameProjects.map((project) => project.id)}
@@ -48,21 +67,36 @@ export function ProjectHub({ onOpenGame }: { onOpenGame: (gameId: string) => voi
 
       <div className="flex flex-wrap justify-center gap-4">
         {gameProjects.map((project) => (
-          <button
-            key={project.id}
-            type="button"
-            onClick={() => project.result.ok && onOpenGame(project.id)}
-            disabled={!project.result.ok}
-            className="w-64 rounded border border-graphite-700 bg-graphite-900/60 p-5 text-left transition-colors hover:border-amber-accent disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <p className="text-[10px] tracking-widest text-graphite-500 uppercase">{project.id}</p>
-            <p className="mt-1 text-lg font-semibold text-graphite-100">{prettifyId(project.id)}</p>
-            {project.result.ok ? (
-              <p className="mt-2 truncate text-[10px] text-graphite-500">{project.result.data.case.title}</p>
-            ) : (
-              <p className="mt-2 text-[10px] text-red-400">{project.result.error}</p>
-            )}
-          </button>
+          // El botón de borrar va al lado del de abrir, no adentro: un botón
+          // dentro de otro no es HTML válido y el click no se puede repartir.
+          <div key={project.id} className="group relative">
+            <button
+              type="button"
+              onClick={() => project.result.ok && onOpenGame(project.id)}
+              disabled={!project.result.ok}
+              className="w-64 rounded border border-graphite-700 bg-graphite-900/60 p-5 text-left transition-colors hover:border-amber-accent disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <p className="text-[10px] tracking-widest text-graphite-500 uppercase">{project.id}</p>
+              <p className="mt-1 text-lg font-semibold text-graphite-100">{prettifyId(project.id)}</p>
+              {project.result.ok ? (
+                <p className="mt-2 truncate text-[10px] text-graphite-500">{project.result.data.case.title}</p>
+              ) : (
+                <p className="mt-2 text-[10px] text-red-400">{project.result.error}</p>
+              )}
+            </button>
+            {/* Aparece al pasar por encima: borrar un proyecto no es algo que
+                deba estar siempre a un click de distancia, pero tampoco
+                escondido en un menú. Sigue accesible por teclado (focus). */}
+            <button
+              type="button"
+              aria-label={`Borrar ${prettifyId(project.id)}`}
+              title="Borrar proyecto"
+              onClick={() => setDeletingId(project.id)}
+              className="absolute top-2 right-2 rounded border border-graphite-700 px-1.5 py-0.5 text-[10px] text-graphite-600 opacity-0 transition hover:border-red-500 hover:text-red-400 focus:opacity-100 group-hover:opacity-100"
+            >
+              ✕
+            </button>
+          </div>
         ))}
         <button
           type="button"

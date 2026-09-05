@@ -29,6 +29,12 @@ export type DesktopApi = {
    * index.ts que expone el juego a la plataforma, más las carpetas de arte.
    * Es lo que permite empezar un juego desde la app en vez de a mano. */
   createGame: (gameId: string, title: string) => Promise<CreateGameResult>;
+  /** Solo funciona en `pnpm dev` — borra src/games/<gameId>/ y
+   * assets/games/<gameId>/ enteras. Irreversible en disco: lo recuperable es
+   * lo que esté commiteado. `confirmId` tiene que ser igual a `gameId` (quien
+   * llama lo escribió a mano), así el handler no depende de que la UI haya
+   * preguntado. */
+  deleteGame: (gameId: string, confirmId: string) => Promise<SceneEditorSaveResult>;
   /** Un archivo de guardado por juego (save-<gameId>.json en userData). */
   saveGame: (gameId: string, data: SaveData) => Promise<void>;
   loadGame: (gameId: string) => Promise<SaveData>;
