@@ -1,6 +1,12 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { app, ipcMain } from 'electron';
+import {
+  newGameCaseMeta,
+  newGameFirstScene,
+  newGameIndexModule,
+  NEW_GAME_STARTING_SCENE_ID,
+} from '../../../shared/new-game-template';
 
 // Patrón en vez de lista fija: permite crear juegos/escenas/personajes
 // nuevos desde el editor sin tener que sumar cada id acá a mano. También es
@@ -61,6 +67,63 @@ async function mergeStrings(gameId: string, patch: Record<string, string>): Prom
 }
 
 export function registerSceneEditorHandlers(): void {
+  ipcMain.handle(
+    'scene-editor:create-game',
+    async (_event, gameId: unknown, title: unknown) => {
+      if (app.isPackaged) {
+        return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
+      }
+      if (!isValidId(gameId)) {
+        return { ok: false, error: 'El id del juego solo puede tener minúsculas, números y guiones.' };
+      }
+      if (typeof title !== 'string' || !title.trim()) {
+        return { ok: false, error: 'Falta el título del juego.' };
+      }
+
+      const root = app.getAppPath();
+      const caseFile = join(root, gameDir(gameId), 'case.json');
+      try {
+        await readFile(caseFile, 'utf-8');
+        return { ok: false, error: `Ya existe un juego con el id "${gameId}".` };
+      } catch {
+        // No existe: es lo que queremos.
+      }
+
+      try {
+        await mkdir(join(root, scenesDir(gameId)), { recursive: true });
+        await mkdir(join(root, `${gameDir(gameId)}/locales`), { recursive: true });
+        // Las carpetas de arte se crean vacías desde el principio para que
+        // generar un fondo o un retrato no tenga que preocuparse por si
+        // existen — el resto del pipeline asume que están.
+        for (const dir of [portraitsDir(gameId), backgroundsDir(gameId), cursorsDir(gameId), actionMenuDir(gameId)]) {
+          await mkdir(join(root, dir), { recursive: true });
+        }
+
+        // Una escena inicial de verdad, no un juego vacío: un proyecto recién
+        // creado tiene que poder abrirse y jugarse en el acto (mostrando el
+        // marcador de fondo faltante) en vez de fallar la validación del
+        // bundle por no tener a dónde empezar.
+        await writeFile(
+          join(root, scenesDir(gameId), `${NEW_GAME_STARTING_SCENE_ID}.json`),
+          `${JSON.stringify(newGameFirstScene(), null, 2)}\n`,
+          'utf-8',
+        );
+        await writeFile(caseFile, `${JSON.stringify(newGameCaseMeta(gameId, title.trim()), null, 2)}\n`, 'utf-8');
+        // Estos dos existen vacíos porque `index.ts` los importa: el editor
+        // los va a reescribir en cuanto se cree un personaje o se guarde un
+        // texto, pero Vite no puede resolver un import a un archivo que no
+        // está.
+        await writeFile(join(root, charactersFile(gameId)), '[]\n', 'utf-8');
+        await writeFile(join(root, stringsFile(gameId)), '{}\n', 'utf-8');
+        await writeFile(join(root, gameDir(gameId), 'index.ts'), newGameIndexModule(), 'utf-8');
+
+        return { ok: true, startingSceneId: NEW_GAME_STARTING_SCENE_ID };
+      } catch (error) {
+        return { ok: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    },
+  );
+
   ipcMain.handle(
     'scene-editor:save',
     async (_event, gameId: unknown, sceneId: unknown, scene: unknown, stringsPatch: unknown) => {

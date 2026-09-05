@@ -21,7 +21,14 @@ export type ComfyUIStatusResult = { running: boolean };
 export type ComfyUILaunchResult = { ok: true } | { ok: false; error: string };
 export type ComfyUIListCheckpointsResult = { ok: true; files: string[] } | { ok: false; error: string };
 
+export type CreateGameResult = { ok: true; startingSceneId: string } | { ok: false; error: string };
+
 export type DesktopApi = {
+  /** Solo funciona en `pnpm dev` — crea src/games/<gameId>/ con su case.json,
+   * una primera escena, los archivos vacíos que el módulo importa y el
+   * index.ts que expone el juego a la plataforma, más las carpetas de arte.
+   * Es lo que permite empezar un juego desde la app en vez de a mano. */
+  createGame: (gameId: string, title: string) => Promise<CreateGameResult>;
   /** Un archivo de guardado por juego (save-<gameId>.json en userData). */
   saveGame: (gameId: string, data: SaveData) => Promise<void>;
   loadGame: (gameId: string) => Promise<SaveData>;

@@ -1,6 +1,7 @@
 import { useState, type JSX } from 'react';
 import { gameProjects } from '../game-engine/scene-engine/gameProjects';
 import { AiIntegrationsPanel } from './AiIntegrationsPanel';
+import { NewGameDialog } from './NewGameDialog';
 
 function prettifyId(id: string): string {
   return id
@@ -11,6 +12,7 @@ function prettifyId(id: string): string {
 
 export function ProjectHub({ onOpenGame }: { onOpenGame: (gameId: string) => void }): JSX.Element {
   const [showIntegrations, setShowIntegrations] = useState(false);
+  const [showNewGame, setShowNewGame] = useState(false);
 
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center gap-10 bg-graphite-950 p-8">
@@ -22,6 +24,20 @@ export function ProjectHub({ onOpenGame }: { onOpenGame: (gameId: string) => voi
         ⚙ Integraciones IA
       </button>
       {showIntegrations && <AiIntegrationsPanel onClose={() => setShowIntegrations(false)} />}
+      {showNewGame && (
+        <NewGameDialog
+          existingIds={gameProjects.map((project) => project.id)}
+          onClose={() => setShowNewGame(false)}
+          onCreate={async (gameId, title) => {
+            const result = await window.api.createGame(gameId, title);
+            // Vite ve el index.ts nuevo y rehace el glob de juegos, pero eso
+            // es un hot-reload del módulo: recargar es lo que hace que el hub
+            // vuelva a leer la lista ya con el juego adentro.
+            if (result.ok) window.location.reload();
+            return result;
+          }}
+        />
+      )}
 
       <div className="text-center">
         <h1 className="text-2xl font-black tracking-tight text-graphite-100 sm:text-3xl">
@@ -48,9 +64,15 @@ export function ProjectHub({ onOpenGame }: { onOpenGame: (gameId: string) => voi
             )}
           </button>
         ))}
-        {gameProjects.length === 0 && (
-          <p className="text-sm text-graphite-500">No hay ningún proyecto todavía en src/games/.</p>
-        )}
+        <button
+          type="button"
+          onClick={() => setShowNewGame(true)}
+          className="w-64 rounded border border-dashed border-graphite-700 p-5 text-left text-graphite-500 transition-colors hover:border-amber-accent hover:text-amber-accent"
+        >
+          <p className="text-[10px] tracking-widest uppercase">Nuevo</p>
+          <p className="mt-1 text-lg font-semibold">+ Crear juego</p>
+          <p className="mt-2 text-[10px]">Arranca con una escena y crece desde el guion.</p>
+        </button>
       </div>
     </div>
   );

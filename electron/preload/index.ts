@@ -4,6 +4,7 @@ import type { DesktopApi } from '../../shared/desktop-api';
 const api: DesktopApi = {
   saveGame: (gameId, data) => ipcRenderer.invoke('save:write', gameId, data),
   loadGame: (gameId) => ipcRenderer.invoke('save:read', gameId),
+  createGame: (gameId, title) => ipcRenderer.invoke('scene-editor:create-game', gameId, title),
   saveSceneLayout: (gameId, sceneId, scene, stringsPatch) =>
     ipcRenderer.invoke('scene-editor:save', gameId, sceneId, scene, stringsPatch),
   saveCharacters: (gameId, characters, stringsPatch) =>
