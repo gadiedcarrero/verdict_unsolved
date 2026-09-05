@@ -3,6 +3,7 @@ import { createEmptyAdventureCaseState, type AdventureCaseState, type VariableVa
 import { useSaveStore } from '../game-engine/save-system/save.store';
 import { conditionContextOf, evaluateCondition } from '../game-engine/scene-engine/conditions';
 import { canSolve, globalEvidenceOf } from '../game-engine/scene-engine/investigation';
+import { inventoryItems, itemById } from '../game-engine/scene-engine/inventory';
 import type {
   AdventureCaseBundle,
   DialogueNode,
@@ -11,6 +12,7 @@ import type {
   Hotspot,
   InterfaceId,
   Investigation,
+  Item,
   MinigameTemplate,
   Scene,
   SceneAction,
@@ -123,6 +125,12 @@ type AdventureRuntimeState = {
   lockCharacter: (characterId: string) => void;
   /** Cambia con quién se juega, desbloqueándolo si hacía falta. */
   setActiveCharacter: (characterId: string) => void;
+  /** Suma un objeto al inventario (idempotente) y avisa cuál fue. */
+  addItem: (itemId: string) => void;
+  /** Lo saca — para un objeto que se consume al usarlo. */
+  removeItem: (itemId: string) => void;
+  /** Lo que el jugador lleva encima, ya resuelto contra las escenas. */
+  getInventory: () => Item[];
   getActiveCharacter: () => Character | null;
   /** Los jugables ahora mismo, en el orden del selector. */
   getAvailableCharacters: () => Character[];
@@ -373,6 +381,12 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
         case 'setActiveCharacter':
           get().setActiveCharacter(action.characterId);
           break;
+        case 'addItem':
+          get().addItem(action.itemId);
+          break;
+        case 'removeItem':
+          get().removeItem(action.itemId);
+          break;
         case 'transitionTo': {
           // Lo que venga después en la lista (p. ej. hacer hablar a un
           // personaje) se difiere hasta que la escena nueva termine de
@@ -525,6 +539,31 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
     }));
     persistIfRegistered(get().caseState);
   },
+
+  addItem: (itemId) => {
+    const { caseState } = get();
+    if (caseState.inventoryItemIds.includes(itemId)) return;
+
+    set({ caseState: { ...caseState, inventoryItemIds: [...caseState.inventoryItemIds, itemId] } });
+    persistIfRegistered(get().caseState);
+
+    // Igual que con las pistas, el aviso dice QUÉ se consiguió: enterarse de
+    // que "algo" entró al inventario no sirve de nada.
+    const item = itemById(get().bundle?.scenes ?? [], itemId);
+    if (item) get().showTransientMessage(item.name);
+  },
+
+  removeItem: (itemId) => {
+    set((state) => ({
+      caseState: {
+        ...state.caseState,
+        inventoryItemIds: state.caseState.inventoryItemIds.filter((id) => id !== itemId),
+      },
+    }));
+    persistIfRegistered(get().caseState);
+  },
+
+  getInventory: () => inventoryItems(get().bundle?.scenes ?? [], get().caseState.inventoryItemIds),
 
   getActiveCharacter: () => {
     const { bundle, caseState } = get();

@@ -40,6 +40,7 @@ import { useAdventureRuntimeStore } from './adventureRuntime.store';
 import { buildSceneFromScript } from '../game-engine/scene-engine/buildSceneFromScript';
 import { capabilityVocabulary, unreachableCapabilities } from '../game-engine/scene-engine/capabilities';
 import { CharacterHud } from './CharacterHud';
+import { InventoryBar } from './InventoryBar';
 import { CluePanel } from './CluePanel';
 import { DeductionPanel } from './DeductionPanel';
 import { DialogueOverlay } from './DialogueOverlay';
@@ -189,6 +190,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const getAvailableCharacters = useAdventureRuntimeStore((s) => s.getAvailableCharacters);
   const setActiveCharacter = useAdventureRuntimeStore((s) => s.setActiveCharacter);
   const investigation = getInvestigation();
+  const getInventory = useAdventureRuntimeStore((s) => s.getInventory);
   const activeCharacter = getActiveCharacter();
   const activeBackgroundId = useAdventureRuntimeStore((s) => s.activeBackgroundId);
   const advance = useAdventureRuntimeStore((s) => s.advance);
@@ -1509,6 +1511,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       act,
       kind,
       backgrounds: [],
+      items: [],
       dialogueNodes: {},
       introSkippable: true,
       cinematicTransition: 'fade',
@@ -1556,6 +1559,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       act: 1,
       kind: breakdownScene?.scriptKind === 'interactiva' ? 'standard' : 'cinematica',
       backgrounds: [],
+      items: [],
       dialogueNodes: {},
       introSkippable: true,
       cinematicTransition: 'fade',
@@ -2890,6 +2894,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
               onOpenClues={() => setCluePanelOpen(true)}
             />
           )}
+          <InventoryBar items={getInventory()} strings={strings} gameId={gameId} />
           {activeCharacter && (
             <CharacterHud
               active={activeCharacter}

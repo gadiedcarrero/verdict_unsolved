@@ -159,6 +159,7 @@ describe('buildSceneFromScript', () => {
         flags: [],
         variables: {},
         activeCharacterId: 'wraith',
+        inventoryItemIds: [],
         capabilities: ['fuerza'],
       }),
     ).toBe(true);
@@ -167,6 +168,7 @@ describe('buildSceneFromScript', () => {
         flags: [],
         variables: {},
         activeCharacterId: 'director-gray',
+        inventoryItemIds: [],
         capabilities: ['analisis'],
       }),
     ).toBe(false);

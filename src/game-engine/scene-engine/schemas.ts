@@ -74,6 +74,11 @@ export const ConditionSchema = z.object({
   characters: z.array(z.string()).default([]),
   /** El personaje activo tiene que tener TODAS estas capacidades. */
   capabilities: z.array(z.string()).default([]),
+  /** Hay que llevar TODOS estos objetos encima. Es lo que convierte "la
+   * puerta pide la tarjeta" en una condición más, en vez de un sistema
+   * aparte de usar-objeto-sobre-objeto: si tenés la tarjeta, la puerta
+   * responde. */
+  items: z.array(z.string()).default([]),
 });
 
 // Compartidas entre SceneActionSchema (todas) y MinigameOutcomeActionSchema
@@ -111,6 +116,11 @@ const OUTCOME_ACTION_VARIANTS = [
    * exactamente lo mismo y deja ver qué pasó con cada uno. */
   z.object({ type: z.literal('lockCharacter'), characterId: z.string() }),
   z.object({ type: z.literal('setActiveCharacter'), characterId: z.string() }),
+  /** Suma un objeto al inventario (idempotente). */
+  z.object({ type: z.literal('addItem'), itemId: z.string() }),
+  /** Lo saca — un objeto que se consume al usarlo. Un objeto que se queda
+   * simplemente no lleva esta acción. */
+  z.object({ type: z.literal('removeItem'), itemId: z.string() }),
   z.object({
     type: z.literal('transitionTo'),
     sceneId: z.string(),
@@ -510,6 +520,20 @@ function migrateLegacySceneFields(raw: unknown): unknown {
   return r;
 }
 
+/** Un objeto que el jugador puede llevar encima. Se define en la escena donde
+ * se consigue —como las pistas— y no en un archivo aparte del juego: así el
+ * generador de escenas puede crearlo junto con la zona que lo entrega, sin
+ * tener que tocar un segundo lugar. El inventario lo resuelve recorriendo las
+ * escenas (ver `itemById` en inventory.ts), igual que la evidencia global. */
+export const ItemSchema = z.object({
+  id: z.string(),
+  /** Clave de traducción del nombre ("Tarjeta de mantenimiento"). */
+  name: z.string(),
+  /** Ruta dentro de assets/games/<juego>/ para el icono, o null mientras no
+   * se generó: el inventario cae al nombre. */
+  icon: z.string().nullable().default(null),
+});
+
 export const ClueSchema = z.object({
   id: z.string(),
   /** Clave de traducción del enunciado ("Daniel trabajó para Acheron") — se
@@ -600,6 +624,10 @@ const SceneObjectSchema = z.object({
    * sigue el que venía. El jugador puede cambiar al que quiera de los
    * desbloqueados: esto fija con cuál empieza, no lo encierra. */
   activeCharacterId: z.string().optional(),
+  /** Objetos que se pueden conseguir EN esta escena (ver `ItemSchema`). La
+   * definición vive donde se consigue el objeto; llevarlo y usarlo funciona
+   * en cualquier otra escena. */
+  items: z.array(ItemSchema).default([]),
   /** Convierte esta escena en una escena de investigación: objetivo visible,
    * contador de pistas y botón SOLUCIONAR (ver `InvestigationSchema`).
    * Ausente = escena normal, sin HUD de investigación. */
@@ -803,6 +831,7 @@ export type MinigameTemplate = z.infer<typeof MinigameTemplateSchema>;
 export type Hotspot = z.infer<typeof HotspotSchema>;
 export type Condition = z.infer<typeof ConditionSchema>;
 export type Clue = z.infer<typeof ClueSchema>;
+export type Item = z.infer<typeof ItemSchema>;
 export type Deduction = z.infer<typeof DeductionSchema>;
 export type Investigation = z.infer<typeof InvestigationSchema>;
 export type Comparison = z.infer<typeof ComparisonSchema>;

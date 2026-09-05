@@ -5,7 +5,10 @@ import type { Character, Comparison, Condition } from './schemas';
  * subconjunto de `AdventureCaseState` a propósito: así el evaluador se puede
  * probar (y reusar desde el editor, que no tiene una partida en curso) sin
  * armar el estado entero del caso. */
-export type ConditionContext = Pick<AdventureCaseState, 'flags' | 'variables' | 'activeCharacterId'> & {
+export type ConditionContext = Pick<
+  AdventureCaseState,
+  'flags' | 'variables' | 'activeCharacterId' | 'inventoryItemIds'
+> & {
   /** Capacidades del personaje activo, ya resueltas contra el roster. Se
    * pasan resueltas y no como el roster entero para que el evaluador no
    * tenga que buscar personajes: acá solo se compara. */
@@ -18,6 +21,7 @@ export function conditionContextOf(state: AdventureCaseState, characters: readon
     flags: state.flags,
     variables: state.variables ?? {},
     activeCharacterId: state.activeCharacterId ?? null,
+    inventoryItemIds: state.inventoryItemIds ?? [],
     capabilities: active?.capabilities ?? [],
   };
 }
@@ -80,6 +84,9 @@ export function evaluateCondition(condition: Condition | undefined, context: Con
   }
   for (const capability of condition.capabilities) {
     if (!context.capabilities.includes(capability)) return false;
+  }
+  for (const itemId of condition.items) {
+    if (!context.inventoryItemIds.includes(itemId)) return false;
   }
   return true;
 }

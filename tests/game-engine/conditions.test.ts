@@ -3,7 +3,14 @@ import { ConditionSchema } from '@/game-engine/scene-engine/schemas';
 import { evaluateCondition, type ConditionContext } from '@/game-engine/scene-engine/conditions';
 
 function context(overrides: Partial<ConditionContext> = {}): ConditionContext {
-  return { flags: [], variables: {}, activeCharacterId: null, capabilities: [], ...overrides };
+  return {
+    flags: [],
+    variables: {},
+    activeCharacterId: null,
+    inventoryItemIds: [],
+    capabilities: [],
+    ...overrides,
+  };
 }
 
 /** Pasa por el schema a propósito: así los tests usan la misma forma que un

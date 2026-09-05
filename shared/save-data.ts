@@ -67,6 +67,9 @@ export type AdventureCaseState = {
    * arranca solo Gray, después Gray y Wraith, y tras la revelación los dos
    * se van y queda Adrian. */
   availableCharacterIds: string[];
+  /** Objetos que el jugador lleva encima, en el orden en que los consiguió
+   * (ver `ItemSchema`). */
+  inventoryItemIds: string[];
 };
 
 export type SaveData = {
@@ -103,6 +106,7 @@ export function createEmptyAdventureCaseState(startingSceneId: string): Adventur
     solvedSceneIds: [],
     activeCharacterId: null,
     availableCharacterIds: [],
+    inventoryItemIds: [],
   };
 }
 
@@ -127,6 +131,7 @@ export function normalizeAdventureCaseState(state: AdventureCaseState): Adventur
     solvedSceneIds: state.solvedSceneIds ?? [],
     activeCharacterId: state.activeCharacterId ?? null,
     availableCharacterIds: state.availableCharacterIds ?? [],
+    inventoryItemIds: state.inventoryItemIds ?? [],
   };
 }
 
@@ -171,7 +176,8 @@ function isAdventureCaseState(value: unknown): value is AdventureCaseState {
     (v['activeCharacterId'] === undefined ||
       v['activeCharacterId'] === null ||
       typeof v['activeCharacterId'] === 'string') &&
-    (v['availableCharacterIds'] === undefined || Array.isArray(v['availableCharacterIds']))
+    (v['availableCharacterIds'] === undefined || Array.isArray(v['availableCharacterIds'])) &&
+    (v['inventoryItemIds'] === undefined || Array.isArray(v['inventoryItemIds']))
   );
 }
 

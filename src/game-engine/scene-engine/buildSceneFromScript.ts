@@ -117,6 +117,7 @@ export function buildSceneFromScript(parsed: ParsedScene, sceneId: string, act =
         variables: {},
         characters: [],
         capabilities: hotspot.requiredCapabilities,
+        items: [],
       };
       if (hotspot.blockedText) {
         const blockedKey = `hotspot.${sceneId}.${id}.blocked`;
