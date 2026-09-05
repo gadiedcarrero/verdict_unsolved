@@ -1,14 +1,25 @@
 import type { AdventureCaseState, VariableValue } from '@shared/save-data';
-import type { Comparison, Condition } from './schemas';
+import type { Character, Comparison, Condition } from './schemas';
 
 /** Lo que una condición necesita saber del estado de la partida. Es un
  * subconjunto de `AdventureCaseState` a propósito: así el evaluador se puede
  * probar (y reusar desde el editor, que no tiene una partida en curso) sin
  * armar el estado entero del caso. */
-export type ConditionContext = Pick<AdventureCaseState, 'flags' | 'variables'>;
+export type ConditionContext = Pick<AdventureCaseState, 'flags' | 'variables' | 'activeCharacterId'> & {
+  /** Capacidades del personaje activo, ya resueltas contra el roster. Se
+   * pasan resueltas y no como el roster entero para que el evaluador no
+   * tenga que buscar personajes: acá solo se compara. */
+  capabilities: string[];
+};
 
-export function conditionContextOf(state: AdventureCaseState): ConditionContext {
-  return { flags: state.flags, variables: state.variables ?? {} };
+export function conditionContextOf(state: AdventureCaseState, characters: readonly Character[] = []): ConditionContext {
+  const active = characters.find((character) => character.id === state.activeCharacterId);
+  return {
+    flags: state.flags,
+    variables: state.variables ?? {},
+    activeCharacterId: state.activeCharacterId ?? null,
+    capabilities: active?.capabilities ?? [],
+  };
 }
 
 function compare(actual: VariableValue | undefined, comparison: Comparison): boolean {
@@ -60,6 +71,15 @@ export function evaluateCondition(condition: Condition | undefined, context: Con
   }
   for (const [name, comparison] of Object.entries(condition.variables)) {
     if (!compare(context.variables[name], comparison)) return false;
+  }
+  // Sin personaje activo no se cumple ninguna condición que pida uno: al
+  // principio de la partida todavía no hay nadie asignado, y una zona que
+  // exige fuerza no debería responder "sí" por no haber a quién preguntarle.
+  if (condition.characters.length > 0) {
+    if (!context.activeCharacterId || !condition.characters.includes(context.activeCharacterId)) return false;
+  }
+  for (const capability of condition.capabilities) {
+    if (!context.capabilities.includes(capability)) return false;
   }
   return true;
 }

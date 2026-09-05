@@ -58,6 +58,15 @@ export type AdventureCaseState = {
   /** Escenas cuya investigación ya se resolvió, por id — para no volver a
    * ofrecer SOLUCIONAR al reentrar. */
   solvedSceneIds: string[];
+  /** Con quién se está jugando ahora, o null antes de que el guion asigne
+   * alguno. Decide qué zonas responden (ver `Condition.characters` y
+   * `Condition.capabilities`). */
+  activeCharacterId: string | null;
+  /** Personajes que el jugador puede usar, en el orden en que se
+   * desbloquearon — es el orden del selector. Cambia durante la partida:
+   * arranca solo Gray, después Gray y Wraith, y tras la revelación los dos
+   * se van y queda Adrian. */
+  availableCharacterIds: string[];
 };
 
 export type SaveData = {
@@ -92,6 +101,8 @@ export function createEmptyAdventureCaseState(startingSceneId: string): Adventur
     discoveredClueIds: [],
     objective: null,
     solvedSceneIds: [],
+    activeCharacterId: null,
+    availableCharacterIds: [],
   };
 }
 
@@ -114,6 +125,8 @@ export function normalizeAdventureCaseState(state: AdventureCaseState): Adventur
     discoveredClueIds: state.discoveredClueIds ?? [],
     objective: state.objective ?? null,
     solvedSceneIds: state.solvedSceneIds ?? [],
+    activeCharacterId: state.activeCharacterId ?? null,
+    availableCharacterIds: state.availableCharacterIds ?? [],
   };
 }
 
@@ -154,7 +167,11 @@ function isAdventureCaseState(value: unknown): value is AdventureCaseState {
     (v['variables'] === undefined || isVariableRecord(v['variables'])) &&
     (v['discoveredClueIds'] === undefined || Array.isArray(v['discoveredClueIds'])) &&
     (v['objective'] === undefined || v['objective'] === null || typeof v['objective'] === 'string') &&
-    (v['solvedSceneIds'] === undefined || Array.isArray(v['solvedSceneIds']))
+    (v['solvedSceneIds'] === undefined || Array.isArray(v['solvedSceneIds'])) &&
+    (v['activeCharacterId'] === undefined ||
+      v['activeCharacterId'] === null ||
+      typeof v['activeCharacterId'] === 'string') &&
+    (v['availableCharacterIds'] === undefined || Array.isArray(v['availableCharacterIds']))
   );
 }
 

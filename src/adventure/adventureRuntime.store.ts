@@ -6,6 +6,7 @@ import { canSolve, globalEvidenceOf } from '../game-engine/scene-engine/investig
 import type {
   AdventureCaseBundle,
   DialogueNode,
+  Character,
   Clue,
   Hotspot,
   InterfaceId,
@@ -116,6 +117,15 @@ type AdventureRuntimeState = {
   /** Suma una pista al caso (idempotente) y avisa en pantalla cuál fue. */
   discoverClue: (clueId: string) => void;
   setObjective: (objective: string) => void;
+  /** Suma un personaje a los jugables. El primero pasa a ser el activo. */
+  unlockCharacter: (characterId: string) => void;
+  /** Lo saca. Si era el activo, pasa a serlo el primero que quede. */
+  lockCharacter: (characterId: string) => void;
+  /** Cambia con quién se juega, desbloqueándolo si hacía falta. */
+  setActiveCharacter: (characterId: string) => void;
+  getActiveCharacter: () => Character | null;
+  /** Los jugables ahora mismo, en el orden del selector. */
+  getAvailableCharacters: () => Character[];
   /** La investigación de la escena actual, o null si no es una escena de
    * investigación. */
   getInvestigation: () => Investigation | null;
@@ -224,7 +234,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
     // La zona se ve, pero todavía no se puede usar ("no puedo mover esto
     // desde la silla"). Se contesta y no corre nada — es distinto de
     // `visibleWhen`, donde la zona directamente no está.
-    if (!evaluateCondition(hotspot.enabledWhen, conditionContextOf(state.caseState))) {
+    if (!evaluateCondition(hotspot.enabledWhen, conditionContextOf(state.caseState, state.bundle?.characters ?? []))) {
       if (hotspot.disabledMessage) get().showTransientMessage(hotspot.disabledMessage);
       return;
     }
@@ -354,6 +364,15 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
         case 'setObjective':
           get().setObjective(action.objective);
           break;
+        case 'unlockCharacter':
+          get().unlockCharacter(action.characterId);
+          break;
+        case 'lockCharacter':
+          get().lockCharacter(action.characterId);
+          break;
+        case 'setActiveCharacter':
+          get().setActiveCharacter(action.characterId);
+          break;
         case 'transitionTo': {
           // Lo que venga después en la lista (p. ej. hacer hablar a un
           // personaje) se difiere hasta que la escena nueva termine de
@@ -437,7 +456,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   },
 
   isHotspotVisible: (hotspot) =>
-    evaluateCondition(hotspot.visibleWhen, conditionContextOf(get().caseState)),
+    evaluateCondition(hotspot.visibleWhen, conditionContextOf(get().caseState, get().bundle?.characters ?? [])),
 
   discoverClue: (clueId) => {
     const { caseState } = get();
@@ -457,6 +476,66 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   setObjective: (objective) => {
     set((state) => ({ caseState: { ...state.caseState, objective } }));
     persistIfRegistered(get().caseState);
+  },
+
+  unlockCharacter: (characterId) => {
+    set((state) => {
+      if (state.caseState.availableCharacterIds.includes(characterId)) return state;
+      const availableCharacterIds = [...state.caseState.availableCharacterIds, characterId];
+      return {
+        caseState: {
+          ...state.caseState,
+          availableCharacterIds,
+          // El primero que se desbloquea pasa a ser el activo: si no, el
+          // juego arrancaría con un personaje disponible y ninguno elegido, y
+          // toda condición que pida capacidades fallaría.
+          activeCharacterId: state.caseState.activeCharacterId ?? characterId,
+        },
+      };
+    });
+    persistIfRegistered(get().caseState);
+  },
+
+  lockCharacter: (characterId) => {
+    set((state) => {
+      const availableCharacterIds = state.caseState.availableCharacterIds.filter((id) => id !== characterId);
+      // Si se bloquea al que estaba activo (el giro Gray/Wraith → Adrian),
+      // el activo pasa al primero que quede, o a null si no queda ninguno —
+      // nunca a un personaje que el jugador ya no tiene.
+      const activeCharacterId =
+        state.caseState.activeCharacterId === characterId
+          ? (availableCharacterIds[0] ?? null)
+          : state.caseState.activeCharacterId;
+      return { caseState: { ...state.caseState, availableCharacterIds, activeCharacterId } };
+    });
+    persistIfRegistered(get().caseState);
+  },
+
+  setActiveCharacter: (characterId) => {
+    set((state) => ({
+      caseState: {
+        ...state.caseState,
+        activeCharacterId: characterId,
+        // Jugar una escena con alguien implica tenerlo: el guion declara
+        // `### PERSONAJE: WRAITH` sin acordarse de desbloquearlo antes.
+        availableCharacterIds: state.caseState.availableCharacterIds.includes(characterId)
+          ? state.caseState.availableCharacterIds
+          : [...state.caseState.availableCharacterIds, characterId],
+      },
+    }));
+    persistIfRegistered(get().caseState);
+  },
+
+  getActiveCharacter: () => {
+    const { bundle, caseState } = get();
+    return bundle?.characters.find((character) => character.id === caseState.activeCharacterId) ?? null;
+  },
+
+  getAvailableCharacters: () => {
+    const { bundle, caseState } = get();
+    return caseState.availableCharacterIds
+      .map((id) => bundle?.characters.find((character) => character.id === id))
+      .filter((character): character is Character => character !== undefined);
   },
 
   getInvestigation: () => get().getActiveScene()?.investigation ?? null,
@@ -545,6 +624,13 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
           // investigación lo apaga, para que no quede colgado el de la
           // anterior en el HUD.
           objective: scene?.investigation?.objective ?? null,
+          // Lo mismo con el personaje, salvo que acá "ausente" significa
+          // seguir con el que venía: cambiar de cuarto no cambia quién sos.
+          activeCharacterId: scene?.activeCharacterId ?? state.caseState.activeCharacterId,
+          availableCharacterIds:
+            scene?.activeCharacterId && !state.caseState.availableCharacterIds.includes(scene.activeCharacterId)
+              ? [...state.caseState.availableCharacterIds, scene.activeCharacterId]
+              : state.caseState.availableCharacterIds,
         },
       }));
       persistIfRegistered(get().caseState);

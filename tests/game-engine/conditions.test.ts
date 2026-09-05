@@ -3,7 +3,7 @@ import { ConditionSchema } from '@/game-engine/scene-engine/schemas';
 import { evaluateCondition, type ConditionContext } from '@/game-engine/scene-engine/conditions';
 
 function context(overrides: Partial<ConditionContext> = {}): ConditionContext {
-  return { flags: [], variables: {}, ...overrides };
+  return { flags: [], variables: {}, activeCharacterId: null, capabilities: [], ...overrides };
 }
 
 /** Pasa por el schema a propósito: así los tests usan la misma forma que un
@@ -86,5 +86,48 @@ describe('evaluateCondition', () => {
     expect(evaluateCondition(c, context({ flags: ['entro'], variables: { PISTAS: 2 } }))).toBe(
       false,
     );
+  });
+});
+
+// El mecanismo Gray/Wraith del guion: la misma zona responde distinto según
+// con quién se esté jugando. Es lo que el sistema de condiciones existía para
+// poder expresar sin tocar el motor.
+describe('condiciones por personaje', () => {
+  it('exige que el personaje activo sea uno de los nombrados', () => {
+    const c = condition({ characters: ['wraith'] });
+
+    expect(evaluateCondition(c, context({ activeCharacterId: 'wraith' }))).toBe(true);
+    expect(evaluateCondition(c, context({ activeCharacterId: 'director-gray' }))).toBe(false);
+  });
+
+  it('exige todas las capacidades pedidas', () => {
+    const c = condition({ capabilities: ['fuerza', 'movilidad'] });
+
+    expect(evaluateCondition(c, context({ capabilities: ['fuerza'] }))).toBe(false);
+    expect(evaluateCondition(c, context({ capabilities: ['fuerza', 'movilidad', 'hackeo'] }))).toBe(
+      true,
+    );
+  });
+
+  // Al empezar la partida todavía no hay nadie asignado: una zona que pide
+  // fuerza no puede responder que sí por no haber a quién preguntarle.
+  it('no se cumple sin personaje activo', () => {
+    expect(evaluateCondition(condition({ characters: ['wraith'] }), context())).toBe(false);
+    expect(evaluateCondition(condition({ capabilities: ['fuerza'] }), context())).toBe(false);
+  });
+
+  it('la caja pesada: Gray no puede, Wraith sí', () => {
+    const caja = condition({ capabilities: ['fuerza'] });
+    const gray = context({
+      activeCharacterId: 'director-gray',
+      capabilities: ['analisis', 'hackeo', 'deduccion'],
+    });
+    const wraith = context({
+      activeCharacterId: 'wraith',
+      capabilities: ['fuerza', 'movilidad', 'infiltracion'],
+    });
+
+    expect(evaluateCondition(caja, gray)).toBe(false);
+    expect(evaluateCondition(caja, wraith)).toBe(true);
   });
 });

@@ -37,6 +37,7 @@ import type {
 } from '../game-engine/scene-engine/schemas';
 import { useSaveStore } from '../game-engine/save-system/save.store';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
+import { CharacterHud } from './CharacterHud';
 import { CluePanel } from './CluePanel';
 import { DeductionPanel } from './DeductionPanel';
 import { DialogueOverlay } from './DialogueOverlay';
@@ -182,7 +183,11 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const cluePanelOpen = useAdventureRuntimeStore((s) => s.cluePanelOpen);
   const setCluePanelOpen = useAdventureRuntimeStore((s) => s.setCluePanelOpen);
   const getGlobalEvidence = useAdventureRuntimeStore((s) => s.getGlobalEvidence);
+  const getActiveCharacter = useAdventureRuntimeStore((s) => s.getActiveCharacter);
+  const getAvailableCharacters = useAdventureRuntimeStore((s) => s.getAvailableCharacters);
+  const setActiveCharacter = useAdventureRuntimeStore((s) => s.setActiveCharacter);
   const investigation = getInvestigation();
+  const activeCharacter = getActiveCharacter();
   const activeBackgroundId = useAdventureRuntimeStore((s) => s.activeBackgroundId);
   const advance = useAdventureRuntimeStore((s) => s.advance);
   const selectChoice = useAdventureRuntimeStore((s) => s.selectChoice);
@@ -1633,7 +1638,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       createdNameKey = `character.${id}.name`;
       return [
         ...base,
-        { id, name: createdNameKey, portrait: null, description: '', expressions: {}, variants: {}, voices: {}, color },
+        { id, name: createdNameKey, portrait: null, description: '', expressions: {}, variants: {}, voices: {}, capabilities: [], color },
       ];
     });
     setPendingCharacterStrings((prev) => ({ ...prev, [createdNameKey]: nameText }));
@@ -1982,6 +1987,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           expressions: {},
           variants: {},
           voices: {},
+          capabilities: [],
           color,
         },
       ]);
@@ -2026,6 +2032,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
             expressions: {},
             variants: {},
             voices: {},
+            capabilities: [],
             color: bc.suggestedColor,
           });
           takenIds.add(bc.id);
@@ -2047,6 +2054,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
             expressions: {},
             variants: {},
             voices: {},
+            capabilities: [],
             color: bc.suggestedColor,
           });
           takenIds.add(look.key);
@@ -2835,6 +2843,15 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
               canSolve={canSolveInvestigation()}
               onSolve={solveInvestigation}
               onOpenClues={() => setCluePanelOpen(true)}
+            />
+          )}
+          {activeCharacter && (
+            <CharacterHud
+              active={activeCharacter}
+              available={getAvailableCharacters()}
+              strings={strings}
+              gameId={gameId}
+              onSelect={setActiveCharacter}
             />
           )}
           {activeInterfaceId ? (

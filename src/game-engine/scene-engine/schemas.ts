@@ -66,6 +66,14 @@ export const ConditionSchema = z.object({
   /** Variable → valor esperado. Una variable que nunca se escribió no cumple
    * ninguna comparación salvo `ne`. */
   variables: z.record(z.string(), ComparisonSchema).default({}),
+  /** El personaje activo tiene que ser uno de estos. Vacío = da igual quién
+   * sea. Preferí `capabilities` cuando lo que importa es lo que el personaje
+   * PUEDE hacer y no quién es: una puerta pesada la abre cualquiera con
+   * fuerza, y escribirla como "solo Wraith" hay que reescribirla el día que
+   * el guion suma a alguien más que también pueda. */
+  characters: z.array(z.string()).default([]),
+  /** El personaje activo tiene que tener TODAS estas capacidades. */
+  capabilities: z.array(z.string()).default([]),
 });
 
 // Compartidas entre SceneActionSchema (todas) y MinigameOutcomeActionSchema
@@ -95,6 +103,14 @@ const OUTCOME_ACTION_VARIANTS = [
   z.object({ type: z.literal('discoverClue'), clueId: z.string() }),
   /** Cambia el objetivo visible sin cambiar de escena. */
   z.object({ type: z.literal('setObjective'), objective: z.string() }),
+  /** Suma un personaje a los que el jugador puede usar (idempotente). */
+  z.object({ type: z.literal('unlockCharacter'), characterId: z.string() }),
+  /** Lo saca. No hay `replaceCharacter` propio: el giro del guion —Gray y
+   * Wraith desaparecen y aparece Adrian con las capacidades de los dos— se
+   * escribe como dos `lockCharacter` y un `unlockCharacter`, que dice
+   * exactamente lo mismo y deja ver qué pasó con cada uno. */
+  z.object({ type: z.literal('lockCharacter'), characterId: z.string() }),
+  z.object({ type: z.literal('setActiveCharacter'), characterId: z.string() }),
   z.object({
     type: z.literal('transitionTo'),
     sceneId: z.string(),
@@ -318,6 +334,15 @@ export const CharacterSchema = z.object({
    * (ver memoria project_dialogue_audio_elevenlabs). Un mismo personaje
    * puede tener una voz distinta por idioma, no una sola voz "traducida". */
   voices: z.record(z.string(), z.string()).default({}),
+  /** Lo que este personaje puede hacer, como claves libres ("fuerza",
+   * "hackeo", "infiltracion"). Es un conjunto, no un mapa de niveles: una
+   * capacidad se tiene o no se tiene, porque así es como se consulta desde
+   * una condición. Los matices del guion ("movilidad limitada") son texto
+   * descriptivo del personaje, no un tercer valor — nunca hubo una zona que
+   * pidiera "movilidad a medias".
+   *
+   * Solo importa en personajes jugables; el resto del roster lo deja vacío. */
+  capabilities: z.array(z.string()).default([]),
   /** Color del nombre y del texto de diálogo, en hex (p. ej. "#e0a636"). */
   color: z.string(),
 });
@@ -569,6 +594,12 @@ const SceneObjectSchema = z.object({
   dialogueNodes: z.record(z.string(), DialogueNodeSchema).default({}),
   /** Acciones que corren automáticamente al entrar a la escena (p. ej. abrir un diálogo). */
   onEnter: z.array(SceneActionSchema).optional(),
+  /** Con quién se juega esta escena (`### PERSONAJE` del guion). Se aplica al
+   * entrar, y además lo desbloquea si hacía falta — una escena que se juega
+   * con Wraith no puede depender de que el jugador ya lo tuviera. Ausente =
+   * sigue el que venía. El jugador puede cambiar al que quiera de los
+   * desbloqueados: esto fija con cuál empieza, no lo encierra. */
+  activeCharacterId: z.string().optional(),
   /** Convierte esta escena en una escena de investigación: objetivo visible,
    * contador de pistas y botón SOLUCIONAR (ver `InvestigationSchema`).
    * Ausente = escena normal, sin HUD de investigación. */
