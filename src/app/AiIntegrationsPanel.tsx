@@ -61,10 +61,12 @@ export function AiIntegrationsPanel({ onClose }: { onClose: () => void }): JSX.E
     setSaveMessage(null);
     try {
       await window.api.writeAiIntegrations(config);
-      setSaveMessage('Guardado.');
+      // Guardar cierra: "Guardado." y el panel todavía abierto dejaba la duda
+      // de si faltaba algo más. Un error sí lo deja abierto — ahí el mensaje
+      // es lo único que dice qué pasó, y cerrar lo escondería.
+      onClose();
     } catch (error) {
       setSaveMessage(`Error: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
       setSaving(false);
     }
   }

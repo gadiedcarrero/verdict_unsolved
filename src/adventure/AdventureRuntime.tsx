@@ -47,6 +47,7 @@ import { DialogueOverlay } from './DialogueOverlay';
 import { InvestigationHud } from './InvestigationHud';
 import { InterfaceHost } from './interfaces/InterfaceHost';
 import { CinematicScene } from './CinematicScene';
+import { AiIntegrationsPanel } from '../app/AiIntegrationsPanel';
 import { ComfyUIStatusIndicator } from '../components/ComfyUIStatusIndicator';
 import { IntroScene } from './IntroScene';
 import { MENU_BUTTON_ACTION_CONTINUE, MENU_BUTTON_ACTION_QUIT } from './menuButtonActions';
@@ -285,6 +286,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const [generatingBackground, setGeneratingBackground] = useState(false);
   const [backgroundGenError, setBackgroundGenError] = useState<string | null>(null);
   const [creatingScene, setCreatingScene] = useState(false);
+  const [showIntegrations, setShowIntegrations] = useState(false);
 
   const [editedCharacters, setEditedCharacters] = useState<Character[] | null>(null);
   const [pendingCharacterStrings, setPendingCharacterStrings] = useState<Record<string, string>>({});
@@ -2398,6 +2400,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         </button>
       </div>
 
+      {showIntegrations && <AiIntegrationsPanel onClose={() => setShowIntegrations(false)} />}
+
       {editMode ? (
         // Modo edición: layout de dos paneles — herramientas a la izquierda,
         // la escena a la derecha, nada superpuesto sobre el juego. Al salir,
@@ -2453,7 +2457,18 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 Guion IA
               </button>
             </div>
-            <div className="flex shrink-0 justify-end px-2 pt-1.5">
+            {/* Junto al estado de ComfyUI porque son la misma preocupación:
+                con qué proveedor se está generando. Estaba solo en el hub de
+                proyectos, y cambiar de proveedor a mitad de un juego obligaba
+                a salir del editor y volver a entrar. */}
+            <div className="flex shrink-0 items-center justify-between gap-2 px-2 pt-1.5">
+              <button
+                type="button"
+                onClick={() => setShowIntegrations(true)}
+                className="rounded border border-graphite-700 px-2 py-0.5 text-[9px] tracking-widest text-graphite-500 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
+              >
+                ⚙ Integraciones IA
+              </button>
               <ComfyUIStatusIndicator />
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
