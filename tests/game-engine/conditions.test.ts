@@ -54,8 +54,12 @@ describe('evaluateCondition', () => {
   // empezar la partida, no un error: la condición simplemente no se cumple.
   it('no cumple ninguna comparación sobre una variable que nunca se escribió, salvo "distinto de"', () => {
     expect(evaluateCondition(condition({ variables: { X: true } }), context())).toBe(false);
-    expect(evaluateCondition(condition({ variables: { X: { op: 'gt', value: 0 } } }), context())).toBe(false);
-    expect(evaluateCondition(condition({ variables: { X: { op: 'ne', value: true } } }), context())).toBe(true);
+    expect(
+      evaluateCondition(condition({ variables: { X: { op: 'gt', value: 0 } } }), context()),
+    ).toBe(false);
+    expect(
+      evaluateCondition(condition({ variables: { X: { op: 'ne', value: true } } }), context()),
+    ).toBe(true);
   });
 
   // Sin esto, JavaScript compararía strings ('10' < '9' es true) y devolvería
@@ -73,8 +77,14 @@ describe('evaluateCondition', () => {
       variables: { PISTAS: { op: 'gte', value: 3 } },
     });
 
-    expect(evaluateCondition(c, context({ flags: ['entro'], variables: { PISTAS: 3 } }))).toBe(true);
-    expect(evaluateCondition(c, context({ flags: ['entro', 'alarma'], variables: { PISTAS: 3 } }))).toBe(false);
-    expect(evaluateCondition(c, context({ flags: ['entro'], variables: { PISTAS: 2 } }))).toBe(false);
+    expect(evaluateCondition(c, context({ flags: ['entro'], variables: { PISTAS: 3 } }))).toBe(
+      true,
+    );
+    expect(
+      evaluateCondition(c, context({ flags: ['entro', 'alarma'], variables: { PISTAS: 3 } })),
+    ).toBe(false);
+    expect(evaluateCondition(c, context({ flags: ['entro'], variables: { PISTAS: 2 } }))).toBe(
+      false,
+    );
   });
 });

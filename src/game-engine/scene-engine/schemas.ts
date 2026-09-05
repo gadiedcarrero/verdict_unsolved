@@ -490,6 +490,12 @@ export const ClueSchema = z.object({
   /** Clave de traducción del enunciado ("Daniel trabajó para Acheron") — se
    * muestra al descubrirla y después en el panel de pistas. */
   text: z.string(),
+  /** Evidencia que sigue importando después de cerrar esta investigación
+   * ("Ellos saben cómo decide la gente", "Adrian Cross podría estar vivo").
+   * El panel la muestra aparte y para siempre, no solo mientras se está en la
+   * escena que la dio. Sigue contando como pista normal para SOLUCIONAR acá:
+   * lo que cambia es cuánto dura, no qué hace. */
+  global: z.boolean().default(false),
 });
 
 export const DeductionAnswerSchema = z.object({

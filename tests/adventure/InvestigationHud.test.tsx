@@ -21,6 +21,7 @@ const INVESTIGATION = InvestigationSchema.parse({
 
 function renderHud(overrides: Partial<Parameters<typeof InvestigationHud>[0]> = {}) {
   const onSolve = vi.fn();
+  const onOpenClues = vi.fn();
   render(
     <InvestigationHud
       investigation={INVESTIGATION}
@@ -29,10 +30,11 @@ function renderHud(overrides: Partial<Parameters<typeof InvestigationHud>[0]> = 
       solved={false}
       canSolve={false}
       onSolve={onSolve}
+      onOpenClues={onOpenClues}
       {...overrides}
     />,
   );
-  return { onSolve };
+  return { onSolve, onOpenClues };
 }
 
 describe('InvestigationHud', () => {
@@ -47,13 +49,21 @@ describe('InvestigationHud', () => {
   it('cuenta solo las pistas de esta investigación', () => {
     renderHud({ discoveredClueIds: ['empleo', 'pagos', 'de-otra-escena'] });
 
-    expect(screen.getByText(/Pistas\s*2\s*\/\s*3/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Pistas\s*2\s*\/\s*3/ })).toBeInTheDocument();
+  });
+
+  // El contador es el acceso al panel: no hay un segundo botón "ver pistas".
+  it('abre el panel de pistas desde el contador', () => {
+    const { onOpenClues } = renderHud({ discoveredClueIds: ['empleo'] });
+
+    fireEvent.click(screen.getByRole('button', { name: /Pistas/ }));
+    expect(onOpenClues).toHaveBeenCalledOnce();
   });
 
   it('deja SOLUCIONAR visible pero deshabilitado mientras faltan pistas', () => {
     const { onSolve } = renderHud({ canSolve: false });
 
-    const button = screen.getByRole('button');
+    const button = screen.getByRole('button', { name: /Solucionar/ });
     expect(button).toBeDisabled();
 
     fireEvent.click(button);
@@ -66,7 +76,7 @@ describe('InvestigationHud', () => {
       canSolve: true,
     });
 
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: /Solucionar/ }));
     expect(onSolve).toHaveBeenCalledOnce();
   });
 
@@ -75,7 +85,7 @@ describe('InvestigationHud', () => {
   it('esconde SOLUCIONAR cuando la investigación ya se resolvió', () => {
     renderHud({ solved: true, canSolve: false });
 
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Solucionar/ })).not.toBeInTheDocument();
     expect(
       screen.getByText('Comprueba si Lena está diciendo la verdad sobre Daniel.'),
     ).toBeInTheDocument();

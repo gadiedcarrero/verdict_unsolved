@@ -2,10 +2,11 @@ import { create } from 'zustand';
 import { createEmptyAdventureCaseState, type AdventureCaseState, type VariableValue } from '@shared/save-data';
 import { useSaveStore } from '../game-engine/save-system/save.store';
 import { conditionContextOf, evaluateCondition } from '../game-engine/scene-engine/conditions';
-import { canSolve } from '../game-engine/scene-engine/investigation';
+import { canSolve, globalEvidenceOf } from '../game-engine/scene-engine/investigation';
 import type {
   AdventureCaseBundle,
   DialogueNode,
+  Clue,
   Hotspot,
   InterfaceId,
   Investigation,
@@ -62,6 +63,8 @@ type AdventureRuntimeState = {
   transientMessageKey: string | null;
   /** True mientras está abierta la pregunta de deducción de SOLUCIONAR. */
   deductionOpen: boolean;
+  /** True mientras está abierto el panel de pistas del caso. */
+  cluePanelOpen: boolean;
   /** Id del fondo activo de la escena actual, o null = usar el default
    * (`scene.backgrounds[0]`) — ver acción `toggleBackground`. Se resetea a
    * null en cada cambio de escena, así el fondo alternado de una escena no
@@ -124,6 +127,9 @@ type AdventureRuntimeState = {
   /** Elegir una conclusión. La incorrecta avisa y deja seguir intentando. */
   answerDeduction: (answerId: string) => void;
   closeDeduction: () => void;
+  setCluePanelOpen: (open: boolean) => void;
+  /** Toda la evidencia global ya descubierta, de cualquier escena del caso. */
+  getGlobalEvidence: () => Clue[];
   /** Marca la investigación de la escena como resuelta y corre su `onSolved`. */
   completeInvestigation: () => void;
   /** Si la zona se le muestra al jugador con el estado actual de la partida
@@ -165,6 +171,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   combiningHotspotId: null,
   transientMessageKey: null,
   deductionOpen: false,
+  cluePanelOpen: false,
   activeBackgroundId: null,
   activeMinigame: null,
 
@@ -182,6 +189,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       combiningHotspotId: null,
       transientMessageKey: null,
       deductionOpen: false,
+      cluePanelOpen: false,
       activeBackgroundId: null,
       activeMinigame: null,
     });
@@ -492,6 +500,12 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
     set({ deductionOpen: false });
   },
 
+  setCluePanelOpen: (open) => {
+    set({ cluePanelOpen: open });
+  },
+
+  getGlobalEvidence: () => globalEvidenceOf(get().bundle?.scenes ?? [], get().caseState.discoveredClueIds),
+
   completeInvestigation: () => {
     const investigation = get().getInvestigation();
     if (!investigation) return;
@@ -514,6 +528,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       combiningHotspotId: null,
       transientMessageKey: null,
       deductionOpen: false,
+      cluePanelOpen: false,
       activeMinigame: null,
       transitioning: true,
     });
@@ -554,6 +569,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       combiningHotspotId: null,
       transientMessageKey: null,
       deductionOpen: false,
+      cluePanelOpen: false,
       activeBackgroundId: null,
       activeMinigame: null,
       transitioning: false,
@@ -571,6 +587,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       combiningHotspotId: null,
       transientMessageKey: null,
       deductionOpen: false,
+      cluePanelOpen: false,
       activeBackgroundId: null,
       activeMinigame: null,
       caseState: createEmptyAdventureCaseState(''),

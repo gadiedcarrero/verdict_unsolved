@@ -37,6 +37,7 @@ import type {
 } from '../game-engine/scene-engine/schemas';
 import { useSaveStore } from '../game-engine/save-system/save.store';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
+import { CluePanel } from './CluePanel';
 import { DeductionPanel } from './DeductionPanel';
 import { DialogueOverlay } from './DialogueOverlay';
 import { InvestigationHud } from './InvestigationHud';
@@ -178,6 +179,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const solveInvestigation = useAdventureRuntimeStore((s) => s.solveInvestigation);
   const answerDeduction = useAdventureRuntimeStore((s) => s.answerDeduction);
   const closeDeduction = useAdventureRuntimeStore((s) => s.closeDeduction);
+  const cluePanelOpen = useAdventureRuntimeStore((s) => s.cluePanelOpen);
+  const setCluePanelOpen = useAdventureRuntimeStore((s) => s.setCluePanelOpen);
+  const getGlobalEvidence = useAdventureRuntimeStore((s) => s.getGlobalEvidence);
   const investigation = getInvestigation();
   const activeBackgroundId = useAdventureRuntimeStore((s) => s.activeBackgroundId);
   const advance = useAdventureRuntimeStore((s) => s.advance);
@@ -2830,6 +2834,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
               solved={caseState.solvedSceneIds.includes(displayScene.id)}
               canSolve={canSolveInvestigation()}
               onSolve={solveInvestigation}
+              onOpenClues={() => setCluePanelOpen(true)}
             />
           )}
           {activeInterfaceId ? (
@@ -2845,6 +2850,15 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 onChoose={selectChoice}
               />
             )
+          )}
+          {cluePanelOpen && investigation && (
+            <CluePanel
+              investigation={investigation}
+              discoveredClueIds={caseState.discoveredClueIds}
+              globalEvidence={getGlobalEvidence()}
+              strings={strings}
+              onClose={() => setCluePanelOpen(false)}
+            />
           )}
           {deductionOpen && investigation?.deduction && (
             <DeductionPanel

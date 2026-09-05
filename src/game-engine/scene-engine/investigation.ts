@@ -1,4 +1,4 @@
-import type { Clue, Investigation } from './schemas';
+import type { Clue, Investigation, Scene } from './schemas';
 
 /**
  * Reglas del loop de investigación, sin estado ni React: qué pistas de esta
@@ -21,6 +21,29 @@ export function cluesRequired(investigation: Investigation): number {
  * lista es de todo el caso, y contiene pistas de otras escenas. */
 export function discoveredCluesOf(investigation: Investigation, discoveredClueIds: readonly string[]): Clue[] {
   return investigation.clues.filter((clue) => discoveredClueIds.includes(clue.id));
+}
+
+/**
+ * Toda la evidencia global ya descubierta, de cualquier escena del caso.
+ *
+ * Se junta recorriendo las escenas en vez de guardarse aparte al descubrirla:
+ * el texto de una pista es contenido de la escena que la da, así que
+ * duplicarlo en el save lo dejaría desactualizado en cuanto se corrija una
+ * redacción — y obligaría a migrar partidas para arreglar una falta de
+ * ortografía. Lo que se guarda es el id; el texto se resuelve al mostrarlo.
+ */
+export function globalEvidenceOf(scenes: readonly Scene[], discoveredClueIds: readonly string[]): Clue[] {
+  const seen = new Set<string>();
+  const evidence: Clue[] = [];
+
+  for (const scene of scenes) {
+    for (const clue of scene.investigation?.clues ?? []) {
+      if (!clue.global || seen.has(clue.id) || !discoveredClueIds.includes(clue.id)) continue;
+      seen.add(clue.id);
+      evidence.push(clue);
+    }
+  }
+  return evidence;
 }
 
 export function canSolve(investigation: Investigation, discoveredClueIds: readonly string[]): boolean {

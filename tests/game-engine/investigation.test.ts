@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { InvestigationSchema } from '@/game-engine/scene-engine/schemas';
-import { canSolve, cluesRequired, discoveredCluesOf } from '@/game-engine/scene-engine/investigation';
+import {
+  canSolve,
+  cluesRequired,
+  discoveredCluesOf,
+  globalEvidenceOf,
+} from '@/game-engine/scene-engine/investigation';
+import type { Scene } from '@/game-engine/scene-engine/schemas';
 
 /** Pasa por el schema para que los tests usen la misma forma que un archivo de
  * escena en disco, con los defaults ya aplicados. */
@@ -29,7 +35,10 @@ describe('discoveredCluesOf', () => {
   // de cruzarla contra las de la escena, una escena se daría por resuelta con
   // pistas encontradas en otra.
   it('solo cuenta las pistas de esta investigación', () => {
-    const found = discoveredCluesOf(investigation({ clues: TRES_PISTAS }), ['empleo', 'de-otra-escena']);
+    const found = discoveredCluesOf(investigation({ clues: TRES_PISTAS }), [
+      'empleo',
+      'de-otra-escena',
+    ]);
 
     expect(found.map((c) => c.id)).toEqual(['empleo']);
   });
@@ -63,5 +72,38 @@ describe('canSolve', () => {
     const inv = investigation({ clues: TRES_PISTAS });
 
     expect(canSolve(inv, ['otra-1', 'otra-2', 'otra-3'])).toBe(false);
+  });
+});
+
+describe('globalEvidenceOf', () => {
+  const scenes = [
+    {
+      id: 'escena-4',
+      investigation: {
+        clues: [
+          { id: 'empleo', text: 'clue.empleo', global: false },
+          { id: 'deciden', text: 'clue.deciden', global: true },
+        ],
+      },
+    },
+    {
+      id: 'escena-6',
+      investigation: { clues: [{ id: 'adrian-vivo', text: 'clue.adrian', global: true }] },
+    },
+    { id: 'escena-7' },
+  ] as unknown as Scene[];
+
+  it('junta la evidencia global descubierta de todas las escenas', () => {
+    const evidence = globalEvidenceOf(scenes, ['empleo', 'deciden', 'adrian-vivo']);
+
+    expect(evidence.map((c) => c.id)).toEqual(['deciden', 'adrian-vivo']);
+  });
+
+  it('deja afuera la evidencia global que todavía no se descubrió', () => {
+    expect(globalEvidenceOf(scenes, ['deciden']).map((c) => c.id)).toEqual(['deciden']);
+  });
+
+  it('ignora escenas sin investigación', () => {
+    expect(globalEvidenceOf(scenes, [])).toEqual([]);
   });
 });

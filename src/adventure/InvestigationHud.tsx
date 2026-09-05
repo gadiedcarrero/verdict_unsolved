@@ -16,6 +16,7 @@ export function InvestigationHud({
   solved,
   canSolve,
   onSolve,
+  onOpenClues,
 }: {
   investigation: Investigation;
   discoveredClueIds: string[];
@@ -23,6 +24,7 @@ export function InvestigationHud({
   solved: boolean;
   canSolve: boolean;
   onSolve: () => void;
+  onOpenClues: () => void;
 }) {
   const objective = translate(strings, investigation.objective);
   const required = cluesRequired(investigation);
@@ -39,10 +41,16 @@ export function InvestigationHud({
         </p>
         <p className="text-sm font-semibold text-graphite-50">{objective}</p>
 
+        {/* El contador ES el acceso al panel: repetir "ver pistas" en un
+            botón aparte sería una segunda cosa que dice lo mismo. */}
         {required > 0 && (
-          <p className="text-xs tracking-widest text-graphite-300 uppercase">
+          <button
+            type="button"
+            onClick={onOpenClues}
+            className="text-xs tracking-widest text-graphite-300 uppercase underline-offset-4 hover:text-graphite-100 hover:underline"
+          >
             {translate(strings, 'investigation.clues')} {found} / {required}
-          </p>
+          </button>
         )}
 
         {!solved && (
