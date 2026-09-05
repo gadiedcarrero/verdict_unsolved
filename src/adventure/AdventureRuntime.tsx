@@ -411,7 +411,16 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     setScriptBreakdown(null);
     setScriptBreakdownError(null);
     void window.api.readScriptBreakdown(gameId).then((result) => {
-      if (result.ok) setScriptBreakdown(result.breakdown);
+      if (!result.ok) return;
+      setScriptBreakdown(result.breakdown);
+      // Promover también al ABRIR, no solo al generar. El borrador de
+      // personajes vive en memoria: si se generó el desglose y la app se
+      // recargó antes de Guardar, el roster propuesto quedaba encerrado en
+      // script-breakdown.json y la pestaña Personajes se veía vacía para
+      // siempre — la única salida era volver a correr la IA sobre el guion
+      // entero. Es idempotente (nunca pisa un personaje que ya existe), así
+      // que reabrir un proyecto ya guardado no cambia nada.
+      if (result.breakdown) promoteBreakdownCharacters(result.breakdown.characters);
     });
   }, [gameId]);
 
