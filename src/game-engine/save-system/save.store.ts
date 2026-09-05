@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import {
   createEmptySave,
+  normalizeAdventureCaseState,
   SAVE_SCHEMA_VERSION,
   type AdventureCaseState,
   type SaveData,
@@ -41,7 +42,12 @@ export const useSaveStore = create<SaveState>((set, get) => ({
   load: async (gameId) => {
     try {
       const data = await window.api.loadGame(gameId);
-      set({ ...data, isLoaded: true, loadedGameId: gameId });
+      set({
+        ...data,
+        adventureCaseState: data.adventureCaseState ? normalizeAdventureCaseState(data.adventureCaseState) : null,
+        isLoaded: true,
+        loadedGameId: gameId,
+      });
     } catch (error) {
       console.error('No se pudo cargar la partida guardada, se inicia con datos vacíos.', error);
       set({ isLoaded: true, loadedGameId: gameId });

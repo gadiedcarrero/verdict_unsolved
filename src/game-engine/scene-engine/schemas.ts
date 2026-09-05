@@ -38,6 +38,36 @@ export const SceneLayerSchema = z.object({
 
 export const InterfaceIdSchema = z.enum(['mirror-investigation', 'agent-market', 'equipment-shop']);
 
+export const VariableValueSchema = z.union([z.string(), z.number(), z.boolean()]);
+
+/** Comparación contra una variable. El atajo (un valor pelado) es igualdad,
+ * que es el 90% de los casos: `{ JANUS_FOUND: true }`. La forma larga es para
+ * rangos: `{ alarmLevel: { op: 'gte', value: 3 } }`. */
+export const ComparisonSchema = z.union([
+  VariableValueSchema,
+  z.object({
+    op: z.enum(['eq', 'ne', 'gt', 'gte', 'lt', 'lte']),
+    value: VariableValueSchema,
+  }),
+]);
+
+/** Condición evaluada contra el estado de la partida. Todos los términos se
+ * cumplen a la vez (AND); una condición vacía siempre se cumple.
+ *
+ * No hay OR ni anidamiento a propósito: cada vez que un guion pide un OR,
+ * casi siempre lo que quiere es una variable con nombre propio
+ * (`PUEDE_ENTRAR`) puesta por quien corresponda — eso se lee mucho mejor en
+ * el editor que un árbol booleano, y deja el rastro de por qué se cumplió. */
+export const ConditionSchema = z.object({
+  /** Flags que tienen que estar presentes. */
+  flags: z.array(z.string()).default([]),
+  /** Flags que NO tienen que estar. */
+  notFlags: z.array(z.string()).default([]),
+  /** Variable → valor esperado. Una variable que nunca se escribió no cumple
+   * ninguna comparación salvo `ne`. */
+  variables: z.record(z.string(), ComparisonSchema).default({}),
+});
+
 // Compartidas entre SceneActionSchema (todas) y MinigameOutcomeActionSchema
 // (el subconjunto permitido como onSuccess/onFail de un minijuego) — así
 // onSuccess/onFail no necesitan referenciarse a sí mismos (Zod no soporta
@@ -50,6 +80,14 @@ const OUTCOME_ACTION_VARIANTS = [
     patch: z.record(z.string(), z.unknown()),
   }),
   z.object({ type: z.literal('addFlag'), flag: z.string() }),
+  /** Escribe una variable de guion (ver `AdventureCaseState.variables`).
+   * `setState` de arriba es el equivalente viejo, limitado a los campos
+   * cableados de VERDICT: UNSOLVED — para un juego nuevo va este. */
+  z.object({
+    type: z.literal('setVariable'),
+    name: z.string(),
+    value: VariableValueSchema,
+  }),
   z.object({
     type: z.literal('transitionTo'),
     sceneId: z.string(),
@@ -165,8 +203,24 @@ export const HotspotSchema = z.object({
   onInteract: z.array(SceneActionSchema),
   repeatable: z.boolean().default(true),
   /** Si es false, la zona existe (para referencia/edición) pero no responde
-   * al mouse durante la partida — p. ej. un objeto decorativo marcado. */
+   * al mouse durante la partida — p. ej. un objeto decorativo marcado. Es una
+   * decisión de autoría fija, no una condición: para "todavía no, pero
+   * después sí" están los dos campos de abajo. */
   interactable: z.boolean().default(true),
+  /** Mientras no se cumpla, la zona no existe para el jugador: no se dibuja,
+   * no responde, no aparece su tooltip. Para lo que todavía no fue revelado
+   * — la puerta detrás de la caja que aún no se movió. */
+  visibleWhen: ConditionSchema.optional(),
+  /** La zona SÍ se ve, pero al hacer click no corre `onInteract`: responde
+   * `disabledMessage`. Es el otro caso, y es distinto del de arriba — "no
+   * puedo mover esto desde la silla" tiene que verse para que el jugador
+   * entienda que ahí hay algo y que le hace falta otra cosa. Esconderlo lo
+   * dejaría buscando a ciegas. */
+  enabledWhen: ConditionSchema.optional(),
+  /** Clave de traducción (como `label`) del texto que responde la zona
+   * cuando `enabledWhen` no se cumple. Sin esto, una zona deshabilitada
+   * simplemente no reacciona. */
+  disabledMessage: z.string().optional(),
   /** Pisa, campo a campo, la tipografía general del sitio
    * (SiteSettings.hotspotLabelStyle) para el tooltip de esta zona. */
   labelStyle: TextStyleOverrideSchema.optional(),
@@ -633,6 +687,8 @@ export type SceneAction = z.infer<typeof SceneActionSchema>;
 export type MinigameOutcomeAction = z.infer<typeof MinigameOutcomeActionSchema>;
 export type MinigameTemplate = z.infer<typeof MinigameTemplateSchema>;
 export type Hotspot = z.infer<typeof HotspotSchema>;
+export type Condition = z.infer<typeof ConditionSchema>;
+export type Comparison = z.infer<typeof ComparisonSchema>;
 export type InteractWithTarget = z.infer<typeof InteractWithTargetSchema>;
 export type HotspotShape = z.infer<typeof HotspotShapeSchema>;
 export type PolygonPoint = z.infer<typeof PolygonPointSchema>;

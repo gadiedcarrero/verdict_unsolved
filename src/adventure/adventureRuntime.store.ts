@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { createEmptyAdventureCaseState, type AdventureCaseState } from '@shared/save-data';
+import { createEmptyAdventureCaseState, type AdventureCaseState, type VariableValue } from '@shared/save-data';
 import { useSaveStore } from '../game-engine/save-system/save.store';
+import { conditionContextOf, evaluateCondition } from '../game-engine/scene-engine/conditions';
 import type {
   AdventureCaseBundle,
   DialogueNode,
@@ -52,9 +53,11 @@ type AdventureRuntimeState = {
    * un hotspot mientras esto no es null se interpreta como el segundo
    * objeto de la combinación, no como su interacción normal. */
   combiningHotspotId: string | null;
-  /** True brevemente cuando se intentó una combinación sin `onInteract`
-   * programado — ver `interactWith.noMatch` en locales. */
-  interactWithFallbackVisible: boolean;
+  /** Clave de traducción del aviso corto que se muestra centrado unos
+   * segundos y se va solo, o null. Lo usan la combinación sin resultado
+   * (`interactWith.noMatch`) y las zonas bloqueadas por `enabledWhen`
+   * (`Hotspot.disabledMessage`) — mismo aviso, no dos mecanismos iguales. */
+  transientMessageKey: string | null;
   /** Id del fondo activo de la escena actual, o null = usar el default
    * (`scene.backgrounds[0]`) — ver acción `toggleBackground`. Se resetea a
    * null en cada cambio de escena, así el fondo alternado de una escena no
@@ -101,6 +104,13 @@ type AdventureRuntimeState = {
   runActions: (actions: SceneAction[]) => void;
   applyStatePatch: (patch: Partial<AdventureCaseState>) => void;
   addFlag: (flag: string) => void;
+  /** Escribe una variable de guion (ver `AdventureCaseState.variables`). */
+  setVariable: (name: string, value: VariableValue) => void;
+  /** Si la zona se le muestra al jugador con el estado actual de la partida
+   * (`Hotspot.visibleWhen`). El editor NO la usa: ahí se ven todas. */
+  isHotspotVisible: (hotspot: Hotspot) => boolean;
+  /** Aviso corto centrado que se borra solo. */
+  showTransientMessage: (messageKey: string) => void;
   /** `onComplete` corre después del fundido y de `scene.onEnter` — la usa
    * `runActions` para encadenar lo que venga después de un `transitionTo`
    * (p. ej. "cambiar de escena y ADEMÁS hacer hablar a un personaje": sin
@@ -133,7 +143,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   transitioning: false,
   activeActionMenuHotspotId: null,
   combiningHotspotId: null,
-  interactWithFallbackVisible: false,
+  transientMessageKey: null,
   activeBackgroundId: null,
   activeMinigame: null,
 
@@ -149,7 +159,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       transitioning: false,
       activeActionMenuHotspotId: null,
       combiningHotspotId: null,
-      interactWithFallbackVisible: false,
+      transientMessageKey: null,
       activeBackgroundId: null,
       activeMinigame: null,
     });
@@ -178,6 +188,14 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
 
     if (state.combiningHotspotId) {
       get().selectCombineTarget(hotspot.id);
+      return;
+    }
+
+    // La zona se ve, pero todavía no se puede usar ("no puedo mover esto
+    // desde la silla"). Se contesta y no corre nada — es distinto de
+    // `visibleWhen`, donde la zona directamente no está.
+    if (!evaluateCondition(hotspot.enabledWhen, conditionContextOf(state.caseState))) {
+      if (hotspot.disabledMessage) get().showTransientMessage(hotspot.disabledMessage);
       return;
     }
 
@@ -219,8 +237,16 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       get().runActions(match.onInteract);
       return;
     }
-    set({ interactWithFallbackVisible: true });
-    window.setTimeout(() => set({ interactWithFallbackVisible: false }), 1800);
+    get().showTransientMessage('interactWith.noMatch');
+  },
+
+  showTransientMessage: (messageKey) => {
+    set({ transientMessageKey: messageKey });
+    window.setTimeout(() => {
+      // Solo se limpia si sigue siendo el mismo mensaje: si mientras tanto
+      // apareció otro, su propio timer es el que tiene que borrarlo, no este.
+      if (get().transientMessageKey === messageKey) set({ transientMessageKey: null });
+    }, 1800);
   },
 
   toggleBackground: (backgroundIdA, backgroundIdB) => {
@@ -288,6 +314,9 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
           break;
         case 'addFlag':
           get().addFlag(action.flag);
+          break;
+        case 'setVariable':
+          get().setVariable(action.name, action.value);
           break;
         case 'transitionTo': {
           // Lo que venga después en la lista (p. ej. hacer hablar a un
@@ -361,13 +390,26 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
     persistIfRegistered(get().caseState);
   },
 
+  setVariable: (name, value) => {
+    set((state) => ({
+      caseState: {
+        ...state.caseState,
+        variables: { ...(state.caseState.variables ?? {}), [name]: value },
+      },
+    }));
+    persistIfRegistered(get().caseState);
+  },
+
+  isHotspotVisible: (hotspot) =>
+    evaluateCondition(hotspot.visibleWhen, conditionContextOf(get().caseState)),
+
   transitionToScene: (sceneId, fade, onComplete) => {
     set({
       activeDialogueNodeId: null,
       activeInterfaceId: null,
       activeActionMenuHotspotId: null,
       combiningHotspotId: null,
-      interactWithFallbackVisible: false,
+      transientMessageKey: null,
       activeMinigame: null,
       transitioning: true,
     });
@@ -399,7 +441,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       activeInterfaceId: null,
       activeActionMenuHotspotId: null,
       combiningHotspotId: null,
-      interactWithFallbackVisible: false,
+      transientMessageKey: null,
       activeBackgroundId: null,
       activeMinigame: null,
       transitioning: false,
@@ -415,7 +457,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       activeInterfaceId: null,
       activeActionMenuHotspotId: null,
       combiningHotspotId: null,
-      interactWithFallbackVisible: false,
+      transientMessageKey: null,
       activeBackgroundId: null,
       activeMinigame: null,
       caseState: createEmptyAdventureCaseState(''),

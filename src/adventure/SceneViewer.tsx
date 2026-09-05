@@ -26,6 +26,7 @@ export function SceneViewer({
   strings,
   siteSettings,
   layerOverrides,
+  hotspotVisible,
   onInteract,
   children,
   editMode = false,
@@ -39,7 +40,7 @@ export function SceneViewer({
   onSelectAction,
   onCloseActionMenu,
   combiningHotspotId,
-  interactWithFallbackVisible,
+  transientMessageKey,
   activeBackgroundId,
 }: {
   gameId: string;
@@ -49,6 +50,12 @@ export function SceneViewer({
   siteSettings: SiteSettings;
   /** assetPath alternativo por layer id (p. ej. el teléfono cambia de imagen mientras suena). */
   layerOverrides?: Record<string, string> | undefined;
+  /** Si una zona se le muestra al jugador ahora mismo (ver `Hotspot.visibleWhen`).
+   * Se recibe evaluado desde afuera en vez de leer el estado de la partida acá:
+   * esto es un componente de presentación, y en `editMode` las zonas se dibujan
+   * todas igual — el autor tiene que poder ver y mover las que todavía están
+   * ocultas. Sin la prop, se muestran todas. */
+  hotspotVisible?: (hotspot: HotspotData) => boolean;
   onInteract: (hotspot: HotspotData) => void;
   /** Diálogo/interfaces: deben compartir el mismo stage que la escena, no la ventana completa. */
   children?: ReactNode;
@@ -71,7 +78,7 @@ export function SceneViewer({
    * el juego espera el segundo click. Ver combiningHotspotId en el store. */
   combiningHotspotId?: string | null;
   /** True brevemente tras intentar una combinación sin acción programada. */
-  interactWithFallbackVisible?: boolean;
+  transientMessageKey?: string | null;
   /** Id del fondo activo (ver acción `toggleBackground`) — null/no
    * encontrado = usar `scene.backgrounds[0]` como siempre. Decide tanto la
    * imagen mostrada como qué `hotspots` responden (cada fondo trae los
@@ -148,7 +155,9 @@ export function SceneViewer({
 
         {!editMode &&
           (() => {
-            const activeHotspots = activeBackground?.hotspots ?? [];
+            const activeHotspots = (activeBackground?.hotspots ?? []).filter(
+              (hotspot) => hotspotVisible?.(hotspot) ?? true,
+            );
             const combiningSource = combiningHotspotId
               ? activeHotspots.find((h) => h.id === combiningHotspotId)
               : null;
@@ -263,12 +272,12 @@ export function SceneViewer({
             );
           })()}
 
-        {!editMode && interactWithFallbackVisible && (
+        {!editMode && transientMessageKey && (
           <div
             className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded bg-graphite-950/90 px-4 py-2 text-sm text-graphite-100"
             style={{ zIndex: 400 }}
           >
-            {translate(strings, 'interactWith.noMatch')}
+            {translate(strings, transientMessageKey)}
           </div>
         )}
 

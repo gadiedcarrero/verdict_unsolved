@@ -167,7 +167,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const selectAction = useAdventureRuntimeStore((s) => s.selectAction);
   const closeActionMenu = useAdventureRuntimeStore((s) => s.closeActionMenu);
   const combiningHotspotId = useAdventureRuntimeStore((s) => s.combiningHotspotId);
-  const interactWithFallbackVisible = useAdventureRuntimeStore((s) => s.interactWithFallbackVisible);
+  const transientMessageKey = useAdventureRuntimeStore((s) => s.transientMessageKey);
+  const isHotspotVisible = useAdventureRuntimeStore((s) => s.isHotspotVisible);
   const activeBackgroundId = useAdventureRuntimeStore((s) => s.activeBackgroundId);
   const advance = useAdventureRuntimeStore((s) => s.advance);
   const selectChoice = useAdventureRuntimeStore((s) => s.selectChoice);
@@ -2805,7 +2806,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           onSelectAction={selectAction}
           onCloseActionMenu={closeActionMenu}
           combiningHotspotId={combiningHotspotId}
-          interactWithFallbackVisible={interactWithFallbackVisible}
+          transientMessageKey={transientMessageKey}
+          hotspotVisible={isHotspotVisible}
           activeBackgroundId={activeBackgroundId}
         >
           {activeInterfaceId ? (
