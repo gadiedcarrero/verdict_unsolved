@@ -1,5 +1,5 @@
 appId: com.narrados.app
-productName: NarraDos
+productName: NarraDOS
 directories:
   output: release
 files:

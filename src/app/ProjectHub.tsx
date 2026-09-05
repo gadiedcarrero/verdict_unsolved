@@ -59,8 +59,11 @@ export function ProjectHub({ onOpenGame }: { onOpenGame: (gameId: string) => voi
       )}
 
       <div className="text-center">
+        {/* "Narra" en caja normal y "DOS" en mayúscula y naranja: el corte es
+            el nombre, no un adorno — separa las dos lecturas de la palabra.
+            En gris el "DOS" parecía apagado, como texto secundario. */}
         <h1 className="text-2xl font-black tracking-tight text-graphite-100 sm:text-3xl">
-          NARRA<span className="text-graphite-500">DOS</span>
+          Narra<span className="text-amber-accent">DOS</span>
         </h1>
         <p className="mt-2 text-[11px] tracking-widest text-graphite-500 uppercase">Elegí un proyecto para abrir</p>
       </div>

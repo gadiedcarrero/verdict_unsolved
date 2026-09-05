@@ -1,7 +1,7 @@
 {
   "name": "narra-dos",
   "version": "0.1.0",
-  "description": "NarraDos — plataforma de creación de novelas gráficas/juegos point-and-click asistida por IA",
+  "description": "NarraDOS — plataforma de creación de novelas gráficas/juegos point-and-click asistida por IA",
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
