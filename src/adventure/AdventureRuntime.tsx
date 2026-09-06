@@ -2484,7 +2484,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
               <button
                 type="button"
                 onClick={() => setShowIntegrations(true)}
-                className="rounded border border-graphite-700 px-2 py-0.5 text-[9px] tracking-widest text-graphite-500 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent"
+                className="rounded border border-amber-accent/50 px-2.5 py-1 text-[11px] tracking-widest text-amber-accent uppercase transition-colors hover:border-amber-accent hover:bg-amber-accent/10"
               >
                 ⚙ Integraciones IA
               </button>
