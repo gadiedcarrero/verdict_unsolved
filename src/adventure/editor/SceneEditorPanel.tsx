@@ -188,6 +188,7 @@ function BackgroundThumb({
   label,
   title,
   durationMs,
+  generationPrompt,
   backgroundColor,
   imageWidthPercent,
   caption,
@@ -209,6 +210,8 @@ function BackgroundThumb({
   label: string;
   title: string | undefined;
   durationMs: number | undefined;
+  /** El prompt con el que se generó esta imagen, si se generó con IA. */
+  generationPrompt: string | undefined;
   backgroundColor: string | undefined;
   imageWidthPercent: number | undefined;
   caption: string | undefined;
@@ -385,6 +388,23 @@ function BackgroundThumb({
               placeholder="Texto de este panel..."
               className="w-full resize-none rounded border border-graphite-700 bg-graphite-900 px-1 py-0.5 text-[9px] text-graphite-100"
             />
+          )}
+          {/* El prompt que produjo ESTA imagen, junto al texto que se va a
+              mostrar sobre ella: es la única forma de juzgar si la imagen
+              corresponde al momento del guion. Estaba guardado desde siempre
+              (SceneBackground.generationPrompt) pero solo se usaba para
+              precargar el formulario al regenerar, así que para saber qué se
+              había pedido había que abrir el JSON a mano.
+              Plegado por default: es largo y estas tarjetas van en fila. */}
+          {generationPrompt && (
+            <details className="mt-0.5">
+              <summary className="cursor-pointer text-[8px] tracking-widest text-graphite-500 uppercase hover:text-amber-accent">
+                Prompt usado
+              </summary>
+              <p className="mt-0.5 max-h-24 overflow-y-auto rounded border border-graphite-800 bg-graphite-950 p-1 text-[8px] whitespace-pre-wrap text-graphite-400">
+                {generationPrompt}
+              </p>
+            </details>
           )}
         </div>
       )}
@@ -766,6 +786,7 @@ function BackgroundsSection({
             assetPath={bg.assetPath}
             label={`BG ${index + 1}`}
             durationMs={bg.durationMs}
+            generationPrompt={bg.generationPrompt}
             backgroundColor={bg.backgroundColor}
             imageWidthPercent={bg.imageWidthPercent}
             caption={bg.caption}
