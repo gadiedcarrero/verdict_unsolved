@@ -32,11 +32,21 @@ import sharp from 'sharp';
 // de forma confiable. El peso entre paréntesis (sintaxis nativa de
 // ComfyUI/CLIPTextEncode) sube la atención sobre esos tokens puntuales sin
 // tocar el resto de la negativa.
+// Ojo con lo que se pone acá: esto contradecía al prompt positivo. Tenía
+// "cartoon" en el negativo mientras el estilo de fondos pide "illustrated
+// digital painting" y el de cuerpos pide "cel-shaded cartoon" — el modelo
+// quedaba tironeado entre los dos y, con un checkpoint fotorrealista de
+// árbitro, ganaba la foto. Ahora el negativo empuja en la misma dirección que
+// el estilo: lo que se rechaza es la foto, no el dibujo.
+//
+// Es una decisión de estilo a nivel plataforma, que a futuro debería ser un
+// ajuste por juego (un juego fotorrealista querría exactamente lo contrario).
 const NEGATIVE_PROMPT =
   'lowres, bad anatomy, bad hands, extra fingers, missing fingers, deformed, mutated, blurry, ' +
   '(watermark:1.3), (text:1.5), (letters:1.4), (words:1.4), (writing:1.4), (readable text:1.5), ' +
   '(typography:1.3), (caption:1.3), (subtitles:1.3), (sign:1.3), (label:1.3), (logo:1.3), signature, ' +
-  'cartoon, 3d render, cgi, disfigured, extra limbs, cloned face, duplicate, ugly, jpeg artifacts';
+  '(photorealistic:1.3), (photograph:1.3), (photo:1.2), (realistic skin texture:1.2), ' +
+  '3d render, cgi, disfigured, extra limbs, cloned face, duplicate, ugly, jpeg artifacts';
 
 export const GREEN_SCREEN_INSTRUCTION =
   'Solid flat pure chroma-key green background (#00FF00), completely uniform, no gradient, no shadow, no texture, no vignette.';

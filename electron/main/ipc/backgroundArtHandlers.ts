@@ -175,7 +175,13 @@ async function generateComfyUI(
   referenceEntries: (CharacterReference & { bytes: Buffer })[],
 ): Promise<GenerateResult> {
   try {
-    const fullPrompt = `${prompt.trim()}\n\n${BACKGROUND_STYLE_PROMPT}`;
+    // El estilo va PRIMERO solo en ComfyUI: CLIP le da más peso a lo que
+    // viene antes y trunca por chunks de 77 tokens, y estos prompts son
+    // largos (escena + Location + Continuity + continuidad con el panel
+    // anterior). Al final, el estilo quedaba diluido y cada panel salía con
+    // el suyo. Nano Banana y gpt-image-1 no tienen ese problema, así que ahí
+    // se deja el orden natural, que se lee mejor.
+    const fullPrompt = `${BACKGROUND_STYLE_PROMPT}\n\n${prompt.trim()}`;
     const bytes = await generateComfyUIImage({
       baseUrl: config.comfyuiBaseUrl,
       checkpoint: config.comfyuiCheckpoint,
