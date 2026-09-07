@@ -100,7 +100,15 @@ export type ComfyUIGenerateOptions = {
    * (fondos, escenas anchas con varios personajes) — usa IP-Adapter, que
    * no fuerza el encuadre de la composición como InstantID. Sin esto,
    * txt2img plano. */
-  reference?: { mode: 'face'; bytes: Buffer } | { mode: 'subject'; bytes: Buffer[] } | undefined;
+  reference?:
+    | { mode: 'face'; bytes: Buffer }
+    | { mode: 'subject'; bytes: Buffer[] }
+    /** Retoca ESTA imagen en vez de generar una parecida (ver
+     * img2imgWorkflow). `strength` es cuánto se la deja cambiar: 0.45 mueve
+     * una expresión sin tocar el resto, más alto empieza a reinventar la
+     * cara, más bajo casi no cambia nada. */
+    | { mode: 'edit'; bytes: Buffer; strength?: number }
+    | undefined;
 };
 
 function baseNodes(checkpoint: string): { nodes: ComfyWorkflow; model: [string, number]; clip: [string, number]; vae: [string, number] } {
@@ -117,6 +125,9 @@ function samplerNode(
   model: [string, number],
   positive: [string, number],
   negative: [string, number],
+  // 1.0 = generar de cero (el latente de entrada es ruido puro). Menos que
+  // eso solo tiene sentido partiendo de una imagen: ver img2imgWorkflow.
+  denoise = 1.0,
 ): ComfyNode {
   return {
     class_type: 'KSampler',
@@ -126,7 +137,7 @@ function samplerNode(
       cfg,
       sampler_name: 'dpmpp_2m',
       scheduler: 'karras',
-      denoise: 1.0,
+      denoise,
       model,
       positive,
       negative,
@@ -141,6 +152,40 @@ function txt2imgWorkflow(opts: Required<Pick<ComfyUIGenerateOptions, 'checkpoint
   nodes['7'] = { class_type: 'CLIPTextEncode', inputs: { text: NEGATIVE_PROMPT, clip } };
   nodes['5'] = { class_type: 'EmptyLatentImage', inputs: { width: opts.width, height: opts.height, batch_size: 1 } };
   nodes['3'] = samplerNode(seed, opts.steps, opts.cfg, model, ['6', 0], ['7', 0]);
+  nodes['8'] = { class_type: 'VAEDecode', inputs: { samples: ['3', 0], vae } };
+  nodes['9'] = { class_type: 'SaveImage', inputs: { images: ['8', 0], filename_prefix: 'narradros' } };
+  return nodes;
+}
+
+/**
+ * Editar una imagen que ya existe, en vez de generar una nueva parecida.
+ *
+ * La imagen de referencia se codifica como latente de partida y se denoisea
+ * solo parcialmente, así que todo lo que el prompt no pide cambiar —edad,
+ * pelo, ropa, encuadre, paleta, estilo— sobrevive porque no se vuelve a
+ * generar: ya está ahí. Es lo que hace "a esta imagen ponela sonriendo".
+ *
+ * InstantID resuelve otro problema: "generá a alguien con ESTA cara", que
+ * sirve para un personaje nuevo pero no para retocar uno existente — arrastra
+ * los puntos faciales de la referencia (y con ellos su expresión) y reinventa
+ * todo lo demás desde el prompt, que es de dónde salía que el mismo personaje
+ * cambiara de edad entre una expresión y otra.
+ *
+ * `width`/`height` no se usan: el tamaño lo fija la imagen de entrada, y que
+ * el encuadre quede idéntico es justamente lo que se quiere.
+ */
+function img2imgWorkflow(
+  opts: Required<Pick<ComfyUIGenerateOptions, 'checkpoint' | 'prompt' | 'steps' | 'cfg'>>,
+  referenceName: string,
+  denoise: number,
+  seed: number,
+): ComfyWorkflow {
+  const { nodes, model, clip, vae } = baseNodes(opts.checkpoint);
+  nodes['6'] = { class_type: 'CLIPTextEncode', inputs: { text: opts.prompt, clip } };
+  nodes['7'] = { class_type: 'CLIPTextEncode', inputs: { text: NEGATIVE_PROMPT, clip } };
+  nodes['13'] = { class_type: 'LoadImage', inputs: { image: referenceName } };
+  nodes['5'] = { class_type: 'VAEEncode', inputs: { pixels: ['13', 0], vae } };
+  nodes['3'] = samplerNode(seed, opts.steps, opts.cfg, model, ['6', 0], ['7', 0], denoise);
   nodes['8'] = { class_type: 'VAEDecode', inputs: { samples: ['3', 0], vae } };
   nodes['9'] = { class_type: 'SaveImage', inputs: { images: ['8', 0], filename_prefix: 'narradros' } };
   return nodes;
@@ -322,7 +367,10 @@ export async function generateComfyUIImage(opts: ComfyUIGenerateOptions): Promis
   const shared = { checkpoint: opts.checkpoint, prompt: opts.prompt, width: opts.width, height: opts.height, steps, cfg };
   try {
     let workflow: ComfyWorkflow;
-    if (opts.reference?.mode === 'face') {
+    if (opts.reference?.mode === 'edit') {
+      const refName = await uploadReferenceImage(baseUrl, opts.reference.bytes);
+      workflow = img2imgWorkflow(shared, refName, opts.reference.strength ?? 0.45, seed);
+    } else if (opts.reference?.mode === 'face') {
       const refName = await uploadReferenceImage(baseUrl, opts.reference.bytes);
       workflow = instantIdWorkflow(shared, refName, seed);
     } else if (opts.reference?.mode === 'subject' && opts.reference.bytes.length > 0) {

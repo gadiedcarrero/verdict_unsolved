@@ -198,11 +198,25 @@ async function requestImageBytesOpenAI(
 // expresión o variante), usa InstantID para mantener la misma cara — para
 // el retrato base de un personaje nuevo (sin referencia todavía) no hay
 // forma de fijar identidad, así que sale plano por texto nada más.
+/** El retrato ya guardado tiene fondo transparente (se le recortó el verde al
+ * generarlo). Al codificarlo como latente el canal alfa se pierde y esas zonas
+ * entran como negro, así que la expresión editada saldría con un fondo negro
+ * opaco que el recorte por chroma no reconoce. Aplanarlo sobre el mismo verde
+ * puro que pide el prompt cierra el círculo: sale verde y se vuelve a
+ * recortar igual que cualquier otro retrato. */
+async function flattenOntoChromaGreen(bytes: Buffer): Promise<Buffer> {
+  return sharp(bytes).flatten({ background: { r: 0, g: 255, b: 0 } }).png().toBuffer();
+}
+
 async function requestImageBytesComfyUI(
   config: AiIntegrationsConfig,
   prompt: string,
   faceReferenceBytes: Buffer | null,
   style: ArtStyle,
+  // true = retocar la imagen de referencia (img2img), false = generar una
+  // imagen nueva de alguien con esa cara (InstantID). Ver el porqué en
+  // generateCharacterImage.
+  editReference = false,
 ): Promise<ImageBytesResult> {
   try {
     const fullPrompt = `${prompt}\n\n${style.base}\n\n${GREEN_SCREEN_INSTRUCTION}`;
@@ -212,7 +226,11 @@ async function requestImageBytesComfyUI(
       prompt: fullPrompt,
       width: 832,
       height: 1216,
-      reference: faceReferenceBytes ? { mode: 'face', bytes: faceReferenceBytes } : undefined,
+      reference: faceReferenceBytes
+        ? editReference
+          ? { mode: 'edit', bytes: await flattenOntoChromaGreen(faceReferenceBytes) }
+          : { mode: 'face', bytes: faceReferenceBytes }
+        : undefined,
     });
     const transparent = await chromaKeyToTransparent(raw);
     return { ok: true, bytes: transparent };
@@ -229,6 +247,11 @@ async function generateCharacterImage(
   prompt: string,
   referenceImageBytes: Buffer | null,
   style: ArtStyle,
+  // Solo cambia el camino de ComfyUI. Nano Banana y OpenAI ya editan la
+  // imagen de referencia por diseño (/edit y /images/edits): son ellos los
+  // que hacen "a esta imagen ponela sonriendo", y ComfyUI era el único que no
+  // podía, porque generaba de cero cada vez.
+  editReference = false,
 ): Promise<ImageBytesResult> {
   if (config.imageProvider === 'openai') {
     if (!config.openaiApiKey) {
@@ -242,7 +265,7 @@ async function generateCharacterImage(
     return requestImageBytesOpenAI(config.openaiApiKey, prompt, referenceImageBytes, style);
   }
   if (config.imageProvider === 'comfyui') {
-    return requestImageBytesComfyUI(config, prompt, referenceImageBytes, style);
+    return requestImageBytesComfyUI(config, prompt, referenceImageBytes, style, editReference);
   }
   if (!config.falApiKey) {
     return { ok: false, error: 'Falta la API key de fal.ai en Ajustes → Integraciones IA.' };
@@ -313,7 +336,18 @@ export function registerCharacterArtHandlers(): void {
           effectivePrompt = `${POSE_GUIDE_INSTRUCTION}${prompt.trim()}`;
         }
 
-        const result = await generateCharacterImage(config, effectivePrompt, referenceImageBytes, PORTRAIT_STYLE);
+        // Una expresión parte del retrato ya generado y solo le cambia la
+        // cara: eso es editar esa imagen, no generar otra. El retrato base de
+        // un personaje nuevo sí se genera de cero, aunque lleve una
+        // referencia de pose o de identidad.
+        const isExpressionEdit = expressionKey !== null && referenceImagePath !== null;
+        const result = await generateCharacterImage(
+          config,
+          effectivePrompt,
+          referenceImageBytes,
+          PORTRAIT_STYLE,
+          isExpressionEdit,
+        );
         if (!result.ok) return result;
 
         const dir = join(app.getAppPath(), portraitsDir(gameId));
