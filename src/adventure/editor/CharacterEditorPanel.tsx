@@ -714,6 +714,21 @@ function CharacterFields({
           <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
         </div>
         {portraitError && <ErrorText message={portraitError} className="mb-1" />}
+        {/* Antes iba después de las seis expresiones y quedaba fuera de
+            pantalla: una sección entera invisible debajo de una lista
+            larga. Va acá porque es el otro juego de imágenes del
+            personaje — busto para el diálogo, cuerpo para la escena. */}
+        <BodyVariantFields
+          gameId={gameId}
+          character={character}
+          generatingArtIds={generatingArtIds}
+          artErrors={artErrors}
+          portraitCacheBust={portraitCacheBust}
+          onCreate={onCreateBodyVariant}
+          onRemove={onRemoveBodyVariant}
+          onGenerate={onGenerateVariantArt}
+          onPreview={onPreviewPortrait}
+        />
         <EmotionsFields
           gameId={gameId}
           character={character}
@@ -727,17 +742,6 @@ function CharacterFields({
           onUploadExpression={onUploadExpression}
           onRemoveExpression={onRemoveExpression}
           onGenerateEmotion={onGenerateEmotion}
-        />
-        <BodyVariantFields
-          gameId={gameId}
-          character={character}
-          generatingArtIds={generatingArtIds}
-          artErrors={artErrors}
-          portraitCacheBust={portraitCacheBust}
-          onCreate={onCreateBodyVariant}
-          onRemove={onRemoveBodyVariant}
-          onGenerate={onGenerateVariantArt}
-          onPreview={onPreviewPortrait}
         />
         <CapabilityFields
           character={character}
