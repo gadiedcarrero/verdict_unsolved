@@ -18,6 +18,7 @@ import { slugify, uniqueId } from './editor/slug';
 import { getGameProject } from '../game-engine/scene-engine/gameProjects';
 import type {
   Character,
+  CharacterVariant,
   CinematicTransition,
   DialogueNode,
   Hotspot,
@@ -65,7 +66,7 @@ import {
   type ScriptBreakdownReviewStatus,
 } from '../../shared/script-breakdown';
 import type { ElevenLabsVoice } from '../../shared/elevenlabs';
-import { EMOTIONS } from '../../shared/emotions';
+import { BODY_EXPRESSIONS, EMOTIONS } from '../../shared/emotions';
 
 type EditorTab = 'scene' | 'characters' | 'settings' | 'script-ai';
 
@@ -1861,6 +1862,108 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     }
   }
 
+  // ---- Variantes de cuerpo entero (ver CharacterVariant en schemas.ts) ----
+  //
+  // Una variante es una identidad visual del personaje —Gray en su silla,
+  // Wraith enmascarado, Adrian de pie— con UNA pose fija y sus propias
+  // expresiones. Es lo que se pone EN la escena; el busto sigue siendo el del
+  // círculo de diálogo.
+
+  function updateVariant(
+    characterId: string,
+    variantId: string,
+    patch: Partial<CharacterVariant>,
+  ): void {
+    const character = displayCharacters.find((c) => c.id === characterId);
+    const current = character?.variants[variantId];
+    if (!current) return;
+    updateCharacter(characterId, {
+      variants: { ...character.variants, [variantId]: { ...current, ...patch } },
+    });
+  }
+
+  function createBodyVariant(characterId: string, label: string, description: string): void {
+    const character = displayCharacters.find((c) => c.id === characterId);
+    if (!character) return;
+    const variantId = uniqueId(slugify(label), new Set(Object.keys(character.variants)));
+    updateCharacter(characterId, {
+      variants: {
+        ...character.variants,
+        [variantId]: { label: label.trim(), description: description.trim(), body: null, expressions: {} },
+      },
+    });
+  }
+
+  function removeBodyVariant(characterId: string, variantId: string): void {
+    const character = displayCharacters.find((c) => c.id === characterId);
+    if (!character) return;
+    const variants = { ...character.variants };
+    delete variants[variantId];
+    updateCharacter(characterId, { variants });
+  }
+
+  /** `expressionKey` null = el cuerpo neutral de la variante. La referencia de
+   * identidad se encadena: el cuerpo parte del busto del personaje, y cada
+   * expresión parte de ese cuerpo ya generado — así la cara no se reinventa
+   * entre gestos y la pose no cambia. */
+  async function generateVariantArt(
+    characterId: string,
+    variantId: string,
+    expressionKey: string | null,
+  ): Promise<void> {
+    const character = displayCharacters.find((c) => c.id === characterId);
+    const variant = character?.variants[variantId];
+    if (!character || !variant) return;
+
+    const reference = expressionKey ? variant.body : character.portrait;
+    if (!reference) return;
+
+    const genId = `${characterId}:${variantId}${expressionKey ? `:${expressionKey}` : ''}`;
+    const hint = expressionKey
+      ? (BODY_EXPRESSIONS.find((e) => e.code === expressionKey)?.promptHint ?? expressionKey)
+      : null;
+    const prompt = hint
+      ? `${variant.description} The figure is ${hint}. Same person, same pose, same outfit as the source image.`
+      : variant.description;
+
+    setGeneratingCharacterArtIds((prev) => [...prev, genId]);
+    setCharacterArtErrors((prev) => {
+      const next = { ...prev };
+      delete next[genId];
+      return next;
+    });
+    try {
+      const result = await window.api.generateCharacterBody(
+        gameId,
+        characterId,
+        variantId,
+        prompt,
+        expressionKey,
+        reference,
+      );
+      if (!result.ok) {
+        setCharacterArtErrors((prev) => ({ ...prev, [genId]: result.error }));
+        return;
+      }
+      const fresh = (editedCharacters ?? baseCharacters).find((c) => c.id === characterId)?.variants[variantId];
+      if (!fresh) return;
+      updateVariant(
+        characterId,
+        variantId,
+        expressionKey
+          ? { expressions: { ...fresh.expressions, [expressionKey]: { path: result.path, description: '' } } }
+          : { body: result.path },
+      );
+    } catch (error) {
+      setCharacterArtErrors((prev) => ({
+        ...prev,
+        [genId]: error instanceof Error ? error.message : String(error),
+      }));
+    } finally {
+      setGeneratingCharacterArtIds((prev) => prev.filter((id) => id !== genId));
+    }
+  }
+
   // Ningún proveedor de imagen probado acierta siempre la orientación del
   // retrato — en vez de perseguir el 100% automático, esto deja arreglarlo
   // a mano: espeja el archivo YA guardado en el mismo lugar (no genera de
@@ -2602,6 +2705,11 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   characters={displayCharacters}
                   strings={strings}
                   onCapabilitiesChange={(id, capabilities) => updateCharacter(id, { capabilities })}
+                  onCreateBodyVariant={createBodyVariant}
+                  onRemoveBodyVariant={removeBodyVariant}
+                  onGenerateVariantArt={(id, variantId, expressionKey) =>
+                    void generateVariantArt(id, variantId, expressionKey)
+                  }
                   capabilityVocabulary={capabilityVocabulary(displayCharacters, allScenes)}
                   unreachableCapabilities={unreachableCapabilities(displayCharacters, allScenes)}
                   uploadingId={uploadingPortraitId}

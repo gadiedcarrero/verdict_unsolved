@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { translate } from '../../i18n/translate';
+import { BodyVariantFields } from './BodyVariantFields';
 import { CapabilityFields } from './CapabilityFields';
 import type { Character } from '../../game-engine/scene-engine/schemas';
 import type { ElevenLabsVoice } from '../../../shared/elevenlabs';
@@ -564,6 +565,9 @@ function CharacterFields({
   onColorChange,
   onDescriptionChange,
   onCapabilitiesChange,
+  onCreateBodyVariant,
+  onRemoveBodyVariant,
+  onGenerateVariantArt,
   capabilityVocabulary,
   unreachableCapabilities,
   onUploadPortrait,
@@ -592,6 +596,9 @@ function CharacterFields({
   onColorChange: (color: string) => void;
   onDescriptionChange: (description: string) => void;
   onCapabilitiesChange: (capabilities: string[]) => void;
+  onCreateBodyVariant: (label: string, description: string) => void;
+  onRemoveBodyVariant: (variantId: string) => void;
+  onGenerateVariantArt: (variantId: string, expressionKey: string | null) => void;
   /** Vocabulario de capacidades del juego (ver capabilities.ts). */
   capabilityVocabulary: string[];
   /** Las que alguna zona pide y nadie tiene. */
@@ -721,6 +728,17 @@ function CharacterFields({
           onRemoveExpression={onRemoveExpression}
           onGenerateEmotion={onGenerateEmotion}
         />
+        <BodyVariantFields
+          gameId={gameId}
+          character={character}
+          generatingArtIds={generatingArtIds}
+          artErrors={artErrors}
+          portraitCacheBust={portraitCacheBust}
+          onCreate={onCreateBodyVariant}
+          onRemove={onRemoveBodyVariant}
+          onGenerate={onGenerateVariantArt}
+          onPreview={onPreviewPortrait}
+        />
         <CapabilityFields
           character={character}
           vocabulary={capabilityVocabulary}
@@ -802,6 +820,9 @@ export function CharacterEditorPanel({
   onColorChange,
   onDescriptionChange,
   onCapabilitiesChange,
+  onCreateBodyVariant,
+  onRemoveBodyVariant,
+  onGenerateVariantArt,
   capabilityVocabulary,
   unreachableCapabilities,
   onUploadPortrait,
@@ -842,6 +863,9 @@ export function CharacterEditorPanel({
   onColorChange: (characterId: string, color: string) => void;
   onDescriptionChange: (characterId: string, description: string) => void;
   onCapabilitiesChange: (characterId: string, capabilities: string[]) => void;
+  onCreateBodyVariant: (characterId: string, label: string, description: string) => void;
+  onRemoveBodyVariant: (characterId: string, variantId: string) => void;
+  onGenerateVariantArt: (characterId: string, variantId: string, expressionKey: string | null) => void;
   capabilityVocabulary: string[];
   unreachableCapabilities: string[];
   onUploadPortrait: (characterId: string, file: File) => void;
@@ -916,6 +940,11 @@ export function CharacterEditorPanel({
           onColorChange={(color) => onColorChange(character.id, color)}
           onDescriptionChange={(description) => onDescriptionChange(character.id, description)}
           onCapabilitiesChange={(capabilities) => onCapabilitiesChange(character.id, capabilities)}
+          onCreateBodyVariant={(label, description) => onCreateBodyVariant(character.id, label, description)}
+          onRemoveBodyVariant={(variantId) => onRemoveBodyVariant(character.id, variantId)}
+          onGenerateVariantArt={(variantId, expressionKey) =>
+            onGenerateVariantArt(character.id, variantId, expressionKey)
+          }
           capabilityVocabulary={capabilityVocabulary}
           unreachableCapabilities={unreachableCapabilities}
           onUploadPortrait={(file) => onUploadPortrait(character.id, file)}
