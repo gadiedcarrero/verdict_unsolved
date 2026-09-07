@@ -1986,22 +1986,26 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     const character = displayCharacters.find((c) => c.id === characterId);
     if (!character?.portrait) return;
     const hint = EMOTIONS.find((e) => e.code === emotionCode)?.promptHint ?? emotionCode;
-    // La emoción va primero y se repite al final, después de la descripción.
-    // La descripción del personaje suele traer su propia expresión metida en
-    // la identidad ("a stern face lined with fatigue... a focused expression
-    // and an analytical gaze"), y al ir después le ganaba a lo que se pedía:
-    // molesto, serio y asustado salían todos con la misma cara adusta. Decir
-    // explícitamente que la expresión de la descripción no aplica es lo que
-    // libera la cara para que cambie.
+    // La descripción física va PRIMERO, antes de la expresión.
+    //
+    // InstantID entra recién al 25% del denoising (ver IDENTITY_START_AT), así
+    // que el primer cuarto corre solo con el texto — y son justo los pasos que
+    // deciden la edad, el color de pelo y la contextura. InstantID después
+    // aporta la estructura de la cara, pero NO la edad ni el pelo: eso sale
+    // del prompt o no sale.
+    //
+    // Con la expresión adelante, "a man in his mid-40s, short grey hair"
+    // quedaba tercero y llegaba diluido a esos pasos (CLIP pesa más lo que
+    // viene primero), y el personaje salía con la expresión correcta pero
+    // veinte años más joven. La expresión no necesita ir primera: se enuncia
+    // en mayúsculas y se repite al final, y además tiene los pasos siguientes
+    // para imponerse.
     const prompt =
-      `Redraw this exact same character. THE FACIAL EXPRESSION MUST BE: ${hint}. ` +
-      `Keep everything else identical: same face structure, same age, same hairstyle, same outfit, ` +
-      `same art style, same framing, same colours. Only the facial expression (and subtly the pose, if ` +
-      `it helps convey the emotion) changes.` +
-      (character.description
-        ? `\n\nWho the character is (for identity only — ignore any expression, mood or gaze mentioned ` +
-          `here, it is overridden by the expression above): ${character.description}`
-        : '') +
+      (character.description ? `${character.description}\n\n` : '') +
+      `THE FACIAL EXPRESSION MUST BE: ${hint}. This overrides any expression, mood or gaze mentioned in the ` +
+      `description above — the age, hair and build described there stay exactly as written. ` +
+      `Everything else matches the reference image: same person, same age, same hair colour and hairstyle, ` +
+      `same outfit, same art style, same framing, same colours. Only the facial expression changes.` +
       `\n\nAgain, the expression to draw is: ${hint}.`;
     void generateCharacterPortraitArt(characterId, prompt, emotionCode, character.portrait);
   }
