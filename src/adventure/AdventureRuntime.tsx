@@ -1160,9 +1160,14 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       const buffer = new Uint8Array(await file.arrayBuffer());
       const result = await window.api.saveSceneBackground(gameId, `${base.id}-${bgId}`, ext, buffer);
       if (result.ok) {
-        setEditedScene({
-          ...base,
-          backgrounds: [...base.backgrounds, { id: bgId, assetPath: result.path, hotspots: [], layers: [] }],
+        // Sobre `prev`, no sobre el `base` de antes del await: ver el
+        // comentario en generateBackgroundWithAi.
+        setEditedScene((prev) => {
+          const current = prev ?? base;
+          return {
+            ...current,
+            backgrounds: [...current.backgrounds, { id: bgId, assetPath: result.path, hotspots: [], layers: [] }],
+          };
         });
       } else {
         setSaveMessage(`Error subiendo fondo: ${result.error}`);
@@ -1192,20 +1197,28 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       const bgId = nextBackgroundId(base);
       const result = await window.api.generateBackground(gameId, `${base.id}-${bgId}`, prompt, characterRefs);
       if (result.ok) {
-        setEditedScene({
-          ...base,
-          backgrounds: [
-            ...base.backgrounds,
-            {
-              id: bgId,
-              assetPath: result.path,
-              caption,
-              hotspots: [],
-              layers: [],
-              generationPrompt: prompt,
-              generationCharacterIds: characterIds,
-            },
-          ],
+        // Se parte de `prev` y no del `base` capturado arriba: generar tarda
+        // minutos, y en ese rato el borrador pudo cambiar —otro fondo, un
+        // caption, una zona movida—. Escribir el `base` viejo con un fondo
+        // más pisaba la escena entera con la foto anterior y se llevaba todo
+        // lo hecho mientras la imagen se generaba.
+        setEditedScene((prev) => {
+          const current = prev ?? base;
+          return {
+            ...current,
+            backgrounds: [
+              ...current.backgrounds,
+              {
+                id: bgId,
+                assetPath: result.path,
+                caption,
+                hotspots: [],
+                layers: [],
+                generationPrompt: prompt,
+                generationCharacterIds: characterIds,
+              },
+            ],
+          };
         });
       } else {
         setBackgroundGenError(result.error);
@@ -1238,11 +1251,16 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       const result = await window.api.generateBackground(gameId, `${base.id}-${bgId}`, prompt, characterRefs);
       if (result.ok) {
         setPortraitCacheBust((prev) => ({ ...prev, [result.path]: (prev[result.path] ?? 0) + 1 }));
-        setEditedScene({
-          ...base,
-          backgrounds: base.backgrounds.map((bg) =>
-            bg.id === bgId ? { ...bg, generationPrompt: prompt, generationCharacterIds: characterIds } : bg,
-          ),
+        // Igual que arriba: sobre `prev`, para no revertir lo editado
+        // mientras corría la generación.
+        setEditedScene((prev) => {
+          const current = prev ?? base;
+          return {
+            ...current,
+            backgrounds: current.backgrounds.map((bg) =>
+              bg.id === bgId ? { ...bg, generationPrompt: prompt, generationCharacterIds: characterIds } : bg,
+            ),
+          };
         });
         setRegeneratingBackgroundId(null);
       } else {
