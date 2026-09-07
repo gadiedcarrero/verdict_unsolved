@@ -2067,61 +2067,60 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   // personaje base — son la misma persona en la trama, pero necesitan su
   // propio set de expresiones emocionales igual que cualquier otro.
   function promoteBreakdownCharacters(breakdownCharacters: ScriptBreakdownCharacter[]): void {
+    // Qué personajes faltan y con qué nombre se llaman se calcula ACÁ, fuera
+    // del updater de estado. Antes se llenaba `pendingNameStrings` adentro del
+    // callback de `setEditedCharacters`, que React ejecuta diferido: el `if`
+    // que lo leía corría sincrónicamente, con el objeto todavía vacío, así que
+    // los nombres casi nunca se encolaban y locales/es.json quedaba sin
+    // ninguno — cada personaje se mostraba como "character.gray.name". (React
+    // a veces corre el updater sincrónicamente por su optimización de estado
+    // eager, y por eso a veces sí funcionaba: peor todavía, porque hacía
+    // parecer intermitente algo que estaba siempre mal.)
+    const existing = new Set((editedCharacters ?? bundle?.characters ?? []).map((c) => c.id));
+    const additions: Character[] = [];
     const pendingNameStrings: Record<string, string> = {};
-    setEditedCharacters((prev) => {
-      // `bundle.characters` y no `baseCharacters`: esta función se llama
-      // desde un efecto que existe también en renders que salen temprano
-      // (sin bundle), donde esa const nunca se inicializa.
-      const base = prev ?? bundle?.characters ?? [];
-      const result = [...base];
-      const takenIds = new Set(result.map((c) => c.id));
-      let changed = false;
-      for (const bc of breakdownCharacters) {
-        if (!takenIds.has(bc.id)) {
-          const nameKey = `character.${bc.id}.name`;
-          pendingNameStrings[nameKey] = bc.name;
-          result.push({
-            id: bc.id,
-            name: nameKey,
-            portrait: null,
-            description: bc.description,
-            expressions: {},
-            variants: {},
-            voices: {},
-            capabilities: [],
-            color: bc.suggestedColor,
-          });
-          takenIds.add(bc.id);
-          changed = true;
-        }
-        // Cada identidad alternativa (Wraith, Director Gray...) se agrega
-        // como personaje propio, no como expresión del personaje base — ver
-        // comentario arriba de la función. Si ya existe un personaje con ese
-        // id (promovido antes, o creado a mano), no se toca.
-        for (const look of bc.alternateLooks) {
-          if (takenIds.has(look.key)) continue;
-          const nameKey = `character.${look.key}.name`;
-          pendingNameStrings[nameKey] = look.label;
-          result.push({
-            id: look.key,
-            name: nameKey,
-            portrait: null,
-            description: look.description,
-            expressions: {},
-            variants: {},
-            voices: {},
-            capabilities: [],
-            color: bc.suggestedColor,
-          });
-          takenIds.add(look.key);
-          changed = true;
-        }
-      }
-      return changed ? result : base;
-    });
-    if (Object.keys(pendingNameStrings).length > 0) {
-      setPendingCharacterStrings((prev) => ({ ...prev, ...pendingNameStrings }));
+
+    function add(id: string, displayName: string, description: string, color: string): void {
+      if (existing.has(id)) return;
+      existing.add(id);
+      const nameKey = `character.${id}.name`;
+      pendingNameStrings[nameKey] = displayName;
+      additions.push({
+        id,
+        name: nameKey,
+        portrait: null,
+        description,
+        expressions: {},
+        variants: {},
+        voices: {},
+        capabilities: [],
+        color,
+      });
     }
+
+    for (const bc of breakdownCharacters) {
+      add(bc.id, bc.name, bc.description, bc.suggestedColor);
+      // Cada identidad alternativa (Wraith, Adrian Cross...) se agrega como
+      // personaje propio, no como expresión del personaje base: son la misma
+      // persona en la trama, pero necesitan nombre, color y set de
+      // expresiones propios — y el dato no puede delatar el vínculo.
+      for (const look of bc.alternateLooks) {
+        add(look.key, look.label, look.description, bc.suggestedColor);
+      }
+    }
+
+    if (additions.length === 0) return;
+
+    setEditedCharacters((prev) => {
+      // Se vuelve a filtrar contra `prev` y no contra lo calculado arriba:
+      // entre el cálculo y este updater pudo entrar otro cambio, y agregar un
+      // id repetido rompería el roster.
+      const current = prev ?? bundle?.characters ?? [];
+      const taken = new Set(current.map((c) => c.id));
+      const missing = additions.filter((c) => !taken.has(c.id));
+      return missing.length > 0 ? [...current, ...missing] : current;
+    });
+    setPendingCharacterStrings((prev) => ({ ...prev, ...pendingNameStrings }));
   }
 
   function persistScriptBreakdown(next: ScriptBreakdown): void {
