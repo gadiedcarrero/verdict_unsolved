@@ -50,8 +50,21 @@ async function fetchWithRetry(url: string, init?: RequestInit): Promise<Response
   throw lastError;
 }
 
+// Solo estilo: medio, técnica, tono e iluminación. NADA de encuadre.
+//
+// Antes empezaba con "Wide point-and-click adventure game background/
+// establishing shot", y eso es una instrucción de plano, no de estilo — le
+// ganaba al panel. Un panel que pedía una grilla de monitores de seguridad
+// salía como la sala vista de frente, y uno que pedía un primer plano de un
+// personaje salía como plano general del cuarto. Al haber movido el estilo al
+// principio del prompt (para que no llegara diluido), esa orden pasó a pesar
+// todavía más.
+//
+// El encuadre lo dice el panel, que es el único que sabe qué momento está
+// ilustrando. Y "wide" además sobraba: el alto y ancho con que se pide la
+// imagen (1216x832) ya fuerzan un cuadro apaisado.
 const BACKGROUND_STYLE_PROMPT =
-  `Wide point-and-click adventure game background/establishing shot. Plain, cinematic, dramatic lighting matching a moody detective-thriller graphic novel aesthetic — stylized illustrated digital painting, clean linework, painterly shading. No watermark, no UI, no border. ${NO_TEXT_INSTRUCTION}`;
+  `Stylized illustrated digital painting — clean linework, painterly shading, moody detective-thriller graphic novel aesthetic, cinematic dramatic lighting. Art for a point-and-click adventure game. No watermark, no UI, no border, no frame. ${NO_TEXT_INSTRUCTION}`;
 
 type CharacterReference = { name: string; description: string; portraitPath: string };
 type GenerateResult = { ok: true; bytes: Buffer } | { ok: false; error: string };
