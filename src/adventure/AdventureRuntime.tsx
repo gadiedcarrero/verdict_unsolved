@@ -39,6 +39,7 @@ import { useSaveStore } from '../game-engine/save-system/save.store';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
 import { buildSceneFromScript } from '../game-engine/scene-engine/buildSceneFromScript';
 import { capabilityVocabulary, unreachableCapabilities } from '../game-engine/scene-engine/capabilities';
+import { resolvePanelCharacterIds } from '../game-engine/scene-engine/panelCharacters';
 import { CharacterHud } from './CharacterHud';
 import { InventoryBar } from './InventoryBar';
 import { CluePanel } from './CluePanel';
@@ -114,17 +115,6 @@ function reloadAfterSave(): void {
  * desglose para poder mandarle el retrato correcto como referencia visual a
  * `generateBackground`. Coincidencia exacta primero, con fallback laxo por
  * si el nombre del panel viene abreviado o con un apodo. */
-function resolvePanelCharacterIds(names: string[], breakdownCharacters: ScriptBreakdownCharacter[]): string[] {
-  const ids: string[] = [];
-  for (const name of names) {
-    const match =
-      breakdownCharacters.find((c) => c.name === name) ??
-      breakdownCharacters.find((c) => c.name.includes(name) || name.includes(c.name));
-    if (match && !ids.includes(match.id)) ids.push(match.id);
-  }
-  return ids;
-}
-
 /** El desglose en paneles no solo trae imageDescription/displayText — trae
  * location y continuity (qué luz hay, dónde está parado cada personaje,
  * qué objetos hay en escena) pensados específicamente para que el
