@@ -79,10 +79,10 @@ const PORTRAIT_STYLE_PROMPT_OPENAI =
 // sentado en silla de ruedas, encapuchado). Esto solo garantiza que entre
 // entera en el cuadro sea cual sea.
 const BODY_STYLE_PROMPT =
-  `Full-body character sprite: the ENTIRE figure is visible from head to feet, centered, with a small margin on every side — nothing cropped at any edge. Keep the pose described above, seen straight on at eye level, with no dramatic perspective or foreshortening. Bold black outline around the figure and its main internal shapes, flat cel-shaded cartoon style in full colour — never greyscale, never a pencil sketch — clean confident linework, simple solid colors, minimal texture, even neutral lighting. Plain, simple, flat background — no scenery, no props, no other characters, no floor, no cast shadow. No watermark, no border or frame, no checkerboard/transparency pattern drawn as an image. ${NO_TEXT_INSTRUCTION}`;
+  `Full-body character sprite: the ENTIRE figure is visible from the top of the head to the feet, centered, ZOOMED OUT far enough that there is clear empty space above the head and below the feet. Nothing may touch or cross any edge of the image — not the hair, not the feet, not a wheelchair wheel. Never crop the head. Keep the pose described above, seen straight on at eye level, with no dramatic perspective or foreshortening. Bold black outline around the figure and its main internal shapes, flat cel-shaded cartoon style in full colour — never greyscale, never a pencil sketch — clean confident linework, simple solid colors, minimal texture, even neutral lighting. Plain, simple, flat background — no scenery, no props, no other characters, no floor, no cast shadow. No watermark, no border or frame, no checkerboard/transparency pattern drawn as an image. ${NO_TEXT_INSTRUCTION}`;
 
 const BODY_STYLE_PROMPT_OPENAI =
-  `Full-body character sprite: the ENTIRE figure is visible from head to feet, centered, with a small margin on every side — nothing cropped at any edge. Keep the pose described above, seen straight on at eye level, with no dramatic perspective or foreshortening. Bold black outline around the figure and its main internal shapes, flat cel-shaded cartoon style in full colour — never greyscale, never a pencil sketch — clean confident linework, simple solid colors, minimal texture, even neutral lighting. Fully transparent background — no scenery, no backdrop, no floor, no cast shadow. No watermark, no border or frame. ${NO_TEXT_INSTRUCTION}`;
+  `Full-body character sprite: the ENTIRE figure is visible from the top of the head to the feet, centered, ZOOMED OUT far enough that there is clear empty space above the head and below the feet. Nothing may touch or cross any edge of the image — not the hair, not the feet, not a wheelchair wheel. Never crop the head. Keep the pose described above, seen straight on at eye level, with no dramatic perspective or foreshortening. Bold black outline around the figure and its main internal shapes, flat cel-shaded cartoon style in full colour — never greyscale, never a pencil sketch — clean confident linework, simple solid colors, minimal texture, even neutral lighting. Fully transparent background — no scenery, no backdrop, no floor, no cast shadow. No watermark, no border or frame. ${NO_TEXT_INSTRUCTION}`;
 
 // OJO con el prompt que llega acá para una expresión: lo arma el renderer
 // como una instrucción de EDICIÓN ("Redraw this exact same character... keep
@@ -97,7 +97,16 @@ const BODY_STYLE_PROMPT_OPENAI =
 /** Encuadre/estilo que se le agrega al prompt del personaje. Una entrada por
  * proveedor con alfa nativo y otra para los que no lo tienen (ver el
  * comentario de PORTRAIT_STYLE_PROMPT sobre el recorte de fondo). */
-type ArtStyle = { base: string; openai: string; edit: string };
+type ArtStyle = {
+  base: string;
+  openai: string;
+  edit: string;
+  /** Lienzo que se le pide a OpenAI. Un busto entra cómodo en un cuadrado;
+   * una figura entera no — el modelo llena el marco y la cabeza termina
+   * pegada al borde de arriba. Por eso el cuerpo pide vertical, que es la
+   * misma proporción que ya usa ComfyUI (832x1216) y donde no se recorta. */
+  openaiSize: '1024x1024' | '1024x1536';
+};
 
 // Al EDITAR una imagen que ya existe, el encuadre y el estilo no hace falta
 // pedirlos: ya están en la imagen de partida. Repetirlos gastaba cerca del 40%
@@ -112,8 +121,14 @@ const PORTRAIT_STYLE: ArtStyle = {
   base: PORTRAIT_STYLE_PROMPT,
   openai: PORTRAIT_STYLE_PROMPT_OPENAI,
   edit: EDIT_STYLE_TAIL,
+  openaiSize: '1024x1024',
 };
-const BODY_STYLE: ArtStyle = { base: BODY_STYLE_PROMPT, openai: BODY_STYLE_PROMPT_OPENAI, edit: EDIT_STYLE_TAIL };
+const BODY_STYLE: ArtStyle = {
+  base: BODY_STYLE_PROMPT,
+  openai: BODY_STYLE_PROMPT_OPENAI,
+  edit: EDIT_STYLE_TAIL,
+  openaiSize: '1024x1536',
+};
 
 async function fetchBytes(url: string): Promise<Buffer> {
   const response = await fetch(url);
@@ -182,7 +197,7 @@ async function requestImageBytesOpenAI(
   form.append('model', 'gpt-image-1');
   form.append('image', new Blob([new Uint8Array(referenceImageBytes)], { type: 'image/png' }), 'reference.png');
   form.append('prompt', fullPrompt);
-  form.append('size', '1024x1024');
+  form.append('size', style.openaiSize);
   form.append('quality', 'high');
   // Sin esto, /edits deja que el modelo decida el fondo por su cuenta — el
   // texto del prompt ("fondo transparente") no alcanza de forma confiable,

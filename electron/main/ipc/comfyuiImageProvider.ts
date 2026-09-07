@@ -79,6 +79,9 @@ const NEGATIVE_PROMPT =
   '(watermark:1.3), (text:1.5), (letters:1.4), (words:1.4), (writing:1.4), (readable text:1.5), ' +
   '(typography:1.3), (caption:1.3), (subtitles:1.3), (sign:1.3), (label:1.3), (logo:1.3), signature, ' +
   '(photorealistic:1.3), (photograph:1.3), (photo:1.2), (realistic skin texture:1.2), ' +
+  // El recorte de cabeza salía incluso pidiendo margen en el positivo: para
+  // un sprite de cuerpo entero, tocar el borde es un defecto, no un encuadre.
+  '(cropped head:1.4), (head out of frame:1.4), (cut off at the top:1.3), (cropped:1.2), ' +
   '3d render, cgi, disfigured, extra limbs, cloned face, duplicate, ugly, jpeg artifacts';
 
 export const GREEN_SCREEN_INSTRUCTION =
