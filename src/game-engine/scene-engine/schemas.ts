@@ -363,6 +363,15 @@ export const DialogueChoiceSchema = z.object({
   next: z.string(),
   setState: z.record(z.string(), z.unknown()).optional(),
   addFlag: z.string().optional(),
+  /** Si no se cumple, la opción no se le ofrece al jugador.
+   *
+   * Es lo que hace que una capacidad sirva para algo más que abrir puertas:
+   * persuasión abre una línea de conversación que otro personaje no tiene,
+   * análisis deja señalar la contradicción que otro no ve. Se oculta en vez
+   * de mostrarse deshabilitada —al revés que en una zona— porque una opción
+   * de diálogo tachada delata que existía y arruina la sensación de que cada
+   * personaje conversa distinto. */
+  when: ConditionSchema.optional(),
 });
 
 export const DialogueNodeSchema = z.object({

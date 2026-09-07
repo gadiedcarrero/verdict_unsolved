@@ -138,3 +138,27 @@ describe('condiciones por personaje', () => {
     expect(evaluateCondition(caja, wraith)).toBe(true);
   });
 });
+
+// Una capacidad no solo abre puertas: también abre líneas de conversación que
+// otro personaje no tiene (ver DialogueChoice.when).
+describe('opciones de diálogo por capacidad', () => {
+  const opcionPersuasiva = condition({ capabilities: ['persuasion'] });
+
+  it('se ofrece a quien tiene la capacidad', () => {
+    expect(
+      evaluateCondition(opcionPersuasiva, context({ activeCharacterId: 'gray', capabilities: ['persuasion'] })),
+    ).toBe(true);
+  });
+
+  it('no se ofrece a quien no la tiene', () => {
+    expect(
+      evaluateCondition(opcionPersuasiva, context({ activeCharacterId: 'wraith', capabilities: ['fuerza'] })),
+    ).toBe(false);
+  });
+
+  // Una opción sin condición la ve todo el mundo: es el caso normal y no
+  // debería requerir escribir nada.
+  it('una opción sin condición está siempre disponible', () => {
+    expect(evaluateCondition(undefined, context())).toBe(true);
+  });
+});

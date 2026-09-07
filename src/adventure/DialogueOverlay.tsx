@@ -1,5 +1,5 @@
 import { useEffect, useState, type JSX } from 'react';
-import type { Character, DialogueNode } from '../game-engine/scene-engine/schemas';
+import type { Character, DialogueChoice, DialogueNode } from '../game-engine/scene-engine/schemas';
 import { gameAssetUrl } from './gameAssetUrl';
 import { translate } from '../i18n/translate';
 
@@ -77,6 +77,7 @@ export function DialogueOverlay({
   strings,
   onAdvance,
   onChoose,
+  isChoiceAvailable,
 }: {
   gameId: string;
   node: DialogueNode;
@@ -84,11 +85,18 @@ export function DialogueOverlay({
   strings: Record<string, string>;
   onAdvance: () => void;
   onChoose: (next: string, setState?: Record<string, unknown>, addFlag?: string) => void;
+  /** Si esta opción se le ofrece al jugador ahora mismo (ver
+   * `DialogueChoice.when`). Se recibe evaluada desde afuera: acá no hay
+   * acceso al estado de la partida ni al personaje activo. */
+  isChoiceAvailable: (choice: DialogueChoice) => boolean;
 }): JSX.Element {
   const character = characters.find((c) => c.id === node.speaker);
   const speakerLabel = character ? translate(strings, character.name) : node.speaker;
   const speakerColor = character?.color;
-  const choices = node.choices ?? [];
+  // Las opciones que el jugador no cumple no se muestran (ver
+  // DialogueChoice.when): si el personaje activo no tiene persuasión, esa
+  // línea sencillamente no está entre las que puede decir.
+  const choices = (node.choices ?? []).filter((choice) => isChoiceAvailable(choice));
   const hasChoices = choices.length > 0;
   // Si el nodo pide una expresión y el personaje tiene imagen cargada para
   // ella, se usa esa variante de retrato; si no (o si la expresión todavía

@@ -6,6 +6,7 @@ import { canSolve, globalEvidenceOf } from '../game-engine/scene-engine/investig
 import { inventoryItems, itemById } from '../game-engine/scene-engine/inventory';
 import type {
   AdventureCaseBundle,
+  DialogueChoice,
   DialogueNode,
   Character,
   Clue,
@@ -153,6 +154,8 @@ type AdventureRuntimeState = {
   /** Si la zona se le muestra al jugador con el estado actual de la partida
    * (`Hotspot.visibleWhen`). El editor NO la usa: ahí se ven todas. */
   isHotspotVisible: (hotspot: Hotspot) => boolean;
+  /** Si esta opción de diálogo se le ofrece al jugador (`DialogueChoice.when`). */
+  isChoiceAvailable: (choice: DialogueChoice) => boolean;
   /** Aviso corto centrado que se borra solo. */
   showTransientMessage: (messageKey: string) => void;
   /** `onComplete` corre después del fundido y de `scene.onEnter` — la usa
@@ -471,6 +474,9 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
 
   isHotspotVisible: (hotspot) =>
     evaluateCondition(hotspot.visibleWhen, conditionContextOf(get().caseState, get().bundle?.characters ?? [])),
+
+  isChoiceAvailable: (choice) =>
+    evaluateCondition(choice.when, conditionContextOf(get().caseState, get().bundle?.characters ?? [])),
 
   discoverClue: (clueId) => {
     const { caseState } = get();

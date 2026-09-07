@@ -168,6 +168,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const combiningHotspotId = useAdventureRuntimeStore((s) => s.combiningHotspotId);
   const transientMessageKey = useAdventureRuntimeStore((s) => s.transientMessageKey);
   const isHotspotVisible = useAdventureRuntimeStore((s) => s.isHotspotVisible);
+  const isChoiceAvailable = useAdventureRuntimeStore((s) => s.isChoiceAvailable);
   const caseState = useAdventureRuntimeStore((s) => s.caseState);
   const deductionOpen = useAdventureRuntimeStore((s) => s.deductionOpen);
   const getInvestigation = useAdventureRuntimeStore((s) => s.getInvestigation);
@@ -3085,6 +3086,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 strings={strings}
                 onAdvance={advance}
                 onChoose={selectChoice}
+                isChoiceAvailable={isChoiceAvailable}
               />
             )
           )}
