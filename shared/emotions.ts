@@ -22,6 +22,15 @@ export type EmotionCode = 'alegre' | 'serio' | 'molesto' | 'asustado' | 'asombra
 // Cada hint dice además qué hace la BOCA, que es el rasgo que más distingue
 // una expresión de otra a tamaño de retrato y el que estas etiquetas cortas
 // dejaban sin especificar.
+//
+// Ojo con "asustado" y "asombrado": los dos son cejas arriba, frente arrugada,
+// ojos grandes y boca abierta, y descritos así salen idénticos (fue el primer
+// intento de esto). Lo que de verdad los separa son tres cosas, y cada hint
+// las dice explícitas:
+//   cejas — rectas y juntas en el miedo, arqueadas y separadas en la sorpresa
+//   boca  — estirada de costado en el miedo, caída en O vertical en la sorpresa
+//   tensión — toda la cara tensa en el miedo, floja en la sorpresa
+// Cualquier retoque futuro tiene que mantener ese contraste, no suavizarlo.
 export const EMOTIONS: { code: EmotionCode; label: string; promptHint: string }[] = [
   {
     code: 'alegre',
@@ -45,13 +54,13 @@ export const EMOTIONS: { code: EmotionCode; label: string; promptHint: string }[
     code: 'asustado',
     label: 'Asustado',
     promptHint:
-      'frightened: eyebrows raised high and dragged together, horizontal creases across the forehead, eyes stretched wide with white clearly visible above the iris, mouth hanging open in a tense oval, chin drawn back and head shrinking away',
+      'terrified: eyebrows raised and squeezed straight together so the inner ends nearly touch, short vertical worry lines between them, upper eyelids lifted and LOWER eyelids tensed up hard, mouth stretched WIDE AND FLAT sideways with the lips pulled back toward the ears, neck tendons tight, chin pulled back and shoulders hunched up',
   },
   {
     code: 'asombrado',
     label: 'Asombrado',
     promptHint:
-      'astonished: eyebrows lifted high in smooth arches, forehead creased horizontally, eyes round and wide open, mouth dropped open in a slack circle, whole face lifted and slack with surprise rather than tense',
+      'astonished: eyebrows lifted straight up in high ROUNDED ARCHES and kept well apart, long horizontal creases right across the forehead, eyelids relaxed and not tense at all, jaw DROPPED STRAIGHT DOWN so the mouth makes a tall rounded O, cheeks and whole face slack and loose, head tilted slightly back',
   },
   {
     code: 'triste',
