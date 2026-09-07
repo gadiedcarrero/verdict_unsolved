@@ -1848,6 +1848,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         setCharacterArtErrors((prev) => ({ ...prev, [genId]: result.error }));
         return;
       }
+      // Regenerar escribe sobre el MISMO archivo, así que la ruta no cambia y
+      // el navegador sigue mostrando la versión cacheada: parecía que la IA
+      // devolvía siempre la misma imagen incluso después de cambiar de
+      // checkpoint. El mecanismo ya existía para voltear y para editar con
+      // IA; a la generación nunca se le había conectado.
+      setPortraitCacheBust((prev) => ({ ...prev, [result.path]: (prev[result.path] ?? 0) + 1 }));
       if (expressionKey) {
         setExpressionPath(characterId, expressionKey, result.path);
       } else {
@@ -1945,6 +1951,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         setCharacterArtErrors((prev) => ({ ...prev, [genId]: result.error }));
         return;
       }
+      setPortraitCacheBust((prev) => ({ ...prev, [result.path]: (prev[result.path] ?? 0) + 1 }));
       const fresh = (editedCharacters ?? baseCharacters).find((c) => c.id === characterId)?.variants[variantId];
       if (!fresh) return;
       updateVariant(
