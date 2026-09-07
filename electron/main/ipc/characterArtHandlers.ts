@@ -97,10 +97,23 @@ const BODY_STYLE_PROMPT_OPENAI =
 /** Encuadre/estilo que se le agrega al prompt del personaje. Una entrada por
  * proveedor con alfa nativo y otra para los que no lo tienen (ver el
  * comentario de PORTRAIT_STYLE_PROMPT sobre el recorte de fondo). */
-type ArtStyle = { base: string; openai: string };
+type ArtStyle = { base: string; openai: string; edit: string };
 
-const PORTRAIT_STYLE: ArtStyle = { base: PORTRAIT_STYLE_PROMPT, openai: PORTRAIT_STYLE_PROMPT_OPENAI };
-const BODY_STYLE: ArtStyle = { base: BODY_STYLE_PROMPT, openai: BODY_STYLE_PROMPT_OPENAI };
+// Al EDITAR una imagen que ya existe, el encuadre y el estilo no hace falta
+// pedirlos: ya están en la imagen de partida. Repetirlos gastaba cerca del 40%
+// del prompt en describir lo que no iba a cambiar, y ese presupuesto se lo
+// quitaba a lo único que sí tenía que cambiar — la cara. Queda solo lo que el
+// pipeline necesita después (fondo verde para recortar) y el ancla de color,
+// que sin ella el resultado se va a monocromo.
+const EDIT_STYLE_TAIL =
+  `Full colour, never greyscale, never a pencil or ink sketch. Same framing and same art style as the source image. ${NO_TEXT_INSTRUCTION}`;
+
+const PORTRAIT_STYLE: ArtStyle = {
+  base: PORTRAIT_STYLE_PROMPT,
+  openai: PORTRAIT_STYLE_PROMPT_OPENAI,
+  edit: EDIT_STYLE_TAIL,
+};
+const BODY_STYLE: ArtStyle = { base: BODY_STYLE_PROMPT, openai: BODY_STYLE_PROMPT_OPENAI, edit: EDIT_STYLE_TAIL };
 
 async function fetchBytes(url: string): Promise<Buffer> {
   const response = await fetch(url);
@@ -219,7 +232,9 @@ async function requestImageBytesComfyUI(
   editReference = false,
 ): Promise<ImageBytesResult> {
   try {
-    const fullPrompt = `${prompt}\n\n${style.base}\n\n${GREEN_SCREEN_INSTRUCTION}`;
+    // Editando, el estilo largo sobra (ver EDIT_STYLE_TAIL): la imagen de
+    // partida ya trae encuadre, luz y técnica.
+    const fullPrompt = `${prompt}\n\n${editReference ? style.edit : style.base}\n\n${GREEN_SCREEN_INSTRUCTION}`;
     const raw = await generateComfyUIImage({
       baseUrl: config.comfyuiBaseUrl,
       checkpoint: config.comfyuiCheckpoint,
