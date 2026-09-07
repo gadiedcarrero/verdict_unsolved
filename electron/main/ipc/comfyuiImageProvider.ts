@@ -41,6 +41,24 @@ import sharp from 'sharp';
 //
 // Es una decisión de estilo a nivel plataforma, que a futuro debería ser un
 // ajuste por juego (un juego fotorrealista querría exactamente lo contrario).
+// InstantID no entra desde el primer paso de denoising a propósito.
+//
+// Su ControlNet condiciona sobre los puntos faciales de la imagen de
+// referencia, y esos puntos codifican la EXPRESIÓN: dónde está la boca,
+// cuánto se abren los ojos, qué hacen las cejas. La composición de la cara se
+// decide en los primeros pasos, así que con start_at en 0 la cara de la
+// referencia quedaba fijada antes de que el prompt pudiera pedir otra cosa —
+// y todas las expresiones de un personaje salían con el mismo gesto que su
+// retrato base, sin importar qué dijera el texto.
+//
+// Dejando correr los primeros pasos sin condicionar, el prompt establece el
+// gesto y recién después entra InstantID a corregir la identidad. Es la misma
+// técnica del start_at que ya se usaba para IP-Adapter en los fondos.
+//
+// Si en algún momento las caras dejan de parecerse entre sí, este es el
+// número a bajar; si las expresiones vuelven a salir todas iguales, a subir.
+const IDENTITY_START_AT = 0.25;
+
 const NEGATIVE_PROMPT =
   'lowres, bad anatomy, bad hands, extra fingers, missing fingers, deformed, mutated, blurry, ' +
   '(watermark:1.3), (text:1.5), (letters:1.4), (words:1.4), (writing:1.4), (readable text:1.5), ' +
@@ -151,8 +169,8 @@ function instantIdWorkflow(
       positive: ['6', 0],
       negative: ['7', 0],
       weight: 0.65,
-      start_at: 0.0,
-      end_at: 0.7,
+      start_at: IDENTITY_START_AT,
+      end_at: 0.85,
     },
   };
   nodes['5'] = { class_type: 'EmptyLatentImage', inputs: { width: opts.width, height: opts.height, batch_size: 1 } };
