@@ -1821,6 +1821,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     prompt: string,
     expressionKey: string | null,
     referenceImagePath: string | null,
+    /** El mismo pedido como descripción, para los proveedores por difusión
+     * (ver generateEmotionExpression). */
+    descriptivePrompt: string | null = null,
   ): Promise<void> {
     const genId = expressionKey ? `${characterId}:${expressionKey}` : characterId;
     setGeneratingCharacterArtIds((prev) => [...prev, genId]);
@@ -1837,6 +1840,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         prompt,
         expressionKey,
         referenceImagePath,
+        descriptivePrompt,
       );
       console.log('[retrato]', genId, 'resultado', result);
       if (!result.ok) {
@@ -1986,28 +1990,40 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     const character = displayCharacters.find((c) => c.id === characterId);
     if (!character?.portrait) return;
     const hint = EMOTIONS.find((e) => e.code === emotionCode)?.promptHint ?? emotionCode;
-    // La descripción física va PRIMERO, antes de la expresión.
+    // El MISMO pedido en dos formas, porque los proveedores no funcionan
+    // igual y una sola redacción no le sirve a los dos:
     //
-    // InstantID entra recién al 25% del denoising (ver IDENTITY_START_AT), así
-    // que el primer cuarto corre solo con el texto — y son justo los pasos que
-    // deciden la edad, el color de pelo y la contextura. InstantID después
-    // aporta la estructura de la cara, pero NO la edad ni el pelo: eso sale
-    // del prompt o no sale.
-    //
-    // Con la expresión adelante, "a man in his mid-40s, short grey hair"
-    // quedaba tercero y llegaba diluido a esos pasos (CLIP pesa más lo que
-    // viene primero), y el personaje salía con la expresión correcta pero
-    // veinte años más joven. La expresión no necesita ir primera: se enuncia
-    // en mayúsculas y se repite al final, y además tiene los pasos siguientes
-    // para imponerse.
-    const prompt =
+    // - Nano Banana y OpenAI editan la imagen por endpoint (/edit,
+    //   /images/edits) e interpretan una instrucción: "redibujá a este mismo
+    //   personaje, cambiá solo la cara" es exactamente lo que hay que
+    //   decirles, y el "mantené todo igual" les sirve.
+    // - ComfyUI genera por difusión: no ejecuta instrucciones, condiciona
+    //   sobre tokens. Ahí "same person, same age, same outfit, same framing"
+    //   refuerza la imagen de partida y compite contra el cambio pedido — con
+    //   esa redacción la cara no se movía por más que se subiera el denoise.
+    //   Lo que sí entiende es la descripción de la imagen buscada.
+    const editPrompt =
       (character.description ? `${character.description}\n\n` : '') +
       `THE FACIAL EXPRESSION MUST BE: ${hint}. This overrides any expression, mood or gaze mentioned in the ` +
       `description above — the age, hair and build described there stay exactly as written. ` +
       `Everything else matches the reference image: same person, same age, same hair colour and hairstyle, ` +
       `same outfit, same art style, same framing, same colours. Only the facial expression changes.` +
       `\n\nAgain, the expression to draw is: ${hint}.`;
-    void generateCharacterPortraitArt(characterId, prompt, emotionCode, character.portrait);
+
+    // Sin verbos de edición ni "mantené": solo qué se ve en la imagen. La
+    // expresión va al final y repetida en corto, que es la parte que tiene
+    // que ganarle al latente de partida.
+    const describedPrompt =
+      (character.description ? `${character.description} ` : '') +
+      `His face is ${hint}. ${hint}.`;
+
+    void generateCharacterPortraitArt(
+      characterId,
+      editPrompt,
+      emotionCode,
+      character.portrait,
+      describedPrompt,
+    );
   }
 
   // "Crear variante": genera un personaje NUEVO a partir de otro ya

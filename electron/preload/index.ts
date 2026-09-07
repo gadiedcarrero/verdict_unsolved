@@ -36,8 +36,16 @@ const api: DesktopApi = {
       characterIds,
       knownCapabilities,
     ),
-  generateCharacterPortrait: (gameId, characterId, prompt, expressionKey, referenceImagePath) =>
-    ipcRenderer.invoke('ai:generate-character-portrait', gameId, characterId, prompt, expressionKey, referenceImagePath),
+  generateCharacterPortrait: (gameId, characterId, prompt, expressionKey, referenceImagePath, descriptivePrompt) =>
+    ipcRenderer.invoke(
+      'ai:generate-character-portrait',
+      gameId,
+      characterId,
+      prompt,
+      expressionKey,
+      referenceImagePath,
+      descriptivePrompt,
+    ),
   generateCharacterBody: (gameId, characterId, variantId, prompt, expressionKey, referenceImagePath) =>
     ipcRenderer.invoke(
       'ai:generate-character-body',

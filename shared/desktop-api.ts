@@ -147,6 +147,10 @@ export type DesktopApi = {
     prompt: string,
     expressionKey: string | null,
     referenceImagePath: string | null,
+    /** El mismo pedido escrito como DESCRIPCIÓN de la imagen buscada, para
+     * los proveedores que generan por difusión (ComfyUI) en vez de ejecutar
+     * una instrucción de edición. Null = usar `prompt` para todos. */
+    descriptivePrompt?: string | null,
   ) => Promise<PortraitSaveResult>;
   /** Cuerpo entero de una variante del personaje, para ponerlo EN la escena
    * (ver `CharacterVariant` en schemas.ts) — hermano de

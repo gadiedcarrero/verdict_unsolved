@@ -252,6 +252,9 @@ async function generateCharacterImage(
   // que hacen "a esta imagen ponela sonriendo", y ComfyUI era el único que no
   // podía, porque generaba de cero cada vez.
   editReference = false,
+  /** El MISMO pedido, escrito como descripción de la imagen buscada en vez de
+   * como instrucción de edición. Ver el porqué en el bloque de abajo. */
+  descriptivePrompt: string | null = null,
 ): Promise<ImageBytesResult> {
   if (config.imageProvider === 'openai') {
     if (!config.openaiApiKey) {
@@ -265,7 +268,21 @@ async function generateCharacterImage(
     return requestImageBytesOpenAI(config.openaiApiKey, prompt, referenceImageBytes, style);
   }
   if (config.imageProvider === 'comfyui') {
-    return requestImageBytesComfyUI(config, prompt, referenceImageBytes, style, editReference);
+    // Un modelo de difusión no ejecuta instrucciones, condiciona sobre
+    // tokens. "Keep everything identical: same person, same age, same
+    // outfit..." es perfecto para Nano Banana y OpenAI, que sí interpretan la
+    // orden, pero en img2img esa ristra de "same" refuerza la imagen de
+    // partida y compite contra el cambio pedido — subir el denoise cambiaba
+    // la corbata y dejaba la cara igual. Acá se manda la descripción de la
+    // imagen buscada, que es sobre lo que un modelo de difusión sabe
+    // condicionar.
+    return requestImageBytesComfyUI(
+      config,
+      descriptivePrompt ?? prompt,
+      referenceImageBytes,
+      style,
+      editReference,
+    );
   }
   if (!config.falApiKey) {
     return { ok: false, error: 'Falta la API key de fal.ai en Ajustes → Integraciones IA.' };
@@ -287,6 +304,7 @@ export function registerCharacterArtHandlers(): void {
       prompt: unknown,
       expressionKey: unknown,
       referenceImagePath: unknown,
+      descriptivePrompt: unknown,
     ) => {
       if (app.isPackaged) {
         return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
@@ -347,6 +365,7 @@ export function registerCharacterArtHandlers(): void {
           referenceImageBytes,
           PORTRAIT_STYLE,
           isExpressionEdit,
+          typeof descriptivePrompt === 'string' && descriptivePrompt.trim() ? descriptivePrompt.trim() : null,
         );
         if (!result.ok) return result;
 
