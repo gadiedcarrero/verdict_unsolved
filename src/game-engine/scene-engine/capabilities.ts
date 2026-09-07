@@ -1,3 +1,4 @@
+import { COMMON_CAPABILITIES } from '@shared/capabilities';
 import type { Character, Scene } from './schemas';
 
 /**
@@ -20,12 +21,15 @@ function conditionCapabilities(scene: Scene): string[] {
   return found;
 }
 
-/** Todas las capacidades que el juego menciona, las tenga alguien o no:
- * las que los personajes declaran más las que las zonas piden. Es el
- * vocabulario que el editor ofrece para elegir, en vez de dejar escribir
- * cualquier cosa y que un tipeo rompa una zona en silencio. */
+/** El vocabulario que el editor ofrece: el catálogo común (ver
+ * shared/capabilities.ts) más lo que este juego ya use — sea porque un
+ * personaje lo tiene o porque una zona lo pide.
+ *
+ * El catálogo entra siempre, incluso en un juego recién creado donde nadie
+ * tiene nada todavía: elegir de una lista es lo que evita que la misma
+ * capacidad se escriba distinto en dos lugares y deje una zona muda. */
 export function capabilityVocabulary(characters: readonly Character[], scenes: readonly Scene[]): string[] {
-  const all = new Set<string>();
+  const all = new Set<string>(COMMON_CAPABILITIES.map((capability) => capability.code));
   for (const character of characters) {
     for (const capability of character.capabilities) all.add(capability);
   }

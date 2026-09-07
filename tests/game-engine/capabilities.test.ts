@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { COMMON_CAPABILITIES } from '@shared/capabilities';
 import { capabilityVocabulary, unreachableCapabilities } from '@/game-engine/scene-engine/capabilities';
 import { CharacterSchema, SceneSchema, type Character, type Scene } from '@/game-engine/scene-engine/schemas';
 
@@ -35,22 +36,43 @@ const GRAY = character('director-gray', ['analisis', 'hackeo']);
 const WRAITH = character('wraith', ['fuerza', 'infiltracion']);
 
 describe('capabilityVocabulary', () => {
-  it('junta lo que tienen los personajes y lo que piden las zonas', () => {
-    const vocabulary = capabilityVocabulary([GRAY, WRAITH], [sceneRequiring('e1', [{ capabilities: ['nadar'] }])]);
+  // El catálogo común entra siempre (ver shared/capabilities.ts): es lo que
+  // hace que "fuerza" se elija de una lista en todos los juegos en vez de
+  // reescribirse, que es de donde salían los tipeos que dejaban zonas mudas.
+  it('incluye el catálogo común aunque el juego no use nada todavía', () => {
+    const vocabulary = capabilityVocabulary([], []);
 
-    expect(vocabulary).toEqual(['analisis', 'fuerza', 'hackeo', 'infiltracion', 'nadar']);
+    for (const { code } of COMMON_CAPABILITIES) {
+      expect(vocabulary).toContain(code);
+    }
   });
 
-  it('no repite una capacidad que tienen varios', () => {
+  it('suma lo que tienen los personajes y lo que piden las zonas', () => {
+    const vocabulary = capabilityVocabulary([GRAY, WRAITH], [sceneRequiring('e1', [{ capabilities: ['nadar'] }])]);
+
+    // Propias del juego, que el catálogo no puede anticipar.
+    expect(vocabulary).toContain('nadar');
+    expect(vocabulary).toContain('infiltracion');
+    // Y el catálogo sigue estando.
+    expect(vocabulary).toContain('deduccion');
+  });
+
+  it('no repite una capacidad que ya está en el catálogo', () => {
     const vocabulary = capabilityVocabulary([character('a', ['fuerza']), character('b', ['fuerza'])], []);
 
-    expect(vocabulary).toEqual(['fuerza']);
+    expect(vocabulary.filter((c) => c === 'fuerza')).toHaveLength(1);
   });
 
   it('mira también las condiciones de visibilidad, no solo las de habilitación', () => {
     const scene = sceneRequiring('e1', [{ capabilities: ['vista-aguda'], via: 'visibleWhen' }]);
 
-    expect(capabilityVocabulary([], [scene])).toEqual(['vista-aguda']);
+    expect(capabilityVocabulary([], [scene])).toContain('vista-aguda');
+  });
+
+  it('viene ordenado, para que el editor no baraje los botones entre renders', () => {
+    const vocabulary = capabilityVocabulary([GRAY], [sceneRequiring('e1', [{ capabilities: ['nadar'] }])]);
+
+    expect(vocabulary).toEqual([...vocabulary].sort((a, b) => a.localeCompare(b)));
   });
 });
 

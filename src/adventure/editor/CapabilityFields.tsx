@@ -1,4 +1,5 @@
 import { useState, type JSX } from 'react';
+import { capabilityLabel } from '../../../shared/capabilities';
 import type { Character } from '../../game-engine/scene-engine/schemas';
 
 /**
@@ -47,12 +48,6 @@ export function CapabilityFields({
     <div className="mt-2 border-t border-graphite-800 pt-1">
       <p className="mb-1 text-[9px] text-graphite-500 uppercase">Capacidades</p>
 
-      {vocabulary.length === 0 && (
-        <p className="mb-1 text-[9px] text-graphite-600">
-          Todavía no hay ninguna. Agregá la primera abajo (fuerza, hackeo, infiltración…).
-        </p>
-      )}
-
       <div className="mb-1 flex flex-wrap gap-1">
         {vocabulary.map((capability) => {
           const has = character.capabilities.includes(capability);
@@ -73,7 +68,7 @@ export function CapabilityFields({
                     : 'border-graphite-700 text-graphite-500 hover:border-graphite-500'
               }`}
             >
-              {capability}
+              {capabilityLabel(capability)}
               {nadieLaTiene && ' ⚠'}
             </button>
           );
