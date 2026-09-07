@@ -3,6 +3,7 @@ import { createEmptyAdventureCaseState, type AdventureCaseState, type VariableVa
 import { useSaveStore } from '../game-engine/save-system/save.store';
 import { conditionContextOf, evaluateCondition } from '../game-engine/scene-engine/conditions';
 import { canSolve, globalEvidenceOf } from '../game-engine/scene-engine/investigation';
+import { remainingSeconds, timerSecondsFor } from '../game-engine/scene-engine/timer';
 import { inventoryItems, itemById } from '../game-engine/scene-engine/inventory';
 import type {
   AdventureCaseBundle,
@@ -76,6 +77,11 @@ type AdventureRuntimeState = {
   activeBackgroundId: string | null;
   /** No null mientras hay un minijuego abierto — ver acción `openMinigame`. */
   activeMinigame: ActiveMinigame | null;
+  /** Segundos que quedan en la escena con reloj, o null si no tiene (ver
+   * `SceneTimer`). Se reinicia al entrar a la escena: no se persiste a
+   * propósito, porque restaurar una partida con tres segundos en el reloj es
+   * una escena imposible, no un desafío. */
+  timerSeconds: number | null;
 
   init: (bundle: AdventureCaseBundle, persisted: AdventureCaseState | null) => void;
   getActiveScene: () => Scene | null;
@@ -158,6 +164,10 @@ type AdventureRuntimeState = {
   isChoiceAvailable: (choice: DialogueChoice) => boolean;
   /** Aviso corto centrado que se borra solo. */
   showTransientMessage: (messageKey: string) => void;
+  /** Arranca la cuenta regresiva de la escena, si tiene. Corta la anterior. */
+  startSceneTimer: (scene: Scene) => void;
+  /** La detiene sin disparar `onExpire` — al salir de la escena o resolverla. */
+  stopSceneTimer: () => void;
   /** `onComplete` corre después del fundido y de `scene.onEnter` — la usa
    * `runActions` para encadenar lo que venga después de un `transitionTo`
    * (p. ej. "cambiar de escena y ADEMÁS hacer hablar a un personaje": sin
@@ -174,6 +184,11 @@ type AdventureRuntimeState = {
    * a correr `init()` de cero en vez de arrastrar el bundle anterior. */
   reset: () => void;
 };
+
+// Fuera del store a propósito: es un recurso del navegador, no estado que se
+// renderice. Guardarlo en el store haría re-render en cada arranque de reloj
+// sin que nada de lo que se ve haya cambiado.
+let timerHandle: number | null = null;
 
 function persistIfRegistered(state: AdventureCaseState): void {
   if (!state.registered) return;
@@ -195,6 +210,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   cluePanelOpen: false,
   activeBackgroundId: null,
   activeMinigame: null,
+  timerSeconds: null,
 
   init: (bundle, persisted) => {
     const startingSceneId = bundle.case.startingSceneId;
@@ -213,6 +229,7 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       cluePanelOpen: false,
       activeBackgroundId: null,
       activeMinigame: null,
+      timerSeconds: null,
     });
   },
 
@@ -289,6 +306,43 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       return;
     }
     get().showTransientMessage('interactWith.noMatch');
+  },
+
+  startSceneTimer: (scene) => {
+    get().stopSceneTimer();
+    if (!scene.timer) {
+      set({ timerSeconds: null });
+      return;
+    }
+    const capabilities = get().getActiveCharacter()?.capabilities ?? [];
+    const total = timerSecondsFor(scene.timer, capabilities);
+    const endsAt = Date.now() + total * 1000;
+    set({ timerSeconds: total });
+
+    // Se compara contra un timestamp en vez de restar uno por tick: un
+    // intervalo de navegador se atrasa (pestaña en segundo plano, hilo
+    // ocupado) y restando de a uno el reloj mentiría a favor del jugador.
+    timerHandle = window.setInterval(() => {
+      const scene_ = get().getActiveScene();
+      if (!scene_?.timer) {
+        get().stopSceneTimer();
+        return;
+      }
+      const left = remainingSeconds(endsAt, Date.now());
+      set({ timerSeconds: left });
+      if (left > 0) return;
+      // Se detiene ANTES de correr las acciones: `onExpire` suele cambiar de
+      // escena, y un intervalo vivo durante la transición volvería a dispararlo.
+      get().stopSceneTimer();
+      get().runActions(scene_.timer.onExpire);
+    }, 250);
+  },
+
+  stopSceneTimer: () => {
+    if (timerHandle !== null) {
+      window.clearInterval(timerHandle);
+      timerHandle = null;
+    }
   },
 
   showTransientMessage: (messageKey) => {
@@ -633,6 +687,9 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
   completeInvestigation: () => {
     const investigation = get().getInvestigation();
     if (!investigation) return;
+    // Resolver la escena para el reloj: seguir corriendo después de que el
+    // jugador ganó solo puede hacerle perder algo que ya había conseguido.
+    get().stopSceneTimer();
 
     const sceneId = get().currentSceneId;
     set((state) => ({
@@ -680,6 +737,9 @@ export const useAdventureRuntimeStore = create<AdventureRuntimeState>((set, get)
       }));
       persistIfRegistered(get().caseState);
       if (scene?.onEnter) get().runActions(scene.onEnter);
+      // Después de `onEnter` porque ahí puede cambiar el personaje activo, y
+      // de eso depende cuánto tiempo hay (ver SceneTimer.capabilityBonus).
+      if (scene) get().startSceneTimer(scene);
       window.setTimeout(
         () => {
           set({ transitioning: false });

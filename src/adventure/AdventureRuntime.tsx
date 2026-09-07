@@ -43,6 +43,7 @@ import { capabilityVocabulary, unreachableCapabilities } from '../game-engine/sc
 import { resolvePanelCharacterIds } from '../game-engine/scene-engine/panelCharacters';
 import { CharacterHud } from './CharacterHud';
 import { InventoryBar } from './InventoryBar';
+import { SceneTimerBar } from './SceneTimerBar';
 import { CluePanel } from './CluePanel';
 import { DeductionPanel } from './DeductionPanel';
 import { DialogueOverlay } from './DialogueOverlay';
@@ -184,6 +185,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const setActiveCharacter = useAdventureRuntimeStore((s) => s.setActiveCharacter);
   const investigation = getInvestigation();
   const getInventory = useAdventureRuntimeStore((s) => s.getInventory);
+  const timerSeconds = useAdventureRuntimeStore((s) => s.timerSeconds);
   const activeCharacter = getActiveCharacter();
   const activeBackgroundId = useAdventureRuntimeStore((s) => s.activeBackgroundId);
   const advance = useAdventureRuntimeStore((s) => s.advance);
@@ -3064,6 +3066,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
               onSolve={solveInvestigation}
               onOpenClues={() => setCluePanelOpen(true)}
             />
+          )}
+          {timerSeconds !== null && displayScene.timer && (
+            <SceneTimerBar seconds={timerSeconds} label={displayScene.timer.label} strings={strings} />
           )}
           <InventoryBar items={getInventory()} strings={strings} gameId={gameId} />
           {activeCharacter && (

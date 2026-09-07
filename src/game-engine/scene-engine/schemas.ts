@@ -594,6 +594,30 @@ export const InvestigationSchema = z.object({
   onSolved: z.array(SceneActionSchema).default([]),
 });
 
+/**
+ * Un límite de tiempo para la escena: desarmar la bomba antes de que estalle,
+ * salir antes de quedarse sin aire.
+ *
+ * `capabilityBonus` es lo que hace que una capacidad valga por algo más que
+ * abrir puertas: no habilita ni bloquea nada, mueve un número. Un personaje
+ * con respiración subacuática aguanta más que otro en la misma escena, y eso
+ * no se puede expresar con una condición, que solo sabe decir sí o no.
+ */
+export const SceneTimerSchema = z.object({
+  /** Segundos base, para un personaje sin ninguna capacidad que sume. */
+  seconds: z.number(),
+  /** Clave de traducción de lo que se muestra al lado del reloj
+   * ("Detonación en", "Oxígeno"). El nombre es parte de la tensión: no es lo
+   * mismo ver correr "tiempo" que ver correr "oxígeno". */
+  label: z.string(),
+  /** Capacidad → segundos que le suma a quien la tiene. Se acumulan si el
+   * personaje tiene varias. */
+  capabilityBonus: z.record(z.string(), z.number()).default({}),
+  /** Qué pasa al llegar a cero. Sin esto el reloj llega a cero y no hace
+   * nada, que es una promesa incumplida al jugador. */
+  onExpire: z.array(SceneActionSchema).default([]),
+});
+
 const SceneObjectSchema = z.object({
   id: z.string(),
   /** Nombre legible para el editor (ej. "Oficina de Gray") — el `id` sigue
@@ -633,6 +657,9 @@ const SceneObjectSchema = z.object({
    * sigue el que venía. El jugador puede cambiar al que quiera de los
    * desbloqueados: esto fija con cuál empieza, no lo encierra. */
   activeCharacterId: z.string().optional(),
+  /** Cuenta regresiva mientras se juega esta escena (ver `SceneTimerSchema`).
+   * Ausente = sin límite de tiempo, que es el caso normal. */
+  timer: SceneTimerSchema.optional(),
   /** Objetos que se pueden conseguir EN esta escena (ver `ItemSchema`). La
    * definición vive donde se consigue el objeto; llevarlo y usarlo funciona
    * en cualquier otra escena. */
@@ -841,6 +868,7 @@ export type Hotspot = z.infer<typeof HotspotSchema>;
 export type Condition = z.infer<typeof ConditionSchema>;
 export type Clue = z.infer<typeof ClueSchema>;
 export type Item = z.infer<typeof ItemSchema>;
+export type SceneTimer = z.infer<typeof SceneTimerSchema>;
 export type Deduction = z.infer<typeof DeductionSchema>;
 export type Investigation = z.infer<typeof InvestigationSchema>;
 export type Comparison = z.infer<typeof ComparisonSchema>;
