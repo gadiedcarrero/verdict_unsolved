@@ -44,6 +44,23 @@ function poseReferencePath(): string {
 const POSE_GUIDE_INSTRUCTION =
   "Use the attached reference image ONLY as a structural pose guide: copy its camera framing, bust crop, and exact 3/4 body/head turn direction and angle. Completely ignore and discard the reference image's identity — different face, different hair, different age, different clothing, different everything except the pose/orientation/framing. Draw this character instead: ";
 
+/**
+ * El lenguaje visual de los PERSONAJES, uno solo para el busto y para el
+ * cuerpo entero.
+ *
+ * Estaba escrito dos veces —el retrato pedía pincelada pictórica y el cuerpo
+ * contorno negro y cel-shading— y el resultado era el mismo personaje en dos
+ * estilos distintos, que además se ven juntos: el cuerpo está en la escena
+ * mientras el busto habla en el círculo de diálogo. Definido una sola vez, no
+ * pueden volver a separarse.
+ *
+ * Los FONDOS siguen con su propio estilo pictórico a propósito: ese contraste
+ * es lo que hace que un recorte sobre un fondo generado se lea como decisión
+ * y no como un pegote (ver BACKGROUND_STYLE_PROMPT).
+ */
+const CHARACTER_ART_STYLE =
+  'Bold black outline around the figure and its main internal shapes, flat cel-shaded cartoon style in full colour — never greyscale, never a pencil or ink sketch — clean confident linework, simple solid colors, minimal texture, even lighting.';
+
 // Ver memoria "busto 3/4, fondo transparente" — mismo criterio que
 // DialogueOverlay.tsx (el retrato se dibuja sin recorte, sobresaliendo de
 // un aro decorativo, así que necesita fondo transparente para verse bien).
@@ -54,14 +71,14 @@ const POSE_GUIDE_INSTRUCTION =
 // transparencia real se logra con un recorte de fondo aparte (ver
 // removeBackground más abajo), no con el modelo de generación.
 const PORTRAIT_STYLE_PROMPT =
-  `Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Plain, simple, softly lit background — no scenery, no props, no other characters. Full colour stylized illustrated adventure-game character art — never greyscale, never a pencil or ink sketch — clean linework, painterly shading, dramatic but flattering lighting. No watermark, no border or frame, no checkerboard/transparency pattern drawn as an image. ${NO_TEXT_INSTRUCTION}`;
+  `Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Plain, simple, softly lit background — no scenery, no props, no other characters. ${CHARACTER_ART_STYLE} No watermark, no border or frame, no checkerboard/transparency pattern drawn as an image. ${NO_TEXT_INSTRUCTION}`;
 
 // Mismo encuadre que la versión de Nano Banana, pero con fondo transparente
 // nativo (gpt-image-1 sí produce alfa real cuando se le pide "background:
 // transparent" en la request, a diferencia de Nano Banana) — no hace falta
 // un paso de recorte aparte para este proveedor.
 const PORTRAIT_STYLE_PROMPT_OPENAI =
-  `Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Fully transparent background — no scenery, no backdrop, no ground. Full colour stylized illustrated adventure-game character art — never greyscale, never a pencil or ink sketch — clean linework, painterly shading, dramatic but flattering lighting. No watermark, no border or frame. ${NO_TEXT_INSTRUCTION}`;
+  `Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Fully transparent background — no scenery, no backdrop, no ground. ${CHARACTER_ART_STYLE} No watermark, no border or frame. ${NO_TEXT_INSTRUCTION}`;
 
 // Cuerpo entero para poner EN la escena (ver CharacterVariant en
 // schemas.ts), no el busto del círculo de diálogo. Dos decisiones de arte
@@ -79,10 +96,10 @@ const PORTRAIT_STYLE_PROMPT_OPENAI =
 // sentado en silla de ruedas, encapuchado). Esto solo garantiza que entre
 // entera en el cuadro sea cual sea.
 const BODY_STYLE_PROMPT =
-  `Full-body character sprite: the ENTIRE figure is visible from the top of the head to the feet, centered, ZOOMED OUT far enough that there is clear empty space above the head and below the feet. Nothing may touch or cross any edge of the image — not the hair, not the feet, not a wheelchair wheel. Never crop the head. Keep the pose described above, seen straight on at eye level, with no dramatic perspective or foreshortening. Bold black outline around the figure and its main internal shapes, flat cel-shaded cartoon style in full colour — never greyscale, never a pencil sketch — clean confident linework, simple solid colors, minimal texture, even neutral lighting. Plain, simple, flat background — no scenery, no props, no other characters, no floor, no cast shadow. No watermark, no border or frame, no checkerboard/transparency pattern drawn as an image. ${NO_TEXT_INSTRUCTION}`;
+  `Full-body character sprite: the ENTIRE figure is visible from the top of the head to the feet, centered, ZOOMED OUT far enough that there is clear empty space above the head and below the feet. Nothing may touch or cross any edge of the image — not the hair, not the feet, not a wheelchair wheel. Never crop the head. Keep the pose described above, seen straight on at eye level, with no dramatic perspective or foreshortening. ${CHARACTER_ART_STYLE} Plain, simple, flat background — no scenery, no props, no other characters, no floor, no cast shadow. No watermark, no border or frame, no checkerboard/transparency pattern drawn as an image. ${NO_TEXT_INSTRUCTION}`;
 
 const BODY_STYLE_PROMPT_OPENAI =
-  `Full-body character sprite: the ENTIRE figure is visible from the top of the head to the feet, centered, ZOOMED OUT far enough that there is clear empty space above the head and below the feet. Nothing may touch or cross any edge of the image — not the hair, not the feet, not a wheelchair wheel. Never crop the head. Keep the pose described above, seen straight on at eye level, with no dramatic perspective or foreshortening. Bold black outline around the figure and its main internal shapes, flat cel-shaded cartoon style in full colour — never greyscale, never a pencil sketch — clean confident linework, simple solid colors, minimal texture, even neutral lighting. Fully transparent background — no scenery, no backdrop, no floor, no cast shadow. No watermark, no border or frame. ${NO_TEXT_INSTRUCTION}`;
+  `Full-body character sprite: the ENTIRE figure is visible from the top of the head to the feet, centered, ZOOMED OUT far enough that there is clear empty space above the head and below the feet. Nothing may touch or cross any edge of the image — not the hair, not the feet, not a wheelchair wheel. Never crop the head. Keep the pose described above, seen straight on at eye level, with no dramatic perspective or foreshortening. ${CHARACTER_ART_STYLE} Fully transparent background — no scenery, no backdrop, no floor, no cast shadow. No watermark, no border or frame. ${NO_TEXT_INSTRUCTION}`;
 
 // OJO con el prompt que llega acá para una expresión: lo arma el renderer
 // como una instrucción de EDICIÓN ("Redraw this exact same character... keep
