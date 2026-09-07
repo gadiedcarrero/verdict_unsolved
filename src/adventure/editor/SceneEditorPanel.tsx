@@ -33,6 +33,25 @@ import type { EditableRect } from './EditableBox';
 const READABLE_TEXT_RISK_PATTERN =
   /\b(list|text|written|writing|words?|letters?|screens? showing|display(ing)? (a|the)|document|newspaper|headline|caption|subtitles?|sign(s)? (with|showing)|label(s|ed)?|page(s)? of|book with|handwriting|highlighting the (name|word)|reveal(ing|s)? the (name|word))\b/i;
 
+// Un modelo de difusión no sabe dibujar "nada": está entrenado para generar
+// contenido, así que un prompt que describe ausencia se rellena con lo que el
+// checkpoint tenga por defecto — o, si insiste, devuelve un rectángulo negro
+// de 2 MB. Los rótulos del guion ("Pantalla negra. Texto: ACHERON SYSTEMS")
+// no son imágenes: son un color de fondo con el caption encima.
+const EMPTY_SCREEN_PATTERN =
+  /\b(black screen|blank screen|empty screen|completely black|pure black|nothing visible|no visible details|darkness|fade to black|blackness)\b/i;
+
+function EmptyScreenHint({ prompt }: { prompt: string }): JSX.Element | null {
+  if (!EMPTY_SCREEN_PATTERN.test(prompt)) return null;
+  return (
+    <p className="mb-2 text-[9px] text-amber-accent/80">
+      ⚠ Esta descripción pide una pantalla vacía o negra. Un generador de imagen no puede dibujar "nada": o la
+      rellena con lo que se le ocurra, o devuelve un rectángulo negro de varios MB. Para un rótulo como este, dejá
+      el fondo sin imagen y usá el color de fondo del panel — el texto va en el caption, encima.
+    </p>
+  );
+}
+
 function TextRiskHint({ prompt }: { prompt: string }): JSX.Element | null {
   if (!READABLE_TEXT_RISK_PATTERN.test(prompt)) return null;
   return (
@@ -344,7 +363,11 @@ function BackgroundThumb({
             />
             <span className="text-[8px] text-graphite-500">ms</span>
           </label>
-          {fieldsVariant === 'intro' && (
+          {/* El color no es solo de "intro": una cinemática abre con rótulos
+              ("Pantalla negra", "TRES AÑOS DESPUÉS") que son un color con el
+              caption encima, no una imagen. Estaba oculto ahí y por eso esos
+              paneles terminaban generando un rectángulo negro de 2 MB. */}
+          {(fieldsVariant === 'intro' || fieldsVariant === 'cinematica') && (
             <>
               <label className="flex items-center gap-1">
                 <input
@@ -460,6 +483,7 @@ function GenerateBackgroundForm({
         className={`${inputClassName} mb-2`}
       />
       <TextRiskHint prompt={prompt} />
+      <EmptyScreenHint prompt={prompt} />
       {characters.length > 0 && (
         <div className="mb-2">
           <p className="mb-1 text-[8px] tracking-widest text-graphite-500 uppercase">
@@ -559,6 +583,7 @@ function RegenerateBackgroundForm({
         className={`${inputClassName} mb-2`}
       />
       <TextRiskHint prompt={prompt} />
+      <EmptyScreenHint prompt={prompt} />
       {characters.length > 0 && (
         <div className="mb-2">
           <p className="mb-1 text-[8px] tracking-widest text-graphite-500 uppercase">
@@ -667,6 +692,7 @@ function PendingPanelQueue({
         className={`${inputClassName} mb-1`}
       />
       <TextRiskHint prompt={prompt} />
+      <EmptyScreenHint prompt={prompt} />
       <textarea
         value={caption}
         onChange={(event) => setCaption(event.target.value)}

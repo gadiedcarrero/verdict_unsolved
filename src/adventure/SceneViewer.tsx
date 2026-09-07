@@ -112,7 +112,12 @@ export function SceneViewer({
           cursor: editMode ? undefined : cursorCssValue(gameId, siteSettings.cursor.defaultCursorPath, 'auto'),
         }}
       >
-        {activeBackground ? (
+        {/* `assetPath` vacío = panel de color sólido, sin imagen: los rótulos
+            del guion ("Pantalla negra", "TRES AÑOS DESPUÉS") son un color con
+            el caption encima, no una imagen que generar. Sin este caso, un
+            fondo sin archivo dibujaba el marcador de asset faltante encima
+            del color. */}
+        {activeBackground && activeBackground.assetPath.trim() ? (
           activeBackground.imageWidthPercent ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <PlaceholderLayer
@@ -128,7 +133,7 @@ export function SceneViewer({
               className="absolute inset-0 h-full w-full object-cover"
             />
           )
-        ) : (
+        ) : activeBackground ? null : (
           <div className="absolute inset-0 flex items-center justify-center text-xs tracking-widest text-graphite-600 uppercase">
             Sin fondo — agregá uno en el editor
           </div>
