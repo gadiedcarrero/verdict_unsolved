@@ -54,14 +54,14 @@ const POSE_GUIDE_INSTRUCTION =
 // transparencia real se logra con un recorte de fondo aparte (ver
 // removeBackground más abajo), no con el modelo de generación.
 const PORTRAIT_STYLE_PROMPT =
-  `Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Plain, simple, softly lit background — no scenery, no props, no other characters. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No watermark, no border or frame, no checkerboard/transparency pattern drawn as an image. ${NO_TEXT_INSTRUCTION}`;
+  `Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Plain, simple, softly lit background — no scenery, no props, no other characters. Full colour stylized illustrated adventure-game character art — never greyscale, never a pencil or ink sketch — clean linework, painterly shading, dramatic but flattering lighting. No watermark, no border or frame, no checkerboard/transparency pattern drawn as an image. ${NO_TEXT_INSTRUCTION}`;
 
 // Mismo encuadre que la versión de Nano Banana, pero con fondo transparente
 // nativo (gpt-image-1 sí produce alfa real cuando se le pide "background:
 // transparent" en la request, a diferencia de Nano Banana) — no hace falta
 // un paso de recorte aparte para este proveedor.
 const PORTRAIT_STYLE_PROMPT_OPENAI =
-  `Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Fully transparent background — no scenery, no backdrop, no ground. Stylized illustrated adventure-game character art, clean linework, painterly shading, dramatic but flattering lighting. No watermark, no border or frame. ${NO_TEXT_INSTRUCTION}`;
+  `Bust portrait, framed from mid-chest up, character positioned in the lower half of the image with clear headroom above the head. Fully transparent background — no scenery, no backdrop, no ground. Full colour stylized illustrated adventure-game character art — never greyscale, never a pencil or ink sketch — clean linework, painterly shading, dramatic but flattering lighting. No watermark, no border or frame. ${NO_TEXT_INSTRUCTION}`;
 
 // Cuerpo entero para poner EN la escena (ver CharacterVariant en
 // schemas.ts), no el busto del círculo de diálogo. Dos decisiones de arte
@@ -79,11 +79,21 @@ const PORTRAIT_STYLE_PROMPT_OPENAI =
 // sentado en silla de ruedas, encapuchado). Esto solo garantiza que entre
 // entera en el cuadro sea cual sea.
 const BODY_STYLE_PROMPT =
-  `Full-body character sprite: the ENTIRE figure is visible from head to feet, centered, with a small margin on every side — nothing cropped at any edge. Keep the pose described above, seen straight on at eye level, with no dramatic perspective or foreshortening. Bold black outline around the figure and its main internal shapes, flat cel-shaded cartoon style, clean confident linework, simple solid colors, minimal texture, even neutral lighting. Plain, simple, flat background — no scenery, no props, no other characters, no floor, no cast shadow. No watermark, no border or frame, no checkerboard/transparency pattern drawn as an image. ${NO_TEXT_INSTRUCTION}`;
+  `Full-body character sprite: the ENTIRE figure is visible from head to feet, centered, with a small margin on every side — nothing cropped at any edge. Keep the pose described above, seen straight on at eye level, with no dramatic perspective or foreshortening. Bold black outline around the figure and its main internal shapes, flat cel-shaded cartoon style in full colour — never greyscale, never a pencil sketch — clean confident linework, simple solid colors, minimal texture, even neutral lighting. Plain, simple, flat background — no scenery, no props, no other characters, no floor, no cast shadow. No watermark, no border or frame, no checkerboard/transparency pattern drawn as an image. ${NO_TEXT_INSTRUCTION}`;
 
 const BODY_STYLE_PROMPT_OPENAI =
-  `Full-body character sprite: the ENTIRE figure is visible from head to feet, centered, with a small margin on every side — nothing cropped at any edge. Keep the pose described above, seen straight on at eye level, with no dramatic perspective or foreshortening. Bold black outline around the figure and its main internal shapes, flat cel-shaded cartoon style, clean confident linework, simple solid colors, minimal texture, even neutral lighting. Fully transparent background — no scenery, no backdrop, no floor, no cast shadow. No watermark, no border or frame. ${NO_TEXT_INSTRUCTION}`;
+  `Full-body character sprite: the ENTIRE figure is visible from head to feet, centered, with a small margin on every side — nothing cropped at any edge. Keep the pose described above, seen straight on at eye level, with no dramatic perspective or foreshortening. Bold black outline around the figure and its main internal shapes, flat cel-shaded cartoon style in full colour — never greyscale, never a pencil sketch — clean confident linework, simple solid colors, minimal texture, even neutral lighting. Fully transparent background — no scenery, no backdrop, no floor, no cast shadow. No watermark, no border or frame. ${NO_TEXT_INSTRUCTION}`;
 
+// OJO con el prompt que llega acá para una expresión: lo arma el renderer
+// como una instrucción de EDICIÓN ("Redraw this exact same character... keep
+// everything else identical"), que es lo correcto para Nano Banana y OpenAI,
+// que editan la imagen de referencia. ComfyUI no edita: InstantID genera de
+// cero y solo toma la identidad de la cara, así que esa instrucción no se
+// ejecuta — son tokens sueltos que además empujan al dibujo monocromo
+// ("redraw", "linework"). Por eso el estilo ancla el color de forma
+// explícita. La solución de fondo es que el renderer mande la descripción y
+// la emoción por separado y que cada proveedor arme su propio prompt, en vez
+// de una sola instrucción pensada para uno solo de los tres.
 /** Encuadre/estilo que se le agrega al prompt del personaje. Una entrada por
  * proveedor con alfa nativo y otra para los que no lo tienen (ver el
  * comentario de PORTRAIT_STYLE_PROMPT sobre el recorte de fondo). */
