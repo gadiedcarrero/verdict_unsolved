@@ -1986,11 +1986,23 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     const character = displayCharacters.find((c) => c.id === characterId);
     if (!character?.portrait) return;
     const hint = EMOTIONS.find((e) => e.code === emotionCode)?.promptHint ?? emotionCode;
+    // La emoción va primero y se repite al final, después de la descripción.
+    // La descripción del personaje suele traer su propia expresión metida en
+    // la identidad ("a stern face lined with fatigue... a focused expression
+    // and an analytical gaze"), y al ir después le ganaba a lo que se pedía:
+    // molesto, serio y asustado salían todos con la misma cara adusta. Decir
+    // explícitamente que la expresión de la descripción no aplica es lo que
+    // libera la cara para que cambie.
     const prompt =
-      `Redraw this exact same character with a ${hint} facial expression. Keep everything else identical: ` +
-      `same face structure, same hairstyle, same outfit, same art style, same framing. Only the facial ` +
-      `expression (and subtly the pose, if it helps convey the emotion) should change.` +
-      (character.description ? `\n\nCharacter description for reference: ${character.description}` : '');
+      `Redraw this exact same character. THE FACIAL EXPRESSION MUST BE: ${hint}. ` +
+      `Keep everything else identical: same face structure, same age, same hairstyle, same outfit, ` +
+      `same art style, same framing, same colours. Only the facial expression (and subtly the pose, if ` +
+      `it helps convey the emotion) changes.` +
+      (character.description
+        ? `\n\nWho the character is (for identity only — ignore any expression, mood or gaze mentioned ` +
+          `here, it is overridden by the expression above): ${character.description}`
+        : '') +
+      `\n\nAgain, the expression to draw is: ${hint}.`;
     void generateCharacterPortraitArt(characterId, prompt, emotionCode, character.portrait);
   }
 

@@ -12,13 +12,53 @@
  */
 export type EmotionCode = 'alegre' | 'serio' | 'molesto' | 'asustado' | 'asombrado' | 'triste';
 
+// Los hints describen la CARA, no la emoción. "angry, irritated" y "scared,
+// afraid" son etiquetas abstractas y un generador de imagen las resuelve casi
+// igual: ceño fruncido y poco más — por eso serio, molesto y asustado salían
+// prácticamente idénticos. Nombrar los músculos (cejas, párpados, boca,
+// mandíbula) es lo que las separa, porque es lo que de verdad cambia entre
+// una cara y otra.
+//
+// Cada hint dice además qué hace la BOCA, que es el rasgo que más distingue
+// una expresión de otra a tamaño de retrato y el que estas etiquetas cortas
+// dejaban sin especificar.
 export const EMOTIONS: { code: EmotionCode; label: string; promptHint: string }[] = [
-  { code: 'alegre', label: 'Alegre', promptHint: 'happy, smiling warmly' },
-  { code: 'serio', label: 'Serio', promptHint: 'serious, neutral, composed' },
-  { code: 'molesto', label: 'Molesto', promptHint: 'angry, irritated, frowning' },
-  { code: 'asustado', label: 'Asustado', promptHint: 'scared, afraid, wide-eyed' },
-  { code: 'asombrado', label: 'Asombrado', promptHint: 'surprised, astonished, shocked' },
-  { code: 'triste', label: 'Triste', promptHint: 'sad, sorrowful, downcast' },
+  {
+    code: 'alegre',
+    label: 'Alegre',
+    promptHint:
+      'openly happy: a wide warm smile with the mouth clearly open showing teeth, cheeks lifted and bunched, crow\'s feet creasing at the outer corners of narrowed sparkling eyes, eyebrows relaxed and slightly raised',
+  },
+  {
+    code: 'serio',
+    label: 'Serio',
+    promptHint:
+      'completely neutral and composed: level relaxed eyebrows with no furrow at all between them, smooth unlined forehead, eyes calmly open at a normal width, lips gently closed in a straight line, jaw loose and untensed',
+  },
+  {
+    code: 'molesto',
+    label: 'Molesto',
+    promptHint:
+      'visibly angry: eyebrows driven sharply down and pulled together into a deep vertical crease between them, upper eyelids tense and lower lids raised into a hard glare, nostrils flared, lips pressed into a tight thin line with a clenched jaw and a visible muscle at the cheekbone',
+  },
+  {
+    code: 'asustado',
+    label: 'Asustado',
+    promptHint:
+      'frightened: eyebrows raised high and dragged together, horizontal creases across the forehead, eyes stretched wide with white clearly visible above the iris, mouth hanging open in a tense oval, chin drawn back and head shrinking away',
+  },
+  {
+    code: 'asombrado',
+    label: 'Asombrado',
+    promptHint:
+      'astonished: eyebrows lifted high in smooth arches, forehead creased horizontally, eyes round and wide open, mouth dropped open in a slack circle, whole face lifted and slack with surprise rather than tense',
+  },
+  {
+    code: 'triste',
+    label: 'Triste',
+    promptHint:
+      'sorrowful: inner ends of the eyebrows pulled up and together while the outer ends droop, upper eyelids heavy and half lowered, gaze cast downward, corners of the closed mouth turned distinctly down, chin faintly puckered',
+  },
 ];
 
 /**
