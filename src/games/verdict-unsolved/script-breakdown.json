@@ -1,0 +1,3658 @@
+{
+  "generatedAt": "2026-09-05T14:24:16.528Z",
+  "characters": [
+    {
+      "id": "gray",
+      "name": "Director Gray",
+      "description": "A man in his mid-40s to early 50s, short grey hair, a stern face lined with fatigue. Always in a wheelchair, wearing a dark suit and a light shirt, with a focused expression and an analytical gaze.",
+      "suggestedColor": "#3a6ea5",
+      "alternateLooks": [
+        {
+          "key": "adrian",
+          "label": "Adrian Cross",
+          "description": "A man around 40, athletic build, short dark hair and a few days of stubble. Wearing functional field clothing or smart casual, standing upright with an intense gaze."
+        },
+        {
+          "key": "wraith",
+          "label": "Wraith",
+          "description": "A tall, powerfully built figure dressed entirely in black, in close-fitting tactical clothing. Wears an opaque mask covering the whole face, dark gloves and boots, no visible features, poised and ready to act."
+        }
+      ]
+    },
+    {
+      "id": "evelyn",
+      "name": "Evelyn Marlowe",
+      "description": "A woman in her early 30s, dark brown hair tied back, sharp features and light eyes. Wearing field gear, a tactical jacket and dark trousers, with a determined expression.",
+      "suggestedColor": "#b13d6f",
+      "alternateLooks": [
+        {
+          "key": "iris",
+          "label": "Iris",
+          "description": "A woman whose face is partly hidden by shadow or pixelation, dark hair worn loose, in a long coat and unobtrusive clothing. Seen on a video call, only part of her face and her determined eyes are visible."
+        }
+      ]
+    },
+    {
+      "id": "mirror",
+      "name": "Mirror",
+      "description": "An abstract digital interface, rendered as glowing blue iconography, geometric lines and floating on-screen elements. It has no physical body and no human face.",
+      "suggestedColor": "#00b8d9",
+      "alternateLooks": []
+    },
+    {
+      "id": "june",
+      "name": "June Sato",
+      "description": "A young woman around 30, East Asian features, short black hair, rectangular glasses. Wearing technical or lab clothing, a light jacket over a pale t-shirt.",
+      "suggestedColor": "#e67e22",
+      "alternateLooks": []
+    },
+    {
+      "id": "elias",
+      "name": "Elias Voss",
+      "description": "A man around 50, grey hair combed back, a trimmed beard, angular face. Wearing a dark suit and tie, with an authoritative bearing and a calculating gaze.",
+      "suggestedColor": "#6c3483",
+      "alternateLooks": []
+    },
+    {
+      "id": "theo",
+      "name": "Theo Kade",
+      "description": "A man around 30, fair skin, short messy blond hair, a square jaw. Wearing a dark tactical uniform over a black t-shirt, with a serious expression.",
+      "suggestedColor": "#27ae60",
+      "alternateLooks": []
+    },
+    {
+      "id": "marcus",
+      "name": "Marcus Wynn",
+      "description": "A man around 35, dark skin, a strong build, very short hair and a neatly trimmed beard. Wearing tactical clothing and a bulletproof vest, standing firmly.",
+      "suggestedColor": "#e74c3c",
+      "alternateLooks": []
+    },
+    {
+      "id": "lena",
+      "name": "Lena Hart",
+      "description": "A woman in her late 20s, fair skin, straight blonde hair to the shoulders, delicate features and light eyes. Wearing simple clothes, a pale sweater and a light jacket.",
+      "suggestedColor": "#f7ca18",
+      "alternateLooks": []
+    },
+    {
+      "id": "daniel",
+      "name": "Daniel Hart",
+      "description": "A man in his early 30s, fair skin, short brown hair, light stubble. Wearing an office shirt and trousers, with an ID badge hanging around his neck.",
+      "suggestedColor": "#2980b9",
+      "alternateLooks": []
+    }
+  ],
+  "scenes": [
+    {
+      "id": "prologo-acheron",
+      "title": "La última noche de Unidad Cero",
+      "summary": "Cinemática que muestra el incidente de Acheron Systems tres años atrás. Se observa a los miembros de Unidad Cero en acción, una explosión y la aparente muerte de todos los agentes. Marca el inicio del misterio principal.",
+      "sourceText": "Pantalla negra.\n\nLluvia.\n\nTexto:\n\n**ACHERON SYSTEMS**\n\n**PLANTA 37**\n\n**TRES AÑOS ATRÁS**\n\nCámaras de seguridad.\n\nCinco personas.\n\nADRIAN.\n\nEVELYN.\n\nTHEO.\n\nMARCUS.\n\nJUNE.\n\nJune trabaja frente a una terminal.\n\nEn pantalla:\n\n**JANUS**\n\nTheo mira hacia una puerta.\n\nUna luz cambia de verde a rojo.\n\nAdrian se gira.\n\nEXPLOSIÓN.\n\nCambio de cámaras.\n\nFuego.\n\nEstática.\n\nUna puerta de emergencia abierta.\n\nUna figura arrastrándose.\n\nOtra cámara.\n\nOtra figura.\n\nNEGRO.\n\n**CONEXIÓN PERDIDA**\n\nNoticias.\n\n**CINCO AGENTES MUERTOS EN INCIDENTE DE ACHERON SYSTEMS**\n\nADRIAN CROSS.\n\nEVELYN MARLOWE.\n\nTHEO KADE.\n\nMARCUS WYNN.\n\nJUNE SATO.\n\nTodos:\n\n**FALLECIDOS**\n\nNegro.\n\n**TRES AÑOS DESPUÉS**",
+      "panels": [
+        {
+          "id": "prologo-acheron-panel-1",
+          "imageDescription": "A completely black screen, no visible details.",
+          "displayText": "",
+          "narrativePurpose": "establishing",
+          "characters": [],
+          "location": "Pantalla negra",
+          "continuity": {
+            "lighting": "none"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-2",
+          "imageDescription": "A dark exterior with heavy rain falling, water streaking down a window or camera lens.",
+          "displayText": "Lluvia.",
+          "narrativePurpose": "establishing",
+          "characters": [],
+          "location": "Exterior, noche lluviosa",
+          "continuity": {
+            "weather": "rain",
+            "time": "night"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-3",
+          "imageDescription": "A black screen with the faint reflection of rain, no readable text.",
+          "displayText": "ACHERON SYSTEMS\nPLANTA 37\nTRES AÑOS ATRÁS",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Pantalla negra",
+          "continuity": {
+            "transition": "text overlay"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-4",
+          "imageDescription": "A grid of security camera feeds showing industrial corridors and a control room.",
+          "displayText": "Cámaras de seguridad.",
+          "narrativePurpose": "establishing",
+          "characters": [],
+          "location": "Sala de control, Planta 37",
+          "continuity": {
+            "camera_feeds": "multiple angles",
+            "lighting": "fluorescent"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-5",
+          "imageDescription": "Five people in a control room: Adrian, Evelyn, Theo, Marcus, and June, each at different workstations.",
+          "displayText": "Cinco personas.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "Adrian",
+            "Evelyn",
+            "Theo",
+            "Marcus",
+            "June"
+          ],
+          "location": "Sala de control, Planta 37",
+          "continuity": {
+            "positions": "spread out",
+            "monitors": "active"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-6",
+          "imageDescription": "Close-up of Adrian, a serious-looking man focused on his screen.",
+          "displayText": "ADRIAN.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Sala de control, Planta 37",
+          "continuity": {
+            "Adrian_position": "at workstation"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-7",
+          "imageDescription": "Close-up of Evelyn, a woman with sharp features, glancing at her monitor.",
+          "displayText": "EVELYN.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "Evelyn"
+          ],
+          "location": "Sala de control, Planta 37",
+          "continuity": {
+            "Evelyn_position": "at workstation"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-8",
+          "imageDescription": "Close-up of Theo, a young man with a tense expression, glancing toward a door.",
+          "displayText": "THEO.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "Theo"
+          ],
+          "location": "Sala de control, Planta 37",
+          "continuity": {
+            "Theo_position": "looking at door"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-9",
+          "imageDescription": "Close-up of Marcus, a muscular man, checking something on his tablet.",
+          "displayText": "MARCUS.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "Marcus"
+          ],
+          "location": "Sala de control, Planta 37",
+          "continuity": {
+            "Marcus_position": "standing by table"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-10",
+          "imageDescription": "Close-up of June, a focused woman, working at a terminal.",
+          "displayText": "JUNE.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "June"
+          ],
+          "location": "Sala de control, Planta 37",
+          "continuity": {
+            "June_position": "typing at terminal"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-11",
+          "imageDescription": "June at her terminal, the screen glows with the word 'JANUS' visible only as a blurred reflection on her face.",
+          "displayText": "June trabaja frente a una terminal.\nEn pantalla: JANUS",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "June"
+          ],
+          "location": "Sala de control, Planta 37",
+          "continuity": {
+            "screen": "JANUS (blurred)",
+            "June_focus": "intense"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-12",
+          "imageDescription": "Theo glancing anxiously toward a heavy security door in the background.",
+          "displayText": "Theo mira hacia una puerta.",
+          "narrativePurpose": "reaction",
+          "characters": [
+            "Theo"
+          ],
+          "location": "Sala de control, Planta 37",
+          "continuity": {
+            "door": "in background",
+            "Theo_gaze": "tense"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-13",
+          "imageDescription": "Close-up of the security door panel as the indicator light shifts from green to red.",
+          "displayText": "Una luz cambia de verde a rojo.",
+          "narrativePurpose": "action",
+          "characters": [],
+          "location": "Sala de control, Planta 37",
+          "continuity": {
+            "door_light": "red"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-14",
+          "imageDescription": "Adrian turning sharply in his chair, alarmed by the change.",
+          "displayText": "Adrian se gira.",
+          "narrativePurpose": "reaction",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Sala de control, Planta 37",
+          "continuity": {
+            "Adrian_motion": "turning",
+            "lighting": "emergency"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-15",
+          "imageDescription": "A sudden explosion rocks the control room, debris and fire bursting inward.",
+          "displayText": "EXPLOSIÓN.",
+          "narrativePurpose": "action",
+          "characters": [],
+          "location": "Sala de control, Planta 37",
+          "continuity": {
+            "explosion": "center",
+            "lighting": "chaotic"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-16",
+          "imageDescription": "Security camera feeds flicker and switch rapidly, showing fire and chaos in multiple rooms.",
+          "displayText": "Cambio de cámaras.\nFuego.",
+          "narrativePurpose": "transition",
+          "characters": [],
+          "location": "Planta 37, varias áreas",
+          "continuity": {
+            "camera_feeds": "unstable",
+            "fire": "visible"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-17",
+          "imageDescription": "A camera feed dissolves into static, obscuring the view.",
+          "displayText": "Estática.",
+          "narrativePurpose": "transition",
+          "characters": [],
+          "location": "Cámara de seguridad",
+          "continuity": {
+            "static": "full screen"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-18",
+          "imageDescription": "A smoke-filled corridor, an emergency door is open, and a figure is dragging themselves through.",
+          "displayText": "Una puerta de emergencia abierta.\nUna figura arrastrándose.",
+          "narrativePurpose": "action",
+          "characters": [],
+          "location": "Pasillo de emergencia, Planta 37",
+          "continuity": {
+            "door": "open",
+            "figure": "crawling",
+            "smoke": "heavy"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-19",
+          "imageDescription": "A different security camera angle shows another indistinct figure moving through the chaos.",
+          "displayText": "Otra cámara.\nOtra figura.",
+          "narrativePurpose": "action",
+          "characters": [],
+          "location": "Otro pasillo, Planta 37",
+          "continuity": {
+            "camera_angle": "different",
+            "figure": "obscured"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-20",
+          "imageDescription": "A completely black screen, no visible details.",
+          "displayText": "NEGRO.",
+          "narrativePurpose": "transition",
+          "characters": [],
+          "location": "Pantalla negra",
+          "continuity": {
+            "lighting": "none"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-21",
+          "imageDescription": "A black screen with the faint glow of a lost connection warning, no readable text.",
+          "displayText": "CONEXIÓN PERDIDA",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Pantalla negra",
+          "continuity": {
+            "overlay": "warning"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-22",
+          "imageDescription": "A TV news broadcast, anchor visible but the headline on the screen is blurred and unreadable.",
+          "displayText": "Noticias.\nCINCO AGENTES MUERTOS EN INCIDENTE DE ACHERON SYSTEMS",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Pantalla de noticias",
+          "continuity": {
+            "newsroom": "dim",
+            "headline": "blurred"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-23",
+          "imageDescription": "Close-ups of five ID photos on a blurred screen: Adrian, Evelyn, Theo, Marcus, and June, their names not readable.",
+          "displayText": "ADRIAN CROSS.\nEVELYN MARLOWE.\nTHEO KADE.\nMARCUS WYNN.\nJUNE SATO.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian",
+            "Evelyn",
+            "Theo",
+            "Marcus",
+            "June"
+          ],
+          "location": "Pantalla de noticias",
+          "continuity": {
+            "photos": "ID style",
+            "names": "not readable"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-24",
+          "imageDescription": "The same five faces, now with somber expressions, their images fading out.",
+          "displayText": "Todos:\nFALLECIDOS",
+          "narrativePurpose": "cliffhanger",
+          "characters": [
+            "Adrian",
+            "Evelyn",
+            "Theo",
+            "Marcus",
+            "June"
+          ],
+          "location": "Pantalla de noticias",
+          "continuity": {
+            "photos": "fading",
+            "mood": "somber"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-25",
+          "imageDescription": "A completely black screen, no visible details.",
+          "displayText": "Negro.",
+          "narrativePurpose": "transition",
+          "characters": [],
+          "location": "Pantalla negra",
+          "continuity": {
+            "lighting": "none"
+          }
+        },
+        {
+          "id": "prologo-acheron-panel-26",
+          "imageDescription": "A black screen with a faint ambient glow, suggesting the passage of time.",
+          "displayText": "TRES AÑOS DESPUÉS",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Pantalla negra",
+          "continuity": {
+            "transition": "text overlay"
+          }
+        }
+      ],
+      "bridgeFromPrevious": null,
+      "characterIds": [
+        "adrian",
+        "evelyn",
+        "theo",
+        "marcus",
+        "june",
+        "elias"
+      ],
+      "objects": [],
+      "minigame": null,
+      "reviewStatus": "approved",
+      "scriptKind": null
+    },
+    {
+      "id": "oficina-despierta",
+      "title": "La oficina despierta",
+      "summary": "El jugador explora la oficina de Gray, familiarizándose con Zero Network y examinando objetos clave como la fotografía de Unidad Cero, la computadora y la credencial. El teléfono suena, iniciando el primer caso.",
+      "sourceText": "Noche.\n\nLluvia.\n\nEscritorio.\n\nHotspots:\n\n[FOTOGRAFÍA]\n\n[COMPUTADORA]\n\n[TELÉFONO]\n\n[ARCHIVADOR]\n\n[LÁMPARA]\n\n[VENTANA]\n\n[CAJÓN]\n\n---\n\n### FOTOGRAFÍA\n\nPrimer plano.\n\nUnidad Cero.\n\nAdrian.\n\nEvelyn.\n\nTheo.\n\nMarcus.\n\nJune.\n\nVoss al fondo.\n\n[GIRAR]\n\nReverso:\n\n**UNIDAD CERO**\n\n**QUE NADIE QUEDE ATRÁS**\n\n**ELEMENTO EXAMINADO 1/3**\n\nGray:\n\n—Eso decíamos.\n\n---\n\n### ARCHIVADOR\n\nExiste una carpeta en la parte superior.\n\nClic.\n\n**FUERA DE ALCANCE**\n\nNo proporciona progreso.\n\n---\n\n### COMPUTADORA\n\nPrimer plano.\n\nMIRROR inicia.\n\n—Identidad confirmada.\n\n—Bienvenido, Director Gray.\n\n**ELEMENTO EXAMINADO 2/3**\n\n---\n\n### CAJÓN\n\nClic.\n\nImagen del cajón abierto.\n\nCredencial:\n\n**ZERO NETWORK**\n\n**DIRECTOR GRAY**\n\n**ELEMENTO EXAMINADO 3/3**\n\nObjetivo completado.\n\nEntonces:\n\nRING.\n\nEl teléfono comienza a sonar.\n\nNuevo objetivo:",
+      "panels": [
+        {
+          "id": "oficina-despierta-panel-1",
+          "imageDescription": "A dimly lit office desk at night, seen through a window streaked with rain. The desk is cluttered with objects: a photograph, a computer, a telephone, a file cabinet, a lamp, and a closed drawer. The only light source is the desk lamp, casting a warm glow.",
+          "displayText": "Noche.\n\nLluvia.\n\nEscritorio.",
+          "narrativePurpose": "establishing",
+          "characters": [],
+          "location": "Oficina, escritorio",
+          "continuity": {
+            "lighting": "nocturna, luz cálida de lámpara",
+            "lluvia": "visible en la ventana",
+            "objetos": "fotografía, computadora, teléfono, archivador, lámpara, ventana, cajón"
+          }
+        },
+        {
+          "id": "oficina-despierta-panel-2",
+          "imageDescription": "Close-up of a photograph on the desk. The photo shows six people: Adrian, Evelyn, Theo, Marcus, and June standing together, with Voss in the background, all in uniforms. The mood is serious but unified.",
+          "displayText": "Primer plano.\n\nUnidad Cero.\n\nAdrian.\n\nEvelyn.\n\nTheo.\n\nMarcus.\n\nJune.\n\nVoss al fondo.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian",
+            "Evelyn",
+            "Theo",
+            "Marcus",
+            "June",
+            "Voss"
+          ],
+          "location": "Oficina, escritorio",
+          "continuity": {
+            "foto": "en el escritorio, personajes en uniforme, Voss al fondo"
+          }
+        },
+        {
+          "id": "oficina-despierta-panel-3",
+          "imageDescription": "The same photograph, now flipped over, showing the back of the photo held in a hand. The writing is not legible from this angle.",
+          "displayText": "UNIDAD CERO\nQUE NADIE QUEDE ATRÁS\nELEMENTO EXAMINADO 1/3",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Oficina, escritorio",
+          "continuity": {
+            "mano": "sujeta la foto, reverso visible",
+            "luz": "cálida de lámpara"
+          }
+        },
+        {
+          "id": "oficina-despierta-panel-4",
+          "imageDescription": "A close-up of Gray's face, somber and thoughtful, reflecting on the photograph just examined.",
+          "displayText": "Gray:\n—Eso decíamos.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Gray"
+          ],
+          "location": "Oficina, escritorio",
+          "continuity": {
+            "Gray": "mirando la foto, expresión seria"
+          }
+        },
+        {
+          "id": "oficina-despierta-panel-5",
+          "imageDescription": "View of the file cabinet from the desk. The top drawer is slightly open, revealing a folder just out of reach.",
+          "displayText": "Existe una carpeta en la parte superior.",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Oficina, archivador",
+          "continuity": {
+            "carpeta": "visible pero fuera de alcance"
+          }
+        },
+        {
+          "id": "oficina-despierta-panel-6",
+          "imageDescription": "Close-up of a hand reaching for the folder in the file cabinet, but unable to grasp it.",
+          "displayText": "Clic.\n\nFUERA DE ALCANCE\nNo proporciona progreso.",
+          "narrativePurpose": "reaction",
+          "characters": [],
+          "location": "Oficina, archivador",
+          "continuity": {
+            "mano": "intentando alcanzar carpeta",
+            "carpeta": "fuera de alcance"
+          }
+        },
+        {
+          "id": "oficina-despierta-panel-7",
+          "imageDescription": "Close-up of the computer monitor on the desk, displaying a login screen as it boots up. The glow of the screen illuminates the dark room.",
+          "displayText": "Primer plano.",
+          "narrativePurpose": "action",
+          "characters": [],
+          "location": "Oficina, escritorio",
+          "continuity": {
+            "computadora": "encendida, pantalla ilumina escritorio"
+          }
+        },
+        {
+          "id": "oficina-despierta-panel-8",
+          "imageDescription": "The computer screen, seen from behind Gray's shoulder, shows a welcome message. Gray's silhouette is visible, but the text on the screen is blurred.",
+          "displayText": "MIRROR inicia.\n—Identidad confirmada.\n—Bienvenido, Director Gray.\nELEMENTO EXAMINADO 2/3",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Gray"
+          ],
+          "location": "Oficina, escritorio",
+          "continuity": {
+            "pantalla": "mensaje de bienvenida, texto ilegible",
+            "Gray": "sentado frente a la computadora"
+          }
+        },
+        {
+          "id": "oficina-despierta-panel-9",
+          "imageDescription": "Close-up of the drawer on the desk being pulled open, revealing a badge inside.",
+          "displayText": "Clic.\n\nImagen del cajón abierto.",
+          "narrativePurpose": "action",
+          "characters": [],
+          "location": "Oficina, escritorio",
+          "continuity": {
+            "cajón": "abierto, credencial visible"
+          }
+        },
+        {
+          "id": "oficina-despierta-panel-10",
+          "imageDescription": "A hand holding up a badge or ID card, the text is turned away from the viewer so it can't be read.",
+          "displayText": "Credencial:\nZERO NETWORK\nDIRECTOR GRAY\nELEMENTO EXAMINADO 3/3",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Gray"
+          ],
+          "location": "Oficina, escritorio",
+          "continuity": {
+            "mano": "sosteniendo credencial",
+            "credencial": "texto no legible"
+          }
+        },
+        {
+          "id": "oficina-despierta-panel-11",
+          "imageDescription": "Gray sitting at the desk, a sense of accomplishment on his face as he looks at the items examined.",
+          "displayText": "Objetivo completado.",
+          "narrativePurpose": "reaction",
+          "characters": [
+            "Gray"
+          ],
+          "location": "Oficina, escritorio",
+          "continuity": {
+            "Gray": "mirando objetos examinados"
+          }
+        },
+        {
+          "id": "oficina-despierta-panel-12",
+          "imageDescription": "Close-up of the desk telephone, its light blinking as it begins to ring. The room is still and tense.",
+          "displayText": "Entonces:\n\nRING.\n\nEl teléfono comienza a sonar.",
+          "narrativePurpose": "action",
+          "characters": [],
+          "location": "Oficina, escritorio",
+          "continuity": {
+            "teléfono": "luz parpadeando, comenzando a sonar"
+          }
+        },
+        {
+          "id": "oficina-despierta-panel-13",
+          "imageDescription": "Gray glances toward the ringing phone, illuminated by the lamp and the computer screen, his expression alert and expectant.",
+          "displayText": "Nuevo objetivo:",
+          "narrativePurpose": "cliffhanger",
+          "characters": [
+            "Gray"
+          ],
+          "location": "Oficina, escritorio",
+          "continuity": {
+            "Gray": "mirando hacia el teléfono",
+            "teléfono": "sonando",
+            "luz": "cálida, ambiente nocturno"
+          }
+        }
+      ],
+      "bridgeFromPrevious": "Tres años después del incidente, Gray despierta en su oficina bajo la lluvia.",
+      "characterIds": [
+        "gray",
+        "mirror"
+      ],
+      "objects": [
+        {
+          "name": "Fotografía de Unidad Cero",
+          "examineText": "Una foto grupal de los miembros de Unidad Cero, incluyendo a Adrian, Evelyn, Theo, Marcus, June y Voss al fondo.",
+          "interactText": "Al girarla, se lee 'QUE NADIE QUEDE ATRÁS'."
+        },
+        {
+          "name": "Computadora",
+          "examineText": "Terminal encendida con la interfaz de MIRROR.",
+          "interactText": "MIRROR confirma la identidad de Gray y da la bienvenida."
+        },
+        {
+          "name": "Credencial",
+          "examineText": "Credencial de Zero Network con el nombre Director Gray.",
+          "interactText": "Permite confirmar la identidad y rol actual."
+        },
+        {
+          "name": "Archivador",
+          "examineText": "Archivador metálico con carpetas en la parte superior.",
+          "interactText": "La carpeta está fuera de alcance desde la silla de ruedas."
+        }
+      ],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "llamada-lena",
+      "title": "La llamada",
+      "summary": "Gray recibe una llamada de Lena Hart, quien afirma que su hermano Daniel desapareció y que hay algo dentro de Halcyon. Lena menciona Acheron y pide ayuda para descubrir el destino de Daniel.",
+      "sourceText": "Retrato:\n\nLENA HART.\n\n—¿Estoy hablando con Zero?\n\nOpciones:\n\n[ZERO YA NO EXISTE]\n\n[¿QUIÉN LE DIO ESTE NÚMERO?]\n\n[HA LLAMADO AL LUGAR EQUIVOCADO]\n\nLena:\n\n—Mi hermano dijo que mencionara Acheron si intentaba terminar la llamada.\n\nNueva opción:\n\n[CONTINUAR]\n\nDaniel desapareció hace dos días.\n\nLena afirma:\n\n**Daniel Hart es periodista.**\n\nAntes de desaparecer dejó instrucciones.\n\nExiste algo dentro de:\n\n**HALCYON**\n\nA las 05:00 Acheron vaciará el edificio.\n\nLena:\n\n—Necesito saber qué le pasó a mi hermano.\n\nLa llamada termina.\n\nMIRROR:",
+      "panels": [
+        {
+          "id": "llamada-lena-panel-1",
+          "imageDescription": "A close-up portrait of Lena Hart, a woman in her late twenties with determined eyes, sitting in a dimly lit room, holding a phone to her ear.",
+          "displayText": "LENA HART.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "Lena Hart"
+          ],
+          "location": "Lena's apartment, night",
+          "continuity": {
+            "lighting": "dim, moody",
+            "Lena_position": "sitting, holding phone to ear"
+          }
+        },
+        {
+          "id": "llamada-lena-panel-2",
+          "imageDescription": "Same scene as before, Lena Hart listening intently to the phone, her expression tense as she waits for a response.",
+          "displayText": "—¿Estoy hablando con Zero?",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Lena Hart"
+          ],
+          "location": "Lena's apartment, night",
+          "continuity": {
+            "lighting": "dim, moody",
+            "Lena_position": "sitting, holding phone to ear"
+          }
+        },
+        {
+          "id": "llamada-lena-panel-3",
+          "imageDescription": "A dark, anonymous room with a phone on a table, the screen glowing. The person on the other end is unseen, only their hand is visible near the phone.",
+          "displayText": "[ZERO YA NO EXISTE]\n[¿QUIÉN LE DIO ESTE NÚMERO?]\n[HA LLAMADO AL LUGAR EQUIVOCADO]",
+          "narrativePurpose": "dialogue",
+          "characters": [],
+          "location": "Unknown location, Zero's side",
+          "continuity": {
+            "phone": "on table, screen glowing",
+            "lighting": "dark, mysterious"
+          }
+        },
+        {
+          "id": "llamada-lena-panel-4",
+          "imageDescription": "Lena Hart gripping the phone tighter, her eyes narrowed with resolve, as if recalling something important.",
+          "displayText": "—Mi hermano dijo que mencionara Acheron si intentaba terminar la llamada.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Lena Hart"
+          ],
+          "location": "Lena's apartment, night",
+          "continuity": {
+            "lighting": "dim, moody",
+            "Lena_position": "sitting, gripping phone"
+          }
+        },
+        {
+          "id": "llamada-lena-panel-5",
+          "imageDescription": "A digital interface or phone screen, the option to continue highlighted, Lena's hand hovering over the device.",
+          "displayText": "[CONTINUAR]",
+          "narrativePurpose": "transition",
+          "characters": [
+            "Lena Hart"
+          ],
+          "location": "Lena's apartment, night",
+          "continuity": {
+            "lighting": "dim, moody",
+            "phone": "Lena holding, screen visible"
+          }
+        },
+        {
+          "id": "llamada-lena-panel-6",
+          "imageDescription": "A flashback-style image: Daniel Hart, a young man with a press badge, walking hurriedly through a city street at dusk, looking over his shoulder.",
+          "displayText": "Daniel desapareció hace dos días.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Daniel Hart"
+          ],
+          "location": "City street, dusk",
+          "continuity": {
+            "Daniel_appearance": "young, press badge, anxious",
+            "lighting": "evening, urban"
+          }
+        },
+        {
+          "id": "llamada-lena-panel-7",
+          "imageDescription": "A close-up of Lena Hart's face, determined as she speaks into the phone.",
+          "displayText": "Daniel Hart es periodista.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Lena Hart"
+          ],
+          "location": "Lena's apartment, night",
+          "continuity": {
+            "lighting": "dim, moody",
+            "Lena_position": "close-up, speaking"
+          }
+        },
+        {
+          "id": "llamada-lena-panel-8",
+          "imageDescription": "A cluttered desk with scattered papers and a sealed envelope labeled with Daniel's name, Lena's hand resting on top.",
+          "displayText": "Antes de desaparecer dejó instrucciones.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Lena Hart"
+          ],
+          "location": "Lena's apartment, desk",
+          "continuity": {
+            "lighting": "dim, desk lamp",
+            "envelope": "sealed, Daniel's name"
+          }
+        },
+        {
+          "id": "llamada-lena-panel-9",
+          "imageDescription": "A high-tech building at night, its facade illuminated, with the name 'HALCYON' implied by the architecture but not shown in text.",
+          "displayText": "Existe algo dentro de: HALCYON",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Exterior, Halcyon building, night",
+          "continuity": {
+            "building": "modern, high-tech, night lighting"
+          }
+        },
+        {
+          "id": "llamada-lena-panel-10",
+          "imageDescription": "A digital clock on a wall showing 04:59, with a sense of urgency in the air, the building interior mostly empty.",
+          "displayText": "A las 05:00 Acheron vaciará el edificio.",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Interior, Halcyon building, near-empty",
+          "continuity": {
+            "clock": "shows 04:59",
+            "lighting": "artificial, cold"
+          }
+        },
+        {
+          "id": "llamada-lena-panel-11",
+          "imageDescription": "Lena Hart, desperate, clutching the phone, her eyes pleading as she speaks.",
+          "displayText": "—Necesito saber qué le pasó a mi hermano.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Lena Hart"
+          ],
+          "location": "Lena's apartment, night",
+          "continuity": {
+            "lighting": "dim, moody",
+            "Lena_emotion": "desperate, pleading"
+          }
+        },
+        {
+          "id": "llamada-lena-panel-12",
+          "imageDescription": "Lena Hart staring at the phone in her hand, the call screen fading to black, her face illuminated by the last glow.",
+          "displayText": "La llamada termina.",
+          "narrativePurpose": "transition",
+          "characters": [
+            "Lena Hart"
+          ],
+          "location": "Lena's apartment, night",
+          "continuity": {
+            "lighting": "dim, phone screen fading",
+            "Lena_reaction": "silent, contemplative"
+          }
+        }
+      ],
+      "bridgeFromPrevious": "El teléfono comienza a sonar en la oficina de Gray.",
+      "characterIds": [
+        "gray",
+        "lena",
+        "mirror"
+      ],
+      "objects": [
+        {
+          "name": "Teléfono",
+          "examineText": "Teléfono fijo antiguo, iluminado por la luz de la lámpara.",
+          "interactText": "Permite contestar y hablar con Lena Hart."
+        }
+      ],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "ficha-daniel",
+      "title": "¿Quién es Daniel Hart?",
+      "summary": "Gray investiga la ficha de Daniel Hart para comprobar si Lena está diciendo la verdad. Descubre que Daniel era ingeniero de seguridad en Acheron y recibía pagos de una empresa vinculada, además de conservar una credencial.",
+      "sourceText": "**DANIEL HART**\n\nProfesión:\n\n**PERIODISTA INDEPENDIENTE**\n\nHotspots:\n\n[FOTOGRAFÍA]\n\n[HISTORIAL LABORAL]\n\n[REGISTROS FINANCIEROS]\n\n[ACTIVIDAD DIGITAL]\n\n---\n\n### HISTORIAL LABORAL\n\nNueva imagen.\n\nVarias empresas.\n\nUna entrada parcialmente eliminada.\n\n**ACHERON SYSTEMS**\n\nClic.\n\nCargo:\n\n**INGENIERO DE SEGURIDAD**\n\n**PISTA DESCUBIERTA 1/3**\n\n**Daniel trabajó como ingeniero de seguridad para Acheron.**\n\n---\n\n### REGISTROS FINANCIEROS\n\nNueva imagen.\n\nVarias transacciones.\n\nHotspot:\n\n**HALCYON HOLDINGS**\n\nClic.\n\nFicha empresarial.\n\n**EMPRESA MATRIZ: ACHERON SYSTEMS**\n\nDaniel recibió pagos recientes.\n\n**PISTA DESCUBIERTA 2/3**\n\n**Daniel continuaba recibiendo dinero de una empresa vinculada a Acheron.**\n\n---\n\n### FOTOGRAFÍA\n\nPrimer plano.\n\nHotspots:\n\n[ROSTRO]\n\n[FONDO]\n\n[RELOJ]\n\n[CREDENCIAL]\n\nCREDENCIAL.\n\nZoom.\n\n**ACHERON**\n\n**SECURITY**\n\n**PISTA DESCUBIERTA 3/3**\n\n**Daniel conservaba una credencial de seguridad de Acheron.**\n\n---\n\n### PISTAS\n\n**3 / 3**\n\n### [SOLUCIONAR]\n\nHABILITADO.\n\nPregunta:\n\n**¿QUÉ DEMUESTRAN LAS EVIDENCIAS?**\n\nA) Daniel estaba investigando Acheron como periodista.\n\nB) Lena ocultó la verdadera relación de Daniel con Acheron.\n\nC) Daniel nunca trabajó para Acheron.\n\nRespuesta:\n\n**B**\n\nSi falla:\n\n**LAS EVIDENCIAS NO RESPALDAN ESA CONCLUSIÓN.**\n\nPuede volver a intentarlo.\n\nSi acierta:\n\n**DEDUCCIÓN CORRECTA**\n\n**LENA HART MINTIÓ SOBRE DANIEL**\n\nNuevo objetivo:\n\n**Confronta a Lena.**\n\n[LLAMAR]\n\n[Fin Escena 4]\n\n---\n\n[Escena 5 - Interactiva - Primera Persona]\n\n## LA VERDAD DE LENA\n\nLlamada.\n\nGray:\n\n—Daniel no era periodista.\n\nLena permanece callada.\n\n—Era ingeniero de seguridad de Acheron.\n\nLena:\n\n—Daniel me dijo que mintiera.\n\n—Me dijo exactamente qué tenía que contarles.\n\nGray:\n\n—¿Por qué?\n\n—Porque dijo que si decía la verdad quizá ustedes no aceptarían ayudar.\n\nPausa.\n\n—También dijo otra cosa.\n\n—“Ellos saben cómo decide la gente.”\n\nLa frase aparece:\n\n**ELLOS SABEN CÓMO DECIDE LA GENTE**\n\nPISTA GLOBAL AÑADIDA.\n\nLena confirma que Daniel dejó algo dentro de Halcyon.\n\nNuevo objetivo:\n\n**Determina por qué Halcyon sigue siendo importante para Acheron.**\n\n[Fin Escena 5]\n\n---\n\n[Escena 6 - Interactiva - Primera Persona]\n\n## HALCYON\n\n### PERSONAJE\n\nGRAY\n\n### OBJETIVO\n\n**Demuestra que Halcyon continúa activo.**\n\n### PISTAS\n\n**0 / 3**\n\n---\n\n## IMAGEN 6.1 — INVESTIGACIÓN HALCYON\n\nHotspots:\n\n[PROPIEDAD]\n\n[ELECTRICIDAD]\n\n[CÁMARAS]\n\n[PLANOS]\n\n[REGISTROS MUNICIPALES]\n\n---\n\n### PROPIEDAD\n\nHALCYON HOLDINGS.\n\nClic sobre:\n\n**PROPIETARIO FINAL**\n\nResultado:\n\n**ACHERON SYSTEMS**\n\n**PISTA 1/3**\n\n---\n\n### ELECTRICIDAD\n\nEdificio oficialmente abandonado.\n\nConsumo actual:\n\n**37 % DEL CONSUMO HISTÓRICO**\n\n**PISTA 2/3**\n\n---\n\n### CÁMARAS\n\nFotografía reciente.\n\nZoom sobre puerta lateral.\n\nUna luz de acceso está encendida.\n\n**PISTA 3/3**\n\n---\n\n[SOLUCIONAR]\n\nPregunta:\n\n**¿QUÉ CONCLUSIÓN EXPLICA LAS TRES EVIDENCIAS?**\n\nRespuesta:\n\n**Halcyon continúa siendo utilizado clandestinamente por Acheron.**\n\nCorrecto.\n\nMIRROR:\n\n—Los sistemas internos están aislados.\n\nGray:\n\n—¿Acceso remoto?\n\n—Insuficiente.\n\n—¿Alternativa?\n\nMIRROR:\n\n—Acceso físico.\n\nGray observa la fotografía de Unidad Cero.\n\nInterfaz:\n\n**OPERADORES**\n\n[GRAY]\n\n[????]\n\nGray abre un expediente.\n\n**WRAITH**\n\n**OPERADOR DISPONIBLE**\n\nEl retrato se desbloquea.\n\n[GRAY] [WRAITH]\n\n[Fin Escena 6]\n\n---\n\n# CASO 001 — OPERACIÓN HALCYON\n\n[Escena 7 - Interactiva - Primera Persona]\n\n## ENTRAR EN HALCYON\n\n### PERSONAJE ACTIVO\n\nWRAITH\n\n### OBJETIVO\n\n**Encuentra una forma de entrar en Halcyon.**\n\n---\n\n## IMAGEN 7.1 — EXTERIOR\n\nHotspots:\n\n[PUERTA]\n\n[CÁMARA]\n\n[VENTANA]\n\n[PANEL]\n\nPuerta:\n\n**BLOQUEADA**\n\nCámara:\n\n**BUCLE DE GRAY ACTIVO**\n\nPanel:\n\nabre primer plano.\n\n---\n\n## IMAGEN 7.2 — PANEL\n\nHotspots:\n\n[TAPA]\n\n[PUERTO]\n\n[CABLE]\n\nTAPA.\n\nNueva imagen.\n\n[PUERTO DE EMERGENCIA]\n\nUsar:\n\n**DISPOSITIVO WRAITH**\n\nResultado:\n\n**PUERTA DESBLOQUEADA**\n\nNueva imagen exterior.\n\nLa puerta está abierta.\n\n[ENTRAR]\n\n[Fin Escena 7]\n\n---\n\n[Escena 8 - Interactiva - Primera Persona]\n\n## ENCUENTRA EL DESPACHO DE DANIEL\n\n### PERSONAJE\n\nWRAITH\n\n### OBJETIVO\n\n**Encuentra el despacho 2B.**\n\n---\n\n## IMAGEN 8.1 — VESTÍBULO\n\nHotspots:\n\n[ASCENSOR]\n\n[ESCALERAS]\n\n[OFICINA DE SEGURIDAD]\n\n[CAJA]\n\n[PANEL]\n\nASCENSOR:\n\n**SIN ENERGÍA**\n\nESCALERAS:\n\n**BLOQUEADAS**\n\nCAJA:\n\n[MOVER]\n\nNueva imagen.\n\nDetrás:\n\n[PUERTA DE MANTENIMIENTO]\n\n**TARJETA REQUERIDA**\n\n---\n\n### OFICINA DE SEGURIDAD\n\nNueva imagen.\n\nHotspots:\n\n[MONITOR]\n\n[ESCRITORIO]\n\n[TAQUILLA]\n\nEn escritorio:\n\n**TARJETA DE MANTENIMIENTO**\n\nINVENTARIO +1.\n\nRegresar.\n\nUsar tarjeta.\n\nPuerta abierta.\n\nNueva imagen:\n\n**CORREDOR 2**\n\nHotspots:\n\n[2A]\n\n[2B]\n\n[2C]\n\nSeleccionar:\n\n**2B**\n\n[Fin Escena 8]\n\n---\n\n[Escena 9 - Interactiva - Primera Persona]\n\n## ¿QUÉ ENCONTRÓ DANIEL?\n\n### PERSONAJE\n\nWRAITH\n\n### OBJETIVO\n\n**Descubre qué estaba investigando Daniel.**\n\n### PISTAS\n\n**0 / 3**\n\n---\n\n## IMAGEN 9.1 — DESPACHO 2B\n\nHotspots:\n\n[SANGRE]\n\n[TELÉFONO]\n\n[FOTOGRAFÍA]\n\n[ESCRITORIO]\n\n[PARED]\n\n---\n\n### FOTOGRAFÍA\n\nUnidad Cero.\n\nHotspot:\n\n[FECHA DE IMPRESIÓN]\n\n**IMPRESA DOS AÑOS DESPUÉS DEL INCIDENTE**\n\n**PISTA 1/3**\n\n**Alguien seguía investigando Unidad Cero después de su muerte.**\n\n---\n\n### TELÉFONO\n\nEstá destruido.\n\n[EXTRAER MEMORIA]\n\nAudio parcial:\n\n—Si encontraste esto...\n\nEstática.\n\n—JANUS...\n\n—no predice...\n\n—aprende...\n\n**PISTA 2/3**\n\n**Daniel estaba investigando JANUS.**\n\n---\n\n### PARED\n\nUna marca.\n\nRetirar fotografía rota.\n\nDetrás:\n\n**COMPARTIMENTO**\n\nAbrir.\n\nUnidad negra.\n\n**JANUS**\n\n**PISTA 3/3**\n\n---\n\n[SOLUCIONAR]\n\n**¿QUÉ ESTABA INVESTIGANDO DANIEL?**\n\nOpciones.\n\nRespuesta correcta:\n\n**Un proyecto secreto de Acheron llamado JANUS relacionado con Unidad Cero.**\n\nDEDUCCIÓN CORRECTA.\n\nWraith recoge:\n\n**UNIDAD JANUS**\n\nALARMA.\n\nLa imagen cambia a estado rojo.\n\nNuevo objetivo:\n\n**ESCAPA DE HALCYON.**\n\n[Fin Escena 9]\n\n---\n\n[Escena 10 - Interactiva - Primera Persona]\n\n## LA RUTA QUE NO EXISTE\n\n### PERSONAJE\n\nWRAITH\n\n### OBJETIVO\n\n**Encuentra una salida alternativa.**\n\n---\n\n## IMAGEN 10.1 — CORREDOR\n\n[PUERTA PRINCIPAL]\n\n**BLOQUEADA**\n\n[VENTILACIÓN]\n\n**NO CONDUCE AL EXTERIOR**\n\n[PUERTA OCULTA]\n\nTeclado numérico.\n\nClic.\n\n---\n\n# MINIJUEGO — CODEBREAKER\n\n### OBJETIVO\n\n**Descubre el código de cuatro dígitos.**\n\nInformación disponible:\n\n- cuatro números;\n- ningún número repetido;\n- código utilizado antiguamente por Unidad Cero.\n\nWraith:\n\n—He visto este sistema antes.\n\nEl jugador introduce cuatro números.\n\nCada intento devuelve:\n\n**● NÚMERO CORRECTO + POSICIÓN CORRECTA**\n\n**◐ NÚMERO CORRECTO + POSICIÓN INCORRECTA**\n\n**○ NÚMERO INCORRECTO**\n\nEjemplo:\n\n8 1 3 9\n\n○ ● ◐ ○\n\nEl jugador utiliza la información para deducir:\n\n**3 1 4 2**\n\nResultado:\n\n● ● ● ●\n\n**ACCESO CONCEDIDO**\n\nMIRROR:\n\n—Curioso.\n\n—Ese código no aparece en los archivos recuperados.\n\nWraith:\n\n—No estaba en los archivos.\n\nPausa.\n\nMIRROR:\n\n—¿Cómo lo conocía?\n\nWraith:\n\n—Después.\n\nNueva imagen:\n\n**TÚNEL DE SERVICIO**\n\n[SALIR]\n\nPantalla negra.\n\n[Fin Escena 10]\n\n---\n\n# CASO 002 — JANUS\n\n[Escena 11 - Interactiva - Primera Persona]\n\n## ¿QUÉ ES JANUS?\n\n### PERSONAJE\n\nGRAY\n\n### OBJETIVO\n\n**Determina la función de JANUS.**\n\n### PISTAS\n\n**0 / 4**\n\n---\n\nUnidad JANUS sobre escritorio.\n\n[ANALIZAR]\n\nInterfaz.\n\nArchivos:\n\n[FASE 0]\n\n[A-CROSS]\n\n[E-MARLOWE]\n\n[MODELO]\n\n[ERRORES]\n\n---\n\n### A-CROSS\n\n**ADRIAN CROSS**\n\n**SUJETO PRIMARIO**\n\n**PISTA 1/4**\n\n---\n\n### E-MARLOWE\n\n**EVELYN MARLOWE**\n\n**SUJETO SECUNDARIO**\n\n**PISTA 2/4**\n\n---\n\n### MODELO\n\nFragmento:\n\n**JANUS NO PREDICE EVENTOS**\n\n**PISTA 3/4**\n\nOtro fragmento requiere reconstrucción.\n\nOrdenar palabras:\n\n**MODELA / DECISIONES / HUMANAS / JANUS**\n\nCorrecto:\n\n**JANUS MODELA DECISIONES HUMANAS**\n\n**PISTA 4/4**\n\n---\n\n[SOLUCIONAR]\n\nPregunta:\n\n**¿PARA QUÉ FUE CREADO JANUS?**\n\nRespuesta:\n\n**Para modelar cómo toman decisiones determinadas personas.**\n\nCorrecto.\n\nGray observa:\n\n**SUJETO A-CROSS**\n\nMIRROR:\n\n—Existe además corrupción de datos.\n\n[ERRORES]\n\nMiles de caracteres.\n\nEntre ellos:\n\n**J.S.**\n\nNo constituye todavía una pista resoluble.\n\n[Fin Escena 11]\n\n---\n\n[Escena 12 - Cinemática]\n\n## ALGUIEN ESTÁ OBSERVANDO\n\nLa computadora se activa.\n\nORIGEN DESCONOCIDO.\n\nVoz:\n\n—Encontró algo que no le pertenece.\n\nGray:\n\n—Entonces venga a buscarlo.\n\n—Ya lo estamos haciendo.\n\nComunicación terminada.\n\nMIRROR:\n\n—Director.\n\n—Se acaba de consultar un expediente gubernamental.\n\nPantalla:\n\n**ADRIAN CROSS**\n\n**FALLECIDO**\n\n**CONSULTADO HACE 11 SEGUNDOS**\n\nNegro.\n\n[Fin Escena 12]\n\n---\n\n# CASO 003 — LOS MUERTOS\n\n[Escena 13 - Interactiva - Primera Persona]\n\n## ¿MURIÓ TODA UNIDAD CERO?\n\n### PERSONAJE\n\nGRAY\n\n### OBJETIVO\n\n**Comprueba si realmente murieron los cinco integrantes de Unidad Cero.**\n\n### PISTAS\n\n**0 / 3**\n\n---\n\nCinco expedientes.\n\n[ADRIAN]\n\n[EVELYN]\n\n[THEO]\n\n[MARCUS]\n\n[JUNE]\n\nDocumentos adicionales:\n\n[FORENSE]\n\n[ACHERON]\n\n[HOSPITAL]\n\n[POLICÍA]\n\n---\n\nComparar fechas.\n\n### PISTA 1\n\n**Dos informes fueron firmados antes de concluir la identificación.**\n\n### PISTA 2\n\n**Dos cuerpos carecen de identificación genética concluyente.**\n\n### PISTA 3\n\n**Una cámara médica registró dos ingresos no identificados después de la explosión.**\n\n---\n\n[SOLUCIONAR]\n\n**¿QUÉ PUEDE AFIRMARSE CON LAS EVIDENCIAS?**\n\nA) Los cinco murieron.\n\nB) Nadie murió.\n\nC) Al menos dos miembros podrían haber sobrevivido.\n\nCorrecta:\n\n**C**\n\nMIRROR:\n\n—Conclusión válida.\n\n**DOS POSIBLES SUPERVIVIENTES**\n\nUna anomalía vuelve a aparecer:\n\n**J.S.**\n\n[Fin Escena 13]\n\n---\n\n[Escena 14 - Interactiva - Primera Persona]\n\n## LA ESTACIÓN\n\n### PERSONAJE\n\nWRAITH\n\n### OBJETIVO\n\n**Encuentra el origen de las grabaciones de Unidad Cero.**\n\n---\n\n## IMAGEN 14.1 — ESTACIÓN ABANDONADA\n\nHotspots:\n\n[CARTEL]\n\n[BANCO]\n\n[PUERTA]\n\n[PARED]\n\nPARED.\n\n[MARCA]\n\nCoincide con símbolo JANUS.\n\n[RETIRAR PANEL]\n\nNueva imagen.\n\n[ENTRAR]\n\n---\n\n## IMAGEN 14.2 — SALA OCULTA\n\nHotspots:\n\n[MONITORES]\n\n[CINTAS]\n\n[SERVIDOR]\n\n[FOTOGRAFÍAS]\n\nEl jugador encuentra grabaciones de antiguas misiones.\n\nLas cámaras estaban ocultas.\n\nUnidad Cero nunca supo que existían.\n\nUna grabación:\n\n**HACE SEIS MESES**\n\nMujer.\n\nTres segundos.\n\nIdentificación parcial:\n\n**E. MAR...**\n\nPISTA:\n\n**UNA MUJER POSIBLEMENTE RELACIONADA CON EVELYN APARECIÓ HACE SEIS MESES.**\n\n[Fin Escena 14]\n\n---\n\n[Escena 15 - Interactiva - Primera Persona]\n\n## ¿QUIÉN ES IRIS?\n\n### PERSONAJE\n\nGRAY\n\n### OBJETIVO\n\n**Identifica a la mujer de la grabación.**\n\n### PISTAS\n\n**0 / 3**\n\n---\n\n[RECONOCIMIENTO FACIAL]\n\n[ATAQUES ACHERON]\n\n[ARCHIVO EVELYN]\n\n---\n\n### RECONOCIMIENTO\n\nAlias:\n\n**IRIS**\n\nPISTA 1.\n\n---\n\n### ATAQUES ACHERON\n\nTodos los objetivos estaban relacionados con JANUS.\n\nPISTA 2.\n\n---\n\n### EVELYN\n\nComparación facial.\n\nCoincidencias parciales.\n\nPISTA 3.\n\n---\n\n[SOLUCIONAR]\n\n**¿CUÁL ES LA HIPÓTESIS MÁS PROBABLE?**\n\n**IRIS podría ser Evelyn Marlowe.**\n\nCorrecto.\n\nEn ese instante:\n\n**MENSAJE RECIBIDO**\n\nIRIS:\n\n**QUIERO HABLAR CON WRAITH**\n\nCoordenadas.\n\n[Fin Escena 15]\n\n---\n\n[Escena 16 - Interactiva - Primera Persona]\n\n## LA PRUEBA\n\n### PERSONAJE\n\nWRAITH\n\n### OBJETIVO\n\n**Descubre qué sabe Iris sobre Unidad Cero.**\n\n---\n\nHabitación vacía.\n\nTerminal.\n\n[ACTIVAR]\n\nVideollamada.\n\nRostro parcialmente oculto.\n\nIris:\n\n—Quiero saber quién eres.\n\nOpciones:\n\n[TRABAJO PARA GRAY]\n\n[NO ES ASUNTO TUYO]\n\n[¿QUIÉN ERES TÚ?]\n\nIris muestra una fotografía térmica.\n\nHotspots:\n\n[EXPLOSIÓN]\n\n[SALIDA]\n\n[FIGURA]\n\nClic sobre figura.\n\nPersona saliendo de las ruinas.\n\nIris:\n\n—Adrian Cross sobrevivió.\n\nNueva pista global:\n\n**ADRIAN CROSS PODRÍA ESTAR VIVO**\n\n—Gray sabe quién salió de Acheron.\n\n—Pregúntale dónde está Adrian.\n\nComunicación terminada.\n\n[Fin Escena 16]\n\n---\n\n# CASO 004 — EL TRAIDOR\n\n[Escena 17 - Interactiva - Primera Persona]\n\n## ¿QUIÉN TRAICIONÓ A UNIDAD CERO?\n\n### PERSONAJE\n\nGRAY\n\n### OBJETIVO\n\n**Identifica quién entregó a Unidad Cero.**\n\n### PISTAS\n\n**0 / 4**\n\n---\n\nMesa de investigación.\n\n[CÁMARAS]\n\n[LLAMADAS]\n\n[REGISTROS DE PUERTAS]\n\n[HORARIOS]\n\n[SENSORES]\n\nEl jugador debe relacionar información.\n\nPISTA 1:\n\nTheo accedió al horario.\n\nPISTA 2:\n\nEl horario fue enviado desde su terminal.\n\nPISTA 3:\n\nVoss recibió una comunicación minutos después.\n\nPISTA 4:\n\nTheo modificó las rutas de acceso.\n\n---\n\n[SOLUCIONAR]\n\n**¿QUIÉN TRAICIONÓ A UNIDAD CERO?**\n\nADRIAN\n\nEVELYN\n\nTHEO\n\nMARCUS\n\nJUNE\n\nRespuesta:\n\n**THEO**\n\n**THEO ERA EL TRAIDOR**\n\nPero se desbloquea:\n\n**AUDIO OCULTO**\n\nTheo:\n\n—Me prometió que saldrían vivos.\n\nVoss:\n\n—Le prometí que los adecuados saldrían vivos.\n\nNueva misión:\n\n**Descubre qué hizo Theo después de la explosión.**\n\n[Fin Escena 17]\n\n---\n\n[Escena 18 - Interactiva - Primera Persona]\n\n## DOS SALIDAS\n\n### PERSONAJE\n\nGRAY\n\n### OBJETIVO\n\n**Determina cuántas personas escaparon de Acheron.**\n\n### PISTAS\n\n**0 / 3**\n\nRegistros:\n\n**SALIDA A — ABIERTA**\n\n**SALIDA B — ABIERTA**\n\nSensores:\n\nA utilizada.\n\nB utilizada.\n\nCámara térmica:\n\ndos firmas separadas.\n\nPISTAS:\n\n3/3.\n\n[SOLUCIONAR]\n\nConclusión correcta:\n\n**AL MENOS DOS PERSONAS SOBREVIVIERON**\n\n[Fin Escena 18]\n\n---\n\n[Escena 19 - Interactiva - Primera Persona]\n\n## EL SEGUNDO SUPERVIVIENTE\n\n### PERSONAJE\n\nGRAY\n\n### OBJETIVO\n\n**Identifica a uno de los supervivientes.**\n\n### PISTAS\n\n**0 / 3**\n\nCámara hospitalaria.\n\nMujer desconocida.\n\nHotspots:\n\n[CABELLO]\n\n[CICATRIZ]\n\n[ROSTRO]\n\nComparar con expedientes.\n\nCada coincidencia añade evidencia.\n\n3/3.\n\n[SOLUCIONAR]\n\n¿QUIÉN ES?\n\n[JUNE]\n\n[EVELYN]\n\n[DESCONOCIDA]\n\nRespuesta:\n\n**EVELYN**\n\nMIRROR:\n\n—Coincidencia estimada: 96,4 %.\n\n**EVELYN MARLOWE SOBREVIVIÓ**\n\nFotografía de Unidad Cero.\n\nNuevo hotspot:\n\n[EVELYN]\n\nGray:\n\n—Te busqué.",
+      "panels": [
+        {
+          "id": "ficha-daniel-panel-1",
+          "imageDescription": "A dimly lit hospital room. A woman with long hair sits on a bed, her back to the camera. Medical equipment and a monitoring screen are visible. The atmosphere is tense and expectant.",
+          "displayText": "Cámara hospitalaria. Mujer desconocida.",
+          "narrativePurpose": "establishing",
+          "characters": [],
+          "location": "Habitación de hospital",
+          "continuity": {
+            "lighting": "tenue, hospitalaria",
+            "woman_position": "sentada en la cama, de espaldas"
+          }
+        },
+        {
+          "id": "ficha-daniel-panel-2",
+          "imageDescription": "Close-up of the woman's hair, showing distinctive color and length. The background is blurred, focusing on the detail.",
+          "displayText": "Hotspots: [CABELLO]",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Habitación de hospital",
+          "continuity": {
+            "woman_hair": "visible, largo, color característico"
+          }
+        },
+        {
+          "id": "ficha-daniel-panel-3",
+          "imageDescription": "Close-up of the woman's neck and shoulder, revealing a visible scar. The medical equipment glows softly in the background.",
+          "displayText": "Hotspots: [CICATRIZ]",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Habitación de hospital",
+          "continuity": {
+            "scar": "visible en el cuello/hombro"
+          }
+        },
+        {
+          "id": "ficha-daniel-panel-4",
+          "imageDescription": "Close-up of the woman's face in profile, partially illuminated by the monitor's light. Her expression is neutral but tired.",
+          "displayText": "Hotspots: [ROSTRO]",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Habitación de hospital",
+          "continuity": {
+            "face": "parcialmente visible, expresión cansada"
+          }
+        },
+        {
+          "id": "ficha-daniel-panel-5",
+          "imageDescription": "A digital interface overlays the previous hospital image, displaying side-by-side comparisons of the woman's features with archived photos of Evelyn Marlowe. The interface highlights matching points.",
+          "displayText": "Comparar con expedientes. Cada coincidencia añade evidencia.",
+          "narrativePurpose": "action",
+          "characters": [],
+          "location": "Habitación de hospital",
+          "continuity": {
+            "interface_overlay": "comparación facial activa"
+          }
+        },
+        {
+          "id": "ficha-daniel-panel-6",
+          "imageDescription": "The same hospital room, now with a focus on a computer screen showing the analysis result: a large percentage match. The woman is still seated, unaware of the result.",
+          "displayText": "MIRROR: —Coincidencia estimada: 96,4 %. EVELYN MARLOWE SOBREVIVIÓ",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Habitación de hospital",
+          "continuity": {
+            "analysis_result": "pantalla visible, porcentaje alto"
+          }
+        },
+        {
+          "id": "ficha-daniel-panel-7",
+          "imageDescription": "A faded group photograph of Unit Zero. The camera zooms in on the figure of Evelyn, highlighting her presence among the group.",
+          "displayText": "Fotografía de Unidad Cero. Nuevo hotspot: [EVELYN]",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Evelyn"
+          ],
+          "location": "Foto de grupo, Unidad Cero",
+          "continuity": {
+            "photo_state": "desgastada, antigua",
+            "focus": "Evelyn resaltada"
+          }
+        },
+        {
+          "id": "ficha-daniel-panel-8",
+          "imageDescription": "Gray stands in front of a digital display, looking at the old photograph of Unit Zero. His face is illuminated by the screen, showing a mix of determination and relief.",
+          "displayText": "Gray: —Te busqué.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Gray"
+          ],
+          "location": "Sala de análisis",
+          "continuity": {
+            "lighting": "luz de pantalla sobre el rostro de Gray",
+            "photo_displayed": "en la pantalla"
+          }
+        }
+      ],
+      "bridgeFromPrevious": "Tras la llamada, Gray inicia la investigación sobre Daniel Hart.",
+      "characterIds": [
+        "gray",
+        "mirror",
+        "daniel"
+      ],
+      "objects": [
+        {
+          "name": "Fotografía de Daniel",
+          "examineText": "Foto de Daniel Hart con credencial visible y fondo de oficina.",
+          "interactText": "Permite examinar la credencial y otros detalles."
+        },
+        {
+          "name": "Historial laboral",
+          "examineText": "Lista de empleos anteriores de Daniel Hart.",
+          "interactText": "Se descubre su relación con Acheron Systems."
+        },
+        {
+          "name": "Registros financieros",
+          "examineText": "Extractos bancarios y pagos recientes.",
+          "interactText": "Se identifican transacciones de Halcyon Holdings."
+        }
+      ],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "confronta-lena",
+      "title": "La verdad de Lena",
+      "summary": "Gray confronta a Lena con la verdad sobre Daniel. Lena admite que mintió por instrucciones de su hermano y revela una frase clave: 'Ellos saben cómo decide la gente'. Se confirma que Daniel dejó algo en Halcyon.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "Tras la deducción, Gray llama a Lena para confrontarla.",
+      "characterIds": [
+        "gray",
+        "lena"
+      ],
+      "objects": [],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "investigacion-halcyon",
+      "title": "Halcyon",
+      "summary": "Gray investiga la situación de Halcyon y descubre que el edificio sigue siendo propiedad de Acheron, tiene consumo eléctrico y cámaras activas. Se concluye que Halcyon sigue en uso clandestino.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "Lena revela que Daniel dejó algo en Halcyon y Gray investiga el edificio.",
+      "characterIds": [
+        "gray",
+        "mirror"
+      ],
+      "objects": [
+        {
+          "name": "Propiedad Halcyon",
+          "examineText": "Documento de propiedad del edificio Halcyon Holdings.",
+          "interactText": "Se identifica a Acheron Systems como propietario final."
+        },
+        {
+          "name": "Consumo eléctrico",
+          "examineText": "Registro de consumo energético del edificio.",
+          "interactText": "Se observa actividad reciente, incompatible con un edificio abandonado."
+        },
+        {
+          "name": "Cámaras de seguridad",
+          "examineText": "Fotografía de la puerta lateral con luz de acceso encendida.",
+          "interactText": "Evidencia de acceso reciente al edificio."
+        }
+      ],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "entrada-halcyon",
+      "title": "Entrar en Halcyon",
+      "summary": "Wraith es activado para infiltrarse en Halcyon. Explora el exterior, manipula un panel electrónico y utiliza un dispositivo especial para desbloquear la puerta y entrar.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "Gray activa a Wraith para la operación física en Halcyon.",
+      "characterIds": [
+        "wraith",
+        "gray",
+        "mirror"
+      ],
+      "objects": [
+        {
+          "name": "Panel de acceso",
+          "examineText": "Panel electrónico junto a la puerta principal.",
+          "interactText": "Permite abrir la tapa y conectar el dispositivo Wraith para desbloquear la puerta."
+        }
+      ],
+      "minigame": {
+        "template": "wiring",
+        "reason": "El jugador debe manipular el panel y conectar el dispositivo correctamente para desbloquear la puerta."
+      },
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "vestibulo-halcyon",
+      "title": "Encuentra el despacho de Daniel",
+      "summary": "Wraith explora el vestíbulo de Halcyon, encuentra la tarjeta de mantenimiento en la oficina de seguridad, desbloquea la puerta de mantenimiento y accede al corredor donde está el despacho 2B.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "Wraith entra en Halcyon y busca el despacho de Daniel.",
+      "characterIds": [
+        "wraith"
+      ],
+      "objects": [
+        {
+          "name": "Tarjeta de mantenimiento",
+          "examineText": "Tarjeta plástica con banda magnética, sobre el escritorio de seguridad.",
+          "interactText": "Permite abrir la puerta de mantenimiento y avanzar por el edificio."
+        }
+      ],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "despacho-daniel",
+      "title": "¿Qué encontró Daniel?",
+      "summary": "Wraith investiga el despacho de Daniel, encuentra evidencia de que alguien seguía investigando Unidad Cero, un audio sobre JANUS y la propia unidad JANUS oculta tras una pared. Salta la alarma y debe escapar.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "Wraith accede al despacho 2B y comienza la búsqueda de pistas.",
+      "characterIds": [
+        "wraith",
+        "daniel"
+      ],
+      "objects": [
+        {
+          "name": "Fotografía Unidad Cero",
+          "examineText": "Foto impresa de Unidad Cero, con fecha posterior al incidente.",
+          "interactText": "Revela que la investigación continuó tras la muerte oficial del equipo."
+        },
+        {
+          "name": "Teléfono destruido",
+          "examineText": "Teléfono de escritorio roto, con la carcasa abierta.",
+          "interactText": "Permite extraer la memoria y escuchar un audio fragmentado sobre JANUS."
+        },
+        {
+          "name": "Compartimento en la pared",
+          "examineText": "Espacio oculto tras una fotografía rota.",
+          "interactText": "Contiene la unidad negra identificada como JANUS."
+        }
+      ],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "escape-halcyon",
+      "title": "La ruta que no existe",
+      "summary": "Wraith debe encontrar una salida alternativa tras la alarma. Encuentra una puerta oculta con teclado numérico y resuelve un minijuego de código para acceder al túnel de servicio y escapar.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "La alarma se activa tras recuperar la unidad JANUS.",
+      "characterIds": [
+        "wraith",
+        "mirror"
+      ],
+      "objects": [
+        {
+          "name": "Puerta oculta con teclado",
+          "examineText": "Puerta metálica sin identificación visible, con teclado numérico empotrado.",
+          "interactText": "Permite introducir el código correcto y abrir la puerta al túnel de servicio."
+        }
+      ],
+      "minigame": {
+        "template": "codebreaker",
+        "reason": "El jugador debe deducir un código de cuatro dígitos, usando lógica y pistas, para abrir la puerta oculta."
+      },
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "analisis-janus",
+      "title": "¿Qué es JANUS?",
+      "summary": "Gray analiza la unidad JANUS recuperada. Encuentra archivos que revelan que JANUS modela decisiones humanas, con Adrian y Evelyn como sujetos principales. Se detectan errores y corrupción de datos.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "Wraith ha escapado con la unidad JANUS y Gray inicia el análisis.",
+      "characterIds": [
+        "gray",
+        "mirror",
+        "adrian",
+        "evelyn"
+      ],
+      "objects": [
+        {
+          "name": "Unidad JANUS",
+          "examineText": "Dispositivo negro y compacto con indicadores LED, conectado al computador.",
+          "interactText": "Permite acceder a archivos y reconstruir información clave sobre el proyecto."
+        }
+      ],
+      "minigame": {
+        "template": "sequence",
+        "reason": "El jugador debe ordenar fragmentos de texto para reconstruir la función de JANUS."
+      },
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "alguien-observa",
+      "title": "Alguien está observando",
+      "summary": "Cinemática donde Gray es contactado por un origen desconocido que reclama la unidad JANUS. MIRROR detecta que el expediente de Adrian Cross fue consultado recientemente, aumentando el misterio.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "Tras analizar JANUS, Gray recibe una intrusión inesperada.",
+      "characterIds": [
+        "gray",
+        "mirror"
+      ],
+      "objects": [],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "unidad-cero-muertos",
+      "title": "¿Murió toda Unidad Cero?",
+      "summary": "Gray revisa los expedientes de los cinco miembros de Unidad Cero y descubre inconsistencias en los informes forenses, identificaciones genéticas y registros médicos que sugieren posibles supervivientes.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "Se sospecha que no todos los miembros de Unidad Cero murieron en Acheron.",
+      "characterIds": [
+        "gray",
+        "mirror",
+        "adrian",
+        "evelyn",
+        "theo",
+        "marcus",
+        "june"
+      ],
+      "objects": [
+        {
+          "name": "Expedientes forenses",
+          "examineText": "Documentos oficiales de identificación y autopsia de los miembros de Unidad Cero.",
+          "interactText": "Permiten comparar fechas, firmas y datos genéticos para detectar anomalías."
+        }
+      ],
+      "minigame": {
+        "template": "association",
+        "reason": "El jugador debe asociar documentos y registros para descubrir inconsistencias en las muertes reportadas."
+      },
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "estacion-abandonada",
+      "title": "La estación",
+      "summary": "Wraith investiga una estación abandonada y encuentra una sala oculta con monitores y grabaciones secretas de Unidad Cero. Una grabación reciente muestra a una mujer posiblemente relacionada con Evelyn.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "Las investigaciones apuntan a grabaciones ocultas de Unidad Cero.",
+      "characterIds": [
+        "wraith",
+        "evelyn"
+      ],
+      "objects": [
+        {
+          "name": "Grabaciones de seguridad",
+          "examineText": "Cintas y archivos de video de antiguas misiones de Unidad Cero.",
+          "interactText": "Permiten ver imágenes inéditas y descubrir la presencia reciente de una mujer misteriosa."
+        }
+      ],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "identidad-iris",
+      "title": "¿Quién es Iris?",
+      "summary": "Gray utiliza reconocimiento facial y análisis de archivos para identificar a la mujer de la grabación como Iris, con coincidencias parciales con Evelyn Marlowe. Iris contacta con Zero y pide hablar con Wraith.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "Una grabación reciente sugiere que Evelyn podría estar viva bajo el alias Iris.",
+      "characterIds": [
+        "gray",
+        "mirror",
+        "evelyn"
+      ],
+      "objects": [
+        {
+          "name": "Reconocimiento facial",
+          "examineText": "Interfaz de software comparando rostros de archivos y grabaciones.",
+          "interactText": "Sugiere coincidencias entre Iris y Evelyn Marlowe."
+        }
+      ],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "la-prueba-iris",
+      "title": "La prueba",
+      "summary": "Wraith contacta con Iris en una videollamada. Iris muestra una fotografía térmica de la explosión de Acheron y revela que Adrian Cross sobrevivió. Pide a Wraith que le pregunte a Gray por Adrian.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "Iris pide hablar con Wraith tras ser identificada.",
+      "characterIds": [
+        "wraith",
+        "evelyn"
+      ],
+      "objects": [
+        {
+          "name": "Fotografía térmica",
+          "examineText": "Imagen térmica de la explosión en Acheron, muestra una figura saliendo de las ruinas.",
+          "interactText": "Permite identificar la figura como Adrian Cross."
+        }
+      ],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "traidor-unidad-cero",
+      "title": "¿Quién traicionó a Unidad Cero?",
+      "summary": "Gray investiga registros de cámaras, llamadas y sensores para deducir que Theo fue el traidor de Unidad Cero. Se desbloquea un audio oculto que sugiere que Voss también estaba implicado.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "La investigación se centra en descubrir al traidor de Unidad Cero.",
+      "characterIds": [
+        "gray",
+        "mirror",
+        "theo",
+        "elias"
+      ],
+      "objects": [
+        {
+          "name": "Registros de cámaras y sensores",
+          "examineText": "Panel con horarios y logs de acceso durante el incidente de Acheron.",
+          "interactText": "Permite asociar accesos y comunicaciones para identificar al traidor."
+        }
+      ],
+      "minigame": {
+        "template": "association",
+        "reason": "El jugador debe vincular horarios, terminales y comunicaciones para deducir la traición."
+      },
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "dos-salidas",
+      "title": "Dos salidas",
+      "summary": "Gray revisa los registros de salida tras la explosión y deduce, por sensores y cámaras térmicas, que al menos dos personas escaparon de Acheron.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "Tras descubrir la traición, Gray analiza las rutas de escape del incidente.",
+      "characterIds": [
+        "gray",
+        "mirror"
+      ],
+      "objects": [
+        {
+          "name": "Registros de salidas",
+          "examineText": "Panel con sensores de apertura y cámaras térmicas.",
+          "interactText": "Permite identificar el uso de dos rutas de escape distintas."
+        }
+      ],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "segundo-superviviente",
+      "title": "El segundo superviviente",
+      "summary": "Gray compara imágenes de una cámara hospitalaria con expedientes y deduce que Evelyn Marlowe sobrevivió al incidente de Acheron.",
+      "sourceText": "",
+      "panels": [],
+      "bridgeFromPrevious": "Gray sabe que dos personas escaparon y busca identificar a la segunda.",
+      "characterIds": [
+        "gray",
+        "mirror",
+        "evelyn"
+      ],
+      "objects": [
+        {
+          "name": "Imágenes hospitalarias",
+          "examineText": "Fotografías de una mujer en una cama de hospital, con cicatriz visible.",
+          "interactText": "Permite comparar rasgos y confirmar la identidad de Evelyn."
+        }
+      ],
+      "minigame": {
+        "template": "comparison",
+        "reason": "El jugador debe comparar características físicas para identificar a Evelyn."
+      },
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "iris-revelacion",
+      "title": "Iris",
+      "summary": "En una videollamada, Iris muestra su rostro y se revela como Evelyn Marlowe. Discute con Wraith sobre The Annex, códigos y la supervivencia de Adrian.",
+      "sourceText": "Videollamada.\n\nEsta vez:\n\nIris muestra su rostro.\n\n**EVELYN MARLOWE**\n\n—Quítate la máscara.\n\nWraith:\n\n—No.\n\n—Conoces The Annex.\n\n—Conoces nuestros códigos.\n\n—Sabes cosas que solamente Adrian debería saber.\n\n—Y Gray sabe quién eres.\n\nPausa.\n\n—Adrian sobrevivió.\n\n—Pregúntale a Gray dónde está.\n\nFin.\n\nNuevo objetivo:\n\n**Descubre qué relación existe entre Wraith y Adrian Cross.**",
+      "panels": [
+        {
+          "id": "iris-revelacion-panel-1",
+          "imageDescription": "A computer screen showing a video call interface. One of the participants, Iris, is now visible on camera for the first time, her face illuminated by the screen's glow. The background is dim and indistinct.",
+          "displayText": "Esta vez: Iris muestra su rostro.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "Iris"
+          ],
+          "location": "Videollamada",
+          "continuity": {
+            "lighting": "screen glow on Iris's face",
+            "Iris_position": "centered in frame",
+            "background": "dim, indistinct"
+          }
+        },
+        {
+          "id": "iris-revelacion-panel-2",
+          "imageDescription": "Evelyn Marlowe sits in front of her own computer, looking directly at the screen with a firm, demanding expression. Her room is softly lit, with the light of the monitor reflecting in her eyes.",
+          "displayText": "—Quítate la máscara.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Evelyn Marlowe"
+          ],
+          "location": "Videollamada",
+          "continuity": {
+            "lighting": "soft room lighting plus monitor glow",
+            "Evelyn_position": "facing camera"
+          }
+        },
+        {
+          "id": "iris-revelacion-panel-3",
+          "imageDescription": "A shadowy figure, Wraith, sits in a dark room, their face still obscured by a mask or in deep shadow. The video call interface shows their camera feed as a vague silhouette.",
+          "displayText": "—No.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Wraith"
+          ],
+          "location": "Videollamada",
+          "continuity": {
+            "lighting": "very low, face obscured",
+            "Wraith_position": "centered, unidentifiable"
+          }
+        },
+        {
+          "id": "iris-revelacion-panel-4",
+          "imageDescription": "Wraith remains in shadow, but now leans slightly forward, as if emphasizing their words. The atmosphere is tense.",
+          "displayText": "—Conoces The Annex.\n—Conoces nuestros códigos.\n—Sabes cosas que solamente Adrian debería saber.\n—Y Gray sabe quién eres.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Wraith"
+          ],
+          "location": "Videollamada",
+          "continuity": {
+            "lighting": "unchanged, shadowy",
+            "Wraith_position": "leaning forward"
+          }
+        },
+        {
+          "id": "iris-revelacion-panel-5",
+          "imageDescription": "A close-up of Evelyn's face on her screen, her expression shifting from suspicion to surprise as she processes Wraith's words. The background is blurred.",
+          "displayText": "Pausa.",
+          "narrativePurpose": "reaction",
+          "characters": [
+            "Evelyn Marlowe"
+          ],
+          "location": "Videollamada",
+          "continuity": {
+            "lighting": "monitor glow on face",
+            "Evelyn_position": "close-up, reacting"
+          }
+        },
+        {
+          "id": "iris-revelacion-panel-6",
+          "imageDescription": "Wraith, still masked and in shadow, sits silently for a moment, then speaks with a subtle change in posture, suggesting the gravity of what is about to be revealed.",
+          "displayText": "—Adrian sobrevivió.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Wraith"
+          ],
+          "location": "Videollamada",
+          "continuity": {
+            "lighting": "unchanged",
+            "Wraith_position": "slightly shifted, serious"
+          }
+        },
+        {
+          "id": "iris-revelacion-panel-7",
+          "imageDescription": "A close-up of Evelyn's hand gripping the edge of her desk tightly, knuckles white, showing the impact of the revelation.",
+          "displayText": "—Pregúntale a Gray dónde está.",
+          "narrativePurpose": "cliffhanger",
+          "characters": [],
+          "location": "Videollamada",
+          "continuity": {
+            "lighting": "monitor light on hand",
+            "hand_position": "gripping desk"
+          }
+        },
+        {
+          "id": "iris-revelacion-panel-8",
+          "imageDescription": "A blank screen with the video call ended, the room reflected in the dark monitor. The atmosphere is tense and unresolved.",
+          "displayText": "Fin.",
+          "narrativePurpose": "transition",
+          "characters": [],
+          "location": "Videollamada",
+          "continuity": {
+            "lighting": "room reflected in black screen",
+            "no_characters": "call ended"
+          }
+        },
+        {
+          "id": "iris-revelacion-panel-9",
+          "imageDescription": "A notepad or computer screen seen from behind or at an angle, showing someone (Evelyn) writing or typing a new objective, but the text itself is not legible.",
+          "displayText": "Nuevo objetivo: Descubre qué relación existe entre Wraith y Adrian Cross.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Evelyn Marlowe"
+          ],
+          "location": "Oficina de Evelyn",
+          "continuity": {
+            "lighting": "soft desk lamp",
+            "Evelyn_position": "writing or typing"
+          }
+        }
+      ],
+      "bridgeFromPrevious": "Evelyn, como Iris, contacta de nuevo y revela su identidad.",
+      "characterIds": [
+        "wraith",
+        "evelyn"
+      ],
+      "objects": [],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "casa-segura",
+      "title": "La casa segura",
+      "summary": "Wraith explora una habitación abandonada y encuentra medicamentos, una silla de ruedas y fotografías de rehabilitación que apuntan a la verdadera identidad de Wraith. Se prepara para reproducir una grabación clave.",
+      "sourceText": "Habitación abandonada.\n\nHotspots:\n\n[ARMARIO]\n\n[MEDICAMENTOS]\n\n[SILLA DE RUEDAS]\n\n[CAJA]\n\n[CÁMARA]\n\n---\n\n### MEDICAMENTOS\n\nTratamiento de rehabilitación.\n\nPaciente parcialmente borrado:\n\n**A. C.**\n\nPISTA 1.\n\n---\n\n### SILLA\n\nNúmero de serie.\n\nComparar con expediente médico de Adrian.\n\nCoincide.\n\nPISTA 2.\n\n---\n\n### CAJA\n\nWraith puede moverla.\n\nNueva imagen.\n\nFotografías de rehabilitación.\n\nRostro oculto.\n\nPISTA 3.\n\n---\n\n### CÁMARA\n\nGrabación:\n\n**SEIS MESES DESPUÉS DE ACHERON**\n\nPISTA 4.\n\n[SOLUCIONAR]\n\n**¿QUÉ DEBES HACER PARA CONFIRMAR LA IDENTIDAD?**\n\nRespuesta:\n\n**REPRODUCIR LA GRABACIÓN**",
+      "panels": [
+        {
+          "id": "casa-segura-panel-1",
+          "imageDescription": "A wide shot of an abandoned, dimly lit room with peeling wallpaper, scattered debris, and dusty furniture. Several objects stand out: a closed wardrobe, a cluttered table with medication bottles, a wheelchair, a sealed cardboard box, and an old video camera on a tripod.",
+          "displayText": "Habitación abandonada.",
+          "narrativePurpose": "establishing",
+          "characters": [],
+          "location": "Habitación abandonada",
+          "continuity": {
+            "lighting": "dim, dusty sunlight filtering through a dirty window",
+            "objects": "wardrobe, medications, wheelchair, box, camera all visible"
+          }
+        },
+        {
+          "id": "casa-segura-panel-2",
+          "imageDescription": "A close-up of a table with several medication bottles and blister packs. One of the labels is partially scratched, showing only the initials 'A. C.', with the rest of the name obscured. A faded rehabilitation treatment schedule lies beside the bottles.",
+          "displayText": "Tratamiento de rehabilitación. Paciente parcialmente borrado: A. C. PISTA 1.",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Habitación abandonada, mesa con medicamentos",
+          "continuity": {
+            "lighting": "soft daylight from window",
+            "medication_label": "initials 'A. C.' visible, rest obscured"
+          }
+        },
+        {
+          "id": "casa-segura-panel-3",
+          "imageDescription": "A close-up of a wheelchair beside the table. The camera focuses on a metallic plate with a serial number engraved. The number is visible, but the viewer cannot see any other identifying marks.",
+          "displayText": "Número de serie. Comparar con expediente médico de Adrian. Coincide. PISTA 2.",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Habitación abandonada, junto a la silla de ruedas",
+          "continuity": {
+            "wheelchair_position": "next to table",
+            "serial_number": "engraved, visible"
+          }
+        },
+        {
+          "id": "casa-segura-panel-4",
+          "imageDescription": "A person with indistinct features (Wraith) is shown moving a dusty cardboard box. The box is heavy and leaves a mark on the floor. The lid is open, revealing scattered photographs inside.",
+          "displayText": "Wraith puede moverla. Nueva imagen. Fotografías de rehabilitación. Rostro oculto. PISTA 3.",
+          "narrativePurpose": "action",
+          "characters": [
+            "Wraith"
+          ],
+          "location": "Habitación abandonada, junto a la caja",
+          "continuity": {
+            "box_position": "being moved by Wraith",
+            "photos_inside": "visible, faces obscured"
+          }
+        },
+        {
+          "id": "casa-segura-panel-5",
+          "imageDescription": "A close-up of an old video camera on a tripod. The camera’s screen is turned toward the viewer, showing a blurred timestamp and the faint glow of a recording indicator. The screen is angled so that the text is not legible, but the mood is tense.",
+          "displayText": "Grabación: SEIS MESES DESPUÉS DE ACHERON. PISTA 4.",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Habitación abandonada, junto a la cámara",
+          "continuity": {
+            "camera_position": "on tripod",
+            "screen_glow": "timestamp blurred, recording indicator visible"
+          }
+        },
+        {
+          "id": "casa-segura-panel-6",
+          "imageDescription": "A close-up of a hand (Wraith’s) hesitating above the camera’s play button. The room is silent, and the tension is palpable.",
+          "displayText": "¿QUÉ DEBES HACER PARA CONFIRMAR LA IDENTIDAD?",
+          "narrativePurpose": "cliffhanger",
+          "characters": [
+            "Wraith"
+          ],
+          "location": "Habitación abandonada, junto a la cámara",
+          "continuity": {
+            "hand_position": "hovering over play button",
+            "camera": "same as previous panel"
+          }
+        },
+        {
+          "id": "casa-segura-panel-7",
+          "imageDescription": "A close-up of the camera’s play button being pressed. The screen glows brighter, illuminating Wraith’s face with anticipation.",
+          "displayText": "Respuesta: REPRODUCIR LA GRABACIÓN",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Wraith"
+          ],
+          "location": "Habitación abandonada, junto a la cámara",
+          "continuity": {
+            "hand": "pressing play",
+            "screen_light": "illuminating Wraith’s face"
+          }
+        }
+      ],
+      "bridgeFromPrevious": "Tras la revelación de Evelyn, Wraith busca pruebas sobre su propia identidad.",
+      "characterIds": [
+        "wraith",
+        "adrian"
+      ],
+      "objects": [
+        {
+          "name": "Medicamentos",
+          "examineText": "Envases de tratamiento de rehabilitación con iniciales A.C.",
+          "interactText": "Sugieren que el paciente es Adrian Cross."
+        },
+        {
+          "name": "Silla de ruedas",
+          "examineText": "Silla de ruedas con número de serie visible.",
+          "interactText": "Coincide con el expediente médico de Adrian."
+        },
+        {
+          "name": "Fotografías de rehabilitación",
+          "examineText": "Fotos de una persona en fisioterapia, rostro oculto.",
+          "interactText": "Indican el proceso de recuperación tras el incidente."
+        },
+        {
+          "name": "Cámara",
+          "examineText": "Cámara de seguridad instalada en la habitación.",
+          "interactText": "Contiene una grabación esencial para confirmar la identidad."
+        }
+      ],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "wraith-revelacion",
+      "title": "Wraith",
+      "summary": "Cinemática que revela que Wraith y Gray son la misma persona: Adrian Cross. Se muestra a Adrian quitándose la máscara y la interfaz confirma la fusión de identidades.",
+      "sourceText": "La misma habitación.\n\nWraith entra.\n\nComprueba que está solo.\n\nSe quita la máscara.\n\n**ADRIAN CROSS**\n\nNegro.\n\n**WRAITH = ADRIAN**\n\nPero continúa.\n\nLa computadora se enciende.\n\nMIRROR:\n\n—Perfil vocal Gray iniciado.\n\nSe escucha la voz de Gray.\n\nSintética.\n\nAparece:\n\n**DIRECTOR GRAY — ONLINE**\n\nMontaje:\n\nGray.\n\nWraith.\n\nSilla.\n\nCódigo 3142.\n\nFotografía.\n\nArchivos.\n\nLa voz.\n\nAdrian.\n\nFinalmente:\n\n**GRAY = WRAITH = ADRIAN CROSS**",
+      "panels": [
+        {
+          "id": "wraith-revelacion-panel-1",
+          "imageDescription": "A dimly lit room with a closed door; the atmosphere is tense and quiet, suggesting someone is about to enter.",
+          "displayText": "La misma habitación.",
+          "narrativePurpose": "establishing",
+          "characters": [],
+          "location": "Habitación",
+          "continuity": {
+            "lighting": "tenue",
+            "door": "cerrada"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-2",
+          "imageDescription": "A figure in a dark coat and mask—Wraith—enters the room, pausing in the doorway.",
+          "displayText": "Wraith entra.",
+          "narrativePurpose": "action",
+          "characters": [
+            "Wraith"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "lighting": "tenue",
+            "Wraith_position": "en la puerta"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-3",
+          "imageDescription": "Wraith stands still, scanning the empty room with a cautious posture to ensure he is alone.",
+          "displayText": "Comprueba que está solo.",
+          "narrativePurpose": "action",
+          "characters": [
+            "Wraith"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "Wraith_position": "de pie, mirando alrededor",
+            "ambiente": "silencioso"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-4",
+          "imageDescription": "Wraith removes his mask, revealing his face for the first time.",
+          "displayText": "Se quita la máscara.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "Wraith"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "Wraith_mask": "en la mano",
+            "rostro": "visible"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-5",
+          "imageDescription": "A close-up of the revealed face, showing the man known as Adrian Cross.",
+          "displayText": "ADRIAN CROSS",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian Cross"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "Adrian_position": "de pie",
+            "iluminación": "enfocada en el rostro"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-6",
+          "imageDescription": "A black screen, no visible details.",
+          "displayText": "Negro.",
+          "narrativePurpose": "transition",
+          "characters": [],
+          "location": "Habitación",
+          "continuity": {
+            "pantalla": "negra"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-7",
+          "imageDescription": "A dark room with Adrian (formerly Wraith) standing, the mask in his hand, as if the revelation still lingers.",
+          "displayText": "WRAITH = ADRIAN",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian Cross"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "Adrian_mask": "en la mano"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-8",
+          "imageDescription": "Adrian moves towards a computer on a desk, the monitor still off, as he sits down.",
+          "displayText": "Pero continúa.",
+          "narrativePurpose": "action",
+          "characters": [
+            "Adrian Cross"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "Adrian_position": "sentándose frente a la computadora"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-9",
+          "imageDescription": "The computer monitor lights up, illuminating Adrian's face with a cold glow.",
+          "displayText": "La computadora se enciende.",
+          "narrativePurpose": "action",
+          "characters": [
+            "Adrian Cross"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "pantalla": "encendida",
+            "iluminación": "brillo azul en el rostro de Adrian"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-10",
+          "imageDescription": "A close-up of the computer screen from behind Adrian's shoulder, the screen's content unreadable but active.",
+          "displayText": "MIRROR:",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian Cross"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "pantalla": "activa, contenido ilegible"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-11",
+          "imageDescription": "Adrian listens intently as a synthetic voice emanates from the computer speakers.",
+          "displayText": "—Perfil vocal Gray iniciado.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Adrian Cross"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "Adrian_postura": "atento",
+            "pantalla": "activa"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-12",
+          "imageDescription": "A subtle visual cue of a waveform or speaker icon on the computer screen, indicating a voice is speaking.",
+          "displayText": "Se escucha la voz de Gray.",
+          "narrativePurpose": "action",
+          "characters": [
+            "Adrian Cross"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "pantalla": "mostrando icono de audio"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-13",
+          "imageDescription": "Adrian's face illuminated by the monitor, his expression reflecting the unnatural, synthetic quality of the voice.",
+          "displayText": "Sintética.",
+          "narrativePurpose": "reaction",
+          "characters": [
+            "Adrian Cross"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "iluminación": "brillo frío",
+            "Adrian_reacción": "ligera incomodidad"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-14",
+          "imageDescription": "A focused shot on Adrian as he reacts to something on the screen, tension rising.",
+          "displayText": "Aparece:",
+          "narrativePurpose": "transition",
+          "characters": [
+            "Adrian Cross"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "Adrian_postura": "tenso"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-15",
+          "imageDescription": "Adrian stares at the computer screen, which emits a strong light, his face serious as if receiving important information.",
+          "displayText": "DIRECTOR GRAY — ONLINE",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian Cross"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "pantalla": "brillante, contenido ilegible"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-16",
+          "imageDescription": "A montage: flashes of Director Gray's face on a monitor (blurred or silhouetted), Adrian at the computer, a chair, glimpses of code (unreadable), a photograph, and digital files, all intercut rapidly.",
+          "displayText": "Montaje:\nGray.\nWraith.\nSilla.\nCódigo 3142.\nFotografía.\nArchivos.\nLa voz.\nAdrian.",
+          "narrativePurpose": "action",
+          "characters": [
+            "Adrian Cross",
+            "Director Gray"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "montaje": "imágenes intercaladas, detalles desenfocados o de espaldas"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-17",
+          "imageDescription": "Adrian sits alone in the chair, the computer screen's light casting dramatic shadows, as if everything has come together in a moment of realization.",
+          "displayText": "Finalmente:",
+          "narrativePurpose": "transition",
+          "characters": [
+            "Adrian Cross"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "Adrian_postura": "sentado, reflexivo",
+            "iluminación": "dramática"
+          }
+        },
+        {
+          "id": "wraith-revelacion-panel-18",
+          "imageDescription": "A close-up on Adrian's face, his expression a mix of shock and understanding, as if he has just realized the full truth.",
+          "displayText": "GRAY = WRAITH = ADRIAN CROSS",
+          "narrativePurpose": "cliffhanger",
+          "characters": [
+            "Adrian Cross"
+          ],
+          "location": "Habitación",
+          "continuity": {
+            "Adrian_reacción": "impactado",
+            "iluminación": "intensa en el rostro"
+          }
+        }
+      ],
+      "bridgeFromPrevious": "Wraith está a punto de reproducir la grabación que confirma su identidad.",
+      "characterIds": [
+        "adrian",
+        "mirror"
+      ],
+      "objects": [],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "confesion-adrian",
+      "title": "La confesión",
+      "summary": "Por primera vez, la cámara muestra a Adrian levantándose de la silla y caminando. MIRROR pregunta si debe actualizar los expedientes de Gray y Adrian, pero Adrian decide mantener ambas identidades ocultas.",
+      "sourceText": "Oficina.\n\nPor primera vez la cámara no está en primera persona.\n\nGray en silla.\n\nSe levanta.\n\nCamina hacia la ventana.\n\nEs Adrian.\n\nMIRROR:\n\n—¿Desea actualizar el expediente del Director Gray?\n\n—No.\n\n—Gray todavía no puede caminar.\n\n—Entendido.\n\n—¿Y Adrian Cross?\n\nAdrian:\n\n—Sigue muerto.\n\nPausa.\n\n—Por ahora.",
+      "panels": [
+        {
+          "id": "confesion-adrian-panel-1",
+          "imageDescription": "A wide shot of a modern office, daylight streaming through large windows. The camera is positioned at a distance, showing the entire room for the first time, with a solitary figure sitting in a chair.",
+          "displayText": "Oficina.\n\nPor primera vez la cámara no está en primera persona.",
+          "narrativePurpose": "establishing",
+          "characters": [],
+          "location": "Oficina",
+          "continuity": {
+            "lighting": "daylight",
+            "camera_angle": "wide shot"
+          }
+        },
+        {
+          "id": "confesion-adrian-panel-2",
+          "imageDescription": "A man with gray hair, Gray, sits in a chair in the office, looking thoughtful.",
+          "displayText": "Gray en silla.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "Gray"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "Gray_position": "seated",
+            "lighting": "daylight"
+          }
+        },
+        {
+          "id": "confesion-adrian-panel-3",
+          "imageDescription": "Gray stands up from the chair, beginning to move towards the window, the office visible behind him.",
+          "displayText": "Se levanta.",
+          "narrativePurpose": "action",
+          "characters": [
+            "Gray"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "Gray_position": "standing",
+            "lighting": "daylight"
+          }
+        },
+        {
+          "id": "confesion-adrian-panel-4",
+          "imageDescription": "Gray walks across the office towards a large window, his back to the camera, sunlight illuminating his silhouette.",
+          "displayText": "Camina hacia la ventana.",
+          "narrativePurpose": "action",
+          "characters": [
+            "Gray"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "Gray_position": "walking to window",
+            "lighting": "daylight"
+          }
+        },
+        {
+          "id": "confesion-adrian-panel-5",
+          "imageDescription": "A close-up of Adrian, a different man, standing by the window, looking out. This is the first clear shot of Adrian.",
+          "displayText": "Es Adrian.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Oficina, junto a la ventana",
+          "continuity": {
+            "Adrian_position": "by window",
+            "lighting": "daylight"
+          }
+        },
+        {
+          "id": "confesion-adrian-panel-6",
+          "imageDescription": "A neutral shot of the office, with both Gray and Adrian present. Gray stands near Adrian, both facing the window. The air feels tense.",
+          "displayText": "MIRROR:\n\n—¿Desea actualizar el expediente del Director Gray?\n\n—No.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Gray",
+            "Adrian"
+          ],
+          "location": "Oficina, junto a la ventana",
+          "continuity": {
+            "Gray_position": "standing near window",
+            "Adrian_position": "by window",
+            "lighting": "daylight"
+          }
+        },
+        {
+          "id": "confesion-adrian-panel-7",
+          "imageDescription": "A close-up of Gray's face, showing a subtle reaction to the conversation, as if processing the information.",
+          "displayText": "—Gray todavía no puede caminar.\n\n—Entendido.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Gray"
+          ],
+          "location": "Oficina, junto a la ventana",
+          "continuity": {
+            "Gray_expression": "slightly conflicted",
+            "lighting": "daylight"
+          }
+        },
+        {
+          "id": "confesion-adrian-panel-8",
+          "imageDescription": "A close-up of Adrian's face, his expression unreadable, as he listens to the question.",
+          "displayText": "—¿Y Adrian Cross?",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Oficina, junto a la ventana",
+          "continuity": {
+            "Adrian_expression": "neutral",
+            "lighting": "daylight"
+          }
+        },
+        {
+          "id": "confesion-adrian-panel-9",
+          "imageDescription": "Adrian turns slightly, his face half in shadow, as he responds quietly.",
+          "displayText": "Adrian:\n\n—Sigue muerto.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Oficina, junto a la ventana",
+          "continuity": {
+            "Adrian_expression": "serious",
+            "lighting": "daylight"
+          }
+        },
+        {
+          "id": "confesion-adrian-panel-10",
+          "imageDescription": "A silent moment: both Gray and Adrian stand by the window, tension in the air, neither speaking.",
+          "displayText": "Pausa.",
+          "narrativePurpose": "reaction",
+          "characters": [
+            "Gray",
+            "Adrian"
+          ],
+          "location": "Oficina, junto a la ventana",
+          "continuity": {
+            "Gray_position": "standing, looking at Adrian",
+            "Adrian_position": "by window, silent",
+            "lighting": "daylight"
+          }
+        },
+        {
+          "id": "confesion-adrian-panel-11",
+          "imageDescription": "Adrian looks over his shoulder, a subtle, enigmatic smile on his lips, hinting at something unresolved.",
+          "displayText": "—Por ahora.",
+          "narrativePurpose": "cliffhanger",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Oficina, junto a la ventana",
+          "continuity": {
+            "Adrian_expression": "enigmatic smile",
+            "lighting": "daylight"
+          }
+        }
+      ],
+      "bridgeFromPrevious": "Tras la revelación, Adrian asume plenamente su identidad.",
+      "characterIds": [
+        "adrian",
+        "mirror"
+      ],
+      "objects": [],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "videollamada-voss",
+      "title": "Elias Voss",
+      "summary": "Adrian contacta a Elias Voss por videollamada. Voss explica que Unidad Cero era parte de un experimento y que JANUS modelaba decisiones humanas. El objetivo se traslada a The Annex.",
+      "sourceText": "Videollamada.\n\nVoss.\n\n—Hola, Adrian.\n\n—Ha tardado más de lo esperado.\n\nEl jugador puede preguntarle:\n\n[¿QUÉ ES JANUS?]\n\n[¿POR QUÉ UNIDAD CERO?]\n\n[¿POR QUÉ LA EXPLOSIÓN?]\n\nVoss explica:\n\nThe Annex era un experimento.\n\nUnidad Cero eran variables.\n\n**ADRIAN — SUJETO PRINCIPAL**\n\n**EVELYN — SUJETO SECUNDARIO**\n\n**THEO — TRAICIÓN**\n\n**MARCUS — LEALTAD**\n\n**JUNE — ANOMALÍA**\n\nJANUS aprendía observando decisiones.\n\nAdrian:\n\n—¿Y la explosión?\n\nVoss:\n\n—El examen final.\n\nDirección:\n\n**THE ANNEX**\n\n—Ven a terminar tu educación.",
+      "panels": [
+        {
+          "id": "videollamada-voss-panel-1",
+          "imageDescription": "A computer screen showing a video call interface, with Voss's face visible in the main window. The room behind Voss is dimly lit, with a hint of technological equipment in the background.",
+          "displayText": "Videollamada.\n\nVoss.",
+          "narrativePurpose": "establishing",
+          "characters": [
+            "Voss"
+          ],
+          "location": "Videollamada, habitación de Voss",
+          "continuity": {
+            "lighting": "dim",
+            "Voss_position": "centered in frame",
+            "background": "technological equipment visible"
+          }
+        },
+        {
+          "id": "videollamada-voss-panel-2",
+          "imageDescription": "Close-up of Voss looking at the camera, a slight smile on his face, as if greeting someone.",
+          "displayText": "—Hola, Adrian.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Voss"
+          ],
+          "location": "Videollamada, habitación de Voss",
+          "continuity": {
+            "Voss_expression": "greeting, slight smile",
+            "camera_angle": "close-up"
+          }
+        },
+        {
+          "id": "videollamada-voss-panel-3",
+          "imageDescription": "Voss glancing at a clock or watch off-screen, then back to the camera, his expression mildly reproachful.",
+          "displayText": "—Ha tardado más de lo esperado.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Voss"
+          ],
+          "location": "Videollamada, habitación de Voss",
+          "continuity": {
+            "Voss_expression": "mildly reproachful",
+            "gesture": "glancing at time"
+          }
+        },
+        {
+          "id": "videollamada-voss-panel-4",
+          "imageDescription": "A split-screen showing Adrian's silhouette in front of a computer, facing Voss's image on the monitor. The interface displays three highlighted options, but the text is not readable.",
+          "displayText": "El jugador puede preguntarle:\n\n[¿QUÉ ES JANUS?]\n\n[¿POR QUÉ UNIDAD CERO?]\n\n[¿POR QUÉ LA EXPLOSIÓN?]",
+          "narrativePurpose": "reaction",
+          "characters": [
+            "Adrian",
+            "Voss"
+          ],
+          "location": "Habitación de Adrian, videollamada",
+          "continuity": {
+            "Adrian_position": "silhouette facing screen",
+            "Voss_on_screen": "visible",
+            "interface": "options highlighted, text not readable"
+          }
+        },
+        {
+          "id": "videollamada-voss-panel-5",
+          "imageDescription": "Voss explaining, gesturing with his hands, his face serious. The background remains the same, with dim lighting and technological equipment.",
+          "displayText": "Voss explica:\n\nThe Annex era un experimento.\n\nUnidad Cero eran variables.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Voss"
+          ],
+          "location": "Videollamada, habitación de Voss",
+          "continuity": {
+            "Voss_expression": "serious",
+            "gesture": "explaining with hands"
+          }
+        },
+        {
+          "id": "videollamada-voss-panel-6",
+          "imageDescription": "A close-up of Voss's face as he lists names, his gaze intense. The screen's light reflects in his eyes.",
+          "displayText": "ADRIAN — SUJETO PRINCIPAL\n\nEVELYN — SUJETO SECUNDARIO\n\nTHEO — TRAICIÓN\n\nMARCUS — LEALTAD\n\nJUNE — ANOMALÍA",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Voss"
+          ],
+          "location": "Videollamada, habitación de Voss",
+          "continuity": {
+            "Voss_expression": "intense",
+            "lighting": "screen light in eyes"
+          }
+        },
+        {
+          "id": "videollamada-voss-panel-7",
+          "imageDescription": "Voss leaning back, his hands folded, as if summarizing. The atmosphere is analytical.",
+          "displayText": "JANUS aprendía observando decisiones.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Voss"
+          ],
+          "location": "Videollamada, habitación de Voss",
+          "continuity": {
+            "Voss_posture": "leaning back, hands folded",
+            "mood": "analytical"
+          }
+        },
+        {
+          "id": "videollamada-voss-panel-8",
+          "imageDescription": "Adrian's face illuminated by the screen, looking tense and focused as he asks a question. The camera is over-the-shoulder, showing Voss on the monitor.",
+          "displayText": "Adrian:\n\n—¿Y la explosión?",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Adrian",
+            "Voss"
+          ],
+          "location": "Habitación de Adrian, videollamada",
+          "continuity": {
+            "Adrian_expression": "tense",
+            "Voss_on_screen": "awaiting response"
+          }
+        },
+        {
+          "id": "videollamada-voss-panel-9",
+          "imageDescription": "Voss looking directly into the camera, his expression grave, as if delivering important news.",
+          "displayText": "Voss:\n\n—El examen final.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Voss"
+          ],
+          "location": "Videollamada, habitación de Voss",
+          "continuity": {
+            "Voss_expression": "grave",
+            "camera_angle": "direct"
+          }
+        },
+        {
+          "id": "videollamada-voss-panel-10",
+          "imageDescription": "A computer screen showing a new message or direction, the screen's light reflecting on Adrian's face. The content of the message is not readable, but Adrian's eyes widen in realization.",
+          "displayText": "Dirección:\n\nTHE ANNEX",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Habitación de Adrian",
+          "continuity": {
+            "screen_light": "illuminating Adrian's face",
+            "Adrian_expression": "eyes widen"
+          }
+        },
+        {
+          "id": "videollamada-voss-panel-11",
+          "imageDescription": "Adrian standing up from his desk, determination on his face, as he prepares to leave the room. The computer screen glows behind him.",
+          "displayText": "—Ven a terminar tu educación.",
+          "narrativePurpose": "cliffhanger",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Habitación de Adrian",
+          "continuity": {
+            "Adrian_posture": "standing, determined",
+            "computer_screen": "glowing in background"
+          }
+        }
+      ],
+      "bridgeFromPrevious": "Adrian, con todas sus capacidades, busca respuestas sobre JANUS y su pasado.",
+      "characterIds": [
+        "adrian",
+        "elias"
+      ],
+      "objects": [],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "regreso-annex",
+      "title": "Regreso a The Annex",
+      "summary": "Adrian regresa a The Annex y debe superar una serie de puzzles y trampas adaptadas a sus decisiones previas. Finalmente, llega al núcleo de JANUS, donde se le presentan cuatro opciones aparentes.",
+      "sourceText": "[PANEL]\n\n[PUERTA]\n\n[CÁMARA]\n\nAdrian puede utilizar capacidades anteriormente exclusivas de Gray y Wraith.\n\n---\n\n## IMAGEN 25.2 — PASILLO\n\nTres puertas.\n\nLos puzzles dependen de decisiones anteriores.\n\nSi el jugador siempre buscó todas las pistas:\n\nJANUS introduce evidencia falsa.\n\nSi tomó decisiones rápidamente:\n\nJANUS introduce presión temporal.\n\nSi utilizó mucho a MIRROR:\n\nJANUS presenta información manipulada.\n\nSi buscó soluciones alternativas:\n\nJANUS coloca un falso camino oculto.\n\n---\n\n## IMAGEN 25.3 — NÚCLEO\n\nJANUS:\n\n**PRUEBA FINAL**\n\nNuevo objetivo:\n\n**Resuelve el problema presentado por JANUS.**\n\nOpciones:\n\n[PROTEGER ZERO]\n\n[RECUPERAR PRUEBAS]\n\n[SALVAR RED]\n\n[CAPTURAR VOSS]\n\nTexto:\n\n**SOLO UNA OPCIÓN ES POSIBLE**\n\nPero existe otro hotspot:\n\n[ENTORNO]\n\nClic.\n\nNueva imagen lateral.\n\nHotspots:\n\n[PANEL]\n\n[CABLEADO]\n\n[REFRIGERACIÓN]\n\n[NÚCLEO]\n\nEl jugador recuerda una frase encontrada anteriormente en archivos de The Annex:\n\n**NUNCA RESUELVAS EL PROBLEMA QUE TE MUESTRAN**\n\nEl verdadero objetivo cambia:\n\n**Encuentra una solución que JANUS no haya ofrecido.**",
+      "panels": [
+        {
+          "id": "regreso-annex-panel-1",
+          "imageDescription": "A dimly lit corridor with three heavy, metallic doors spaced evenly along one wall. The atmosphere is tense and sterile, with faint indicator lights above each door. No characters are visible.",
+          "displayText": "Tres puertas. Los puzzles dependen de decisiones anteriores.",
+          "narrativePurpose": "establishing",
+          "characters": [],
+          "location": "Pasillo frente a las puertas",
+          "continuity": {
+            "lighting": "tenue, industrial",
+            "doors": "tres, metálicas, alineadas",
+            "atmosphere": "tensa, silenciosa"
+          }
+        },
+        {
+          "id": "regreso-annex-panel-2",
+          "imageDescription": "A close-up of Adrian, focused and alert, standing in the corridor. He appears determined, with a subtle glow reflecting on his face from the doors' indicator lights.",
+          "displayText": "Adrian puede utilizar capacidades anteriormente exclusivas de Gray y Wraith.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Pasillo frente a las puertas",
+          "continuity": {
+            "lighting": "reflejo de luces de las puertas",
+            "Adrian_position": "de pie, mirando hacia las puertas"
+          }
+        },
+        {
+          "id": "regreso-annex-panel-3",
+          "imageDescription": "A digital interface projected in the air or on a wall, with abstract icons representing different types of challenges: a fake evidence icon, a timer, a distorted mirror, and a hidden path. The interface is slightly blurred, with Adrian's silhouette visible observing it.",
+          "displayText": "JANUS introduce evidencia falsa, presión temporal, información manipulada o un falso camino oculto, según las decisiones previas del jugador.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Pasillo frente a las puertas",
+          "continuity": {
+            "interface": "proyectada, abstracta, sin texto legible",
+            "Adrian_position": "de espaldas, mirando la proyección"
+          }
+        },
+        {
+          "id": "regreso-annex-panel-4",
+          "imageDescription": "A stark, high-tech chamber with a glowing central core surrounded by control panels and cables. JANUS is present as a holographic figure or an imposing digital avatar near the core. Adrian stands at the entrance, facing JANUS.",
+          "displayText": "JANUS: PRUEBA FINAL\nNuevo objetivo: Resuelve el problema presentado por JANUS.",
+          "narrativePurpose": "action",
+          "characters": [
+            "Adrian",
+            "JANUS"
+          ],
+          "location": "Núcleo",
+          "continuity": {
+            "lighting": "intenso en el núcleo, sombras en los bordes",
+            "JANUS_form": "holograma o avatar digital",
+            "Adrian_position": "frente al núcleo"
+          }
+        },
+        {
+          "id": "regreso-annex-panel-5",
+          "imageDescription": "A close-up of a screen or holographic display showing four distinct icons or buttons, each subtly representing one of the options: protect, recover, save, capture. The options are highlighted but no text is visible. Adrian's hand is hesitating near the selection interface.",
+          "displayText": "[PROTEGER ZERO] [RECUPERAR PRUEBAS] [SALVAR RED] [CAPTURAR VOSS]\nSOLO UNA OPCIÓN ES POSIBLE",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Núcleo",
+          "continuity": {
+            "interface": "sin texto, solo iconos",
+            "Adrian_hand": "cerca de la interfaz de selección"
+          }
+        },
+        {
+          "id": "regreso-annex-panel-6",
+          "imageDescription": "A lateral view of the core chamber, revealing several hotspots: a side control panel, exposed cabling, a refrigeration unit, and the central core itself. Adrian is examining the environment closely, not interacting with the main interface.",
+          "displayText": "Pero existe otro hotspot: [ENTORNO]\nClic.\nNueva imagen lateral.\nHotspots: [PANEL] [CABLEADO] [REFRIGERACIÓN] [NÚCLEO]",
+          "narrativePurpose": "action",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Núcleo",
+          "continuity": {
+            "camera_angle": "lateral",
+            "hotspots": "panel, cableado, refrigeración, núcleo visibles",
+            "Adrian_focus": "explorando el entorno"
+          }
+        },
+        {
+          "id": "regreso-annex-panel-7",
+          "imageDescription": "A flashback-style overlay showing a fragment of a digital file or document, viewed from behind Adrian's shoulder. The text is blurred and unreadable, but Adrian's expression is one of sudden realization.",
+          "displayText": "El jugador recuerda una frase encontrada anteriormente en archivos de The Annex: NUNCA RESUELVAS EL PROBLEMA QUE TE MUESTRAN",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Núcleo (flashback a The Annex)",
+          "continuity": {
+            "visual_overlay": "fragmento de archivo digital desenfocado",
+            "Adrian_expression": "sorpresa, comprensión"
+          }
+        },
+        {
+          "id": "regreso-annex-panel-8",
+          "imageDescription": "Adrian stands in the core chamber, now looking away from the main interface and towards the environment, as if searching for an alternative solution. The core glows ominously in the background.",
+          "displayText": "El verdadero objetivo cambia: Encuentra una solución que JANUS no haya ofrecido.",
+          "narrativePurpose": "cliffhanger",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Núcleo",
+          "continuity": {
+            "Adrian_focus": "mirando el entorno, no la interfaz",
+            "core_glow": "intenso en el fondo"
+          }
+        }
+      ],
+      "bridgeFromPrevious": "Voss desafía a Adrian a terminar su educación en The Annex.",
+      "characterIds": [
+        "adrian",
+        "mirror"
+      ],
+      "objects": [
+        {
+          "name": "Panel de acceso",
+          "examineText": "Panel electrónico en la entrada de The Annex.",
+          "interactText": "Permite acceder tras resolver el puzzle correspondiente."
+        },
+        {
+          "name": "Núcleo de JANUS",
+          "examineText": "Centro de control con múltiples opciones en pantalla.",
+          "interactText": "Ofrece cuatro opciones principales, pero el jugador debe buscar una solución alternativa."
+        }
+      ],
+      "minigame": {
+        "template": "custom",
+        "reason": "El jugador debe superar puzzles adaptativos según su estilo de juego previo y encontrar la opción oculta."
+      },
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "quinta-opcion",
+      "title": "La quinta opción",
+      "summary": "Adrian descubre que debe neutralizar JANUS sin elegir ninguna de las opciones propuestas. Encuentra pistas técnicas y ejecuta la secuencia correcta para aislar el motor de decisión y apagar el sistema.",
+      "sourceText": "### OBJETIVO\n\n**Neutraliza JANUS sin elegir ninguna de sus cuatro opciones.**\n\n### PISTAS\n\n**0 / 3**\n\nPISTA 1:\n\nEl motor de decisión está separado del almacenamiento.\n\nPISTA 2:\n\nLa red de emergencia posee alimentación independiente.\n\nPISTA 3:\n\nEl enlace externo puede desconectarse manualmente.\n\n3/3.\n\n[SOLUCIONAR]\n\nOpciones de deducción.\n\nRespuesta correcta:\n\n**AISLAR EL MOTOR DE DECISIÓN**\n\nEl jugador ejecuta tres hotspots:\n\n[ABRIR PANEL]\n\n↓\n\n[DESCONECTAR ENLACE]\n\n↓\n\n[DESACTIVAR MOTOR]\n\nNueva imagen.\n\nLuces apagadas.\n\nJANUS:\n\n**RESULTADO NO PREVISTO**",
+      "panels": [
+        {
+          "id": "quinta-opcion-panel-1",
+          "imageDescription": "A dimly lit control room filled with monitors and panels. The main console is in the foreground, with a large access panel slightly ajar, revealing complex wiring and circuit boards inside.",
+          "displayText": "El jugador ejecuta tres hotspots:",
+          "narrativePurpose": "action",
+          "characters": [],
+          "location": "Sala de control",
+          "continuity": {
+            "lighting": "tenue",
+            "console_panel": "abierto",
+            "monitors": "encendidos"
+          }
+        },
+        {
+          "id": "quinta-opcion-panel-2",
+          "imageDescription": "Close-up of a hand carefully opening a panel on the main console, exposing internal components and wires.",
+          "displayText": "[ABRIR PANEL]",
+          "narrativePurpose": "action",
+          "characters": [],
+          "location": "Sala de control, consola principal",
+          "continuity": {
+            "lighting": "tenue",
+            "console_panel": "abierto"
+          }
+        },
+        {
+          "id": "quinta-opcion-panel-3",
+          "imageDescription": "A hand reaches inside the open console, gripping a thick cable connected to a port labeled with a red warning sticker.",
+          "displayText": "[DESCONECTAR ENLACE]",
+          "narrativePurpose": "action",
+          "characters": [],
+          "location": "Sala de control, consola principal",
+          "continuity": {
+            "lighting": "tenue",
+            "console_panel": "abierto",
+            "hand": "desconectando cable"
+          }
+        },
+        {
+          "id": "quinta-opcion-panel-4",
+          "imageDescription": "A finger presses a recessed button on a circuit board inside the console, next to a small indicator light that turns off.",
+          "displayText": "[DESACTIVAR MOTOR]",
+          "narrativePurpose": "action",
+          "characters": [],
+          "location": "Sala de control, consola principal",
+          "continuity": {
+            "lighting": "tenue",
+            "console_panel": "abierto",
+            "hand": "presionando botón",
+            "indicator_light": "apagado"
+          }
+        },
+        {
+          "id": "quinta-opcion-panel-5",
+          "imageDescription": "The control room is now almost completely dark, with only faint emergency lights casting shadows. The monitors are black. A subtle silhouette of a speaker or intercom is visible in the gloom.",
+          "displayText": "Luces apagadas.",
+          "narrativePurpose": "transition",
+          "characters": [],
+          "location": "Sala de control",
+          "continuity": {
+            "lighting": "oscuridad total salvo luces de emergencia",
+            "monitors": "apagados"
+          }
+        },
+        {
+          "id": "quinta-opcion-panel-6",
+          "imageDescription": "In the darkened room, the intercom speaker glows faintly as if active, but no other lights are on. The room is silent and tense.",
+          "displayText": "JANUS:\n\nRESULTADO NO PREVISTO",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "JANUS"
+          ],
+          "location": "Sala de control",
+          "continuity": {
+            "lighting": "oscuridad, solo brillo tenue del intercom",
+            "monitors": "apagados"
+          }
+        }
+      ],
+      "bridgeFromPrevious": "Adrian busca una solución fuera de las opciones que ofrece JANUS.",
+      "characterIds": [
+        "adrian",
+        "mirror"
+      ],
+      "objects": [
+        {
+          "name": "Panel de control",
+          "examineText": "Panel técnico con cableado y controles de refrigeración.",
+          "interactText": "Permite abrir el panel, desconectar el enlace y desactivar el motor de decisión."
+        }
+      ],
+      "minigame": {
+        "template": "sequence",
+        "reason": "El jugador debe ejecutar una secuencia específica de acciones técnicas para aislar y apagar JANUS."
+      },
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "voss-veredicto",
+      "title": "Voss",
+      "summary": "Adrian confronta a Voss tras neutralizar JANUS. El jugador debe tomar una decisión final sobre qué hacer con las pruebas y el sistema. MIRROR revela la existencia de CONTINUIDAD y la anomalía J.S.",
+      "sourceText": "Voss aparece.\n\n—Eso no estaba entre las opciones.\n\nAdrian:\n\n—Ese era el problema.\n\nEl jugador debe decidir qué hacer con Voss.\n\n[PÚBLICAR EVIDENCIAS]\n\n[ENTREGAR UBICACIÓN]\n\n[DESTRUIR JANUS]\n\n[CONSERVAR PARTE DE JANUS]\n\nLa decisión queda registrada.\n\nAntes de terminar:\n\nMIRROR:\n\n—Adrian.\n\n—Encontré algo que Voss intentaba eliminar.\n\n**CONTINUIDAD**\n\nClic.\n\nMiles de archivos.\n\nErrores.\n\nCoordenadas.\n\nChecksums.\n\nRepetidamente:\n\n**J.S.**\n\nAdrian:\n\n—¿Qué es Continuidad?\n\nVoss:\n\nsilencio.\n\n—Voss.\n\n—¿Qué es Continuidad?\n\nPor primera vez parece confundido.\n\n—¿Dónde encontró eso?\n\nNueva pista:\n\n**VOSS NO CONTROLA CONTINUIDAD**",
+      "panels": [
+        {
+          "id": "voss-veredicto-panel-1",
+          "imageDescription": "A mysterious figure, Voss, steps into a dimly lit room where Adrian stands, both facing each other tensely.",
+          "displayText": "Voss aparece.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "Voss",
+            "Adrian"
+          ],
+          "location": "cuarto oscuro",
+          "continuity": {
+            "lighting": "dim",
+            "Voss_position": "entrando",
+            "Adrian_position": "de pie, mirando a Voss"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-2",
+          "imageDescription": "Close-up of Voss with a neutral, unreadable expression, as if responding to an unexpected situation.",
+          "displayText": "—Eso no estaba entre las opciones.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Voss"
+          ],
+          "location": "cuarto oscuro",
+          "continuity": {
+            "lighting": "dim",
+            "Voss_expression": "neutral"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-3",
+          "imageDescription": "Adrian, arms crossed, looking at Voss with a knowing, resigned expression.",
+          "displayText": "Adrian: —Ese era el problema.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "cuarto oscuro",
+          "continuity": {
+            "lighting": "dim",
+            "Adrian_expression": "resignado"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-4",
+          "imageDescription": "A static, tense tableau: Adrian and Voss facing each other, with the player’s perspective as if standing behind Adrian, the atmosphere thick with anticipation.",
+          "displayText": "El jugador debe decidir qué hacer con Voss.",
+          "narrativePurpose": "cliffhanger",
+          "characters": [
+            "Voss",
+            "Adrian"
+          ],
+          "location": "cuarto oscuro",
+          "continuity": {
+            "lighting": "dim",
+            "positions": "frente a frente"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-5",
+          "imageDescription": "A close-up of Adrian’s hand hovering over a console or device, four buttons visible but the labels are blurred and unreadable.",
+          "displayText": "[PÚBLICAR EVIDENCIAS]\n[ENTREGAR UBICACIÓN]\n[DESTRUIR JANUS]\n[CONSERVAR PARTE DE JANUS]",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "cuarto oscuro",
+          "continuity": {
+            "lighting": "dim",
+            "console": "visible"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-6",
+          "imageDescription": "A digital interface from behind Adrian, showing a confirmation or progress bar, indicating a choice has been made and is being recorded.",
+          "displayText": "La decisión queda registrada.",
+          "narrativePurpose": "action",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "cuarto oscuro",
+          "continuity": {
+            "lighting": "dim",
+            "interface": "progreso"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-7",
+          "imageDescription": "A new, sterile digital environment: MIRROR, represented as a glowing screen or holographic interface, with Adrian’s reflection faintly visible.",
+          "displayText": "Antes de terminar:\nMIRROR:",
+          "narrativePurpose": "transition",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "entorno digital MIRROR",
+          "continuity": {
+            "lighting": "fría, azulada",
+            "pantalla": "activa"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-8",
+          "imageDescription": "A digital avatar or abstract representation of MIRROR, addressing Adrian through the interface.",
+          "displayText": "—Adrian.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Adrian",
+            "MIRROR"
+          ],
+          "location": "entorno digital MIRROR",
+          "continuity": {
+            "pantalla": "activa"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-9",
+          "imageDescription": "MIRROR’s interface highlighting a file or folder, with Adrian’s face illuminated by the screen’s glow.",
+          "displayText": "—Encontré algo que Voss intentaba eliminar.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian",
+            "MIRROR"
+          ],
+          "location": "entorno digital MIRROR",
+          "continuity": {
+            "pantalla": "resalta archivo"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-10",
+          "imageDescription": "A close-up of Adrian’s finger clicking a mouse or tapping a screen, triggering the opening of files.",
+          "displayText": "Clic.",
+          "narrativePurpose": "action",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "entorno digital MIRROR",
+          "continuity": {
+            "pantalla": "interactiva"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-11",
+          "imageDescription": "Adrian’s face, wide-eyed, illuminated by a cascade of rapidly opening digital files on the screen.",
+          "displayText": "Miles de archivos.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "entorno digital MIRROR",
+          "continuity": {
+            "pantalla": "llena de archivos"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-12",
+          "imageDescription": "The screen flickers with error messages and corrupted data, as Adrian leans in, trying to make sense of the chaos.",
+          "displayText": "Errores.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "entorno digital MIRROR",
+          "continuity": {
+            "pantalla": "errores visibles"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-13",
+          "imageDescription": "A digital map with blinking points and strings of numbers, all slightly out of focus so no text is readable, Adrian’s hand hovering over the interface.",
+          "displayText": "Coordenadas.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "entorno digital MIRROR",
+          "continuity": {
+            "pantalla": "mapa y números desenfocados"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-14",
+          "imageDescription": "A screen filled with lines of code and checksums, the information overwhelming, Adrian’s reflection visible in the glass.",
+          "displayText": "Checksums.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "entorno digital MIRROR",
+          "continuity": {
+            "pantalla": "código y checksums"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-15",
+          "imageDescription": "A series of digital files repeatedly displaying the same two initials—blurred and unreadable—while Adrian stares, puzzled.",
+          "displayText": "Repetidamente:\nJ.S.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "entorno digital MIRROR",
+          "continuity": {
+            "pantalla": "iniciales repetidas desenfocadas"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-16",
+          "imageDescription": "Adrian turns from the screen to look at Voss, who stands in the background, partially in shadow.",
+          "displayText": "Adrian: —¿Qué es Continuidad?",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Adrian",
+            "Voss"
+          ],
+          "location": "cuarto oscuro",
+          "continuity": {
+            "iluminación": "mezcla de luz fría y sombra",
+            "Voss": "en sombra"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-17",
+          "imageDescription": "Voss remains silent, his face unreadable, eyes averted from Adrian.",
+          "displayText": "Voss: silencio.",
+          "narrativePurpose": "reaction",
+          "characters": [
+            "Voss"
+          ],
+          "location": "cuarto oscuro",
+          "continuity": {
+            "Voss_expression": "callado, evasivo"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-18",
+          "imageDescription": "Adrian, more insistent, leans forward, his gaze fixed on Voss.",
+          "displayText": "—Voss.\n—¿Qué es Continuidad?",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Adrian",
+            "Voss"
+          ],
+          "location": "cuarto oscuro",
+          "continuity": {
+            "tensión": "alta",
+            "Adrian": "insistente"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-19",
+          "imageDescription": "For the first time, Voss looks genuinely confused, his brow furrowed, unsure how to respond.",
+          "displayText": "Por primera vez parece confundido.",
+          "narrativePurpose": "reaction",
+          "characters": [
+            "Voss"
+          ],
+          "location": "cuarto oscuro",
+          "continuity": {
+            "Voss_expression": "confundido"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-20",
+          "imageDescription": "Voss, hesitating, glances nervously at Adrian, as if searching for answers.",
+          "displayText": "—¿Dónde encontró eso?",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Voss",
+            "Adrian"
+          ],
+          "location": "cuarto oscuro",
+          "continuity": {
+            "Voss": "nervioso",
+            "Adrian": "expectante"
+          }
+        },
+        {
+          "id": "voss-veredicto-panel-21",
+          "imageDescription": "A close-up of Adrian’s eyes narrowing as a new realization dawns, while Voss is in the background, visibly unsettled.",
+          "displayText": "Nueva pista:\nVOSS NO CONTROLA CONTINUIDAD",
+          "narrativePurpose": "cliffhanger",
+          "characters": [
+            "Adrian",
+            "Voss"
+          ],
+          "location": "cuarto oscuro",
+          "continuity": {
+            "tensión": "máxima",
+            "Adrian": "alerta",
+            "Voss": "desconcertado"
+          }
+        }
+      ],
+      "bridgeFromPrevious": "JANUS ha sido neutralizado y Voss aparece para la confrontación final.",
+      "characterIds": [
+        "adrian",
+        "elias",
+        "mirror"
+      ],
+      "objects": [],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "epilogo-js",
+      "title": "Los errores",
+      "summary": "Adrian investiga las anomalías J.S. y descubre que June Sato está viva y ha estado comunicándose a través de los sistemas. El jugador debe deducir la identidad detrás de las anomalías.",
+      "sourceText": "Oficina.\n\nFotografía de Unidad Cero.\n\nComputadora.\n\nUnidad JANUS.\n\nEl jugador investiga anomalías.\n\n[FECHAS]\n\n[COORDENADAS]\n\n[CHECKSUMS]\n\n[CARACTERES]\n\nCada sistema produce una pieza.\n\nPISTA 1:\n\nJ\n\nPISTA 2:\n\nS\n\nPISTA 3:\n\nLas anomalías comenzaron después de Acheron.\n\nPISTA 4:\n\nUtilizan protocolos de Unidad Cero.\n\n[SOLUCIONAR]\n\nPregunta:\n\n**¿QUIÉN ES J.S.?**\n\nOpciones:\n\n[JANUS SYSTEM]\n\n[JUNE SATO]\n\n[JUNCTION SECURITY]\n\nRespuesta:\n\n**JUNE SATO**\n\nPantalla:\n\n**JUNE SATO**\n\n**FALLECIDA**\n\nMIRROR:\n\n—Existe más información.",
+      "panels": [
+        {
+          "id": "epilogo-js-panel-1",
+          "imageDescription": "A wide shot of a dimly lit, modern office filled with computer monitors and scattered documents. The atmosphere is tense and focused.",
+          "displayText": "Oficina.",
+          "narrativePurpose": "establishing",
+          "characters": [],
+          "location": "Oficina",
+          "continuity": {
+            "lighting": "dim",
+            "props": "computers, documents",
+            "mood": "tense"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-2",
+          "imageDescription": "A close-up of a black-and-white photograph labeled 'Unidad Cero' lying on a desk, surrounded by other investigation materials. The photo is slightly worn, showing a group of people in uniforms, but the label itself is out of focus and unreadable.",
+          "displayText": "Fotografía de Unidad Cero.",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Oficina",
+          "continuity": {
+            "desk": "photograph present",
+            "lighting": "dim"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-3",
+          "imageDescription": "A focused shot of a computer terminal with multiple screens displaying code and data streams. The glow from the monitors illuminates the nearby workspace.",
+          "displayText": "Computadora.",
+          "narrativePurpose": "establishing",
+          "characters": [],
+          "location": "Oficina",
+          "continuity": {
+            "computer": "active",
+            "lighting": "monitor glow"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-4",
+          "imageDescription": "A medium shot of the player character seated at the computer, their face partially illuminated by the screen. On the monitor, a system interface is visible, but the text is blurred and illegible.",
+          "displayText": "Unidad JANUS.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "Jugador"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "player_position": "seated at computer",
+            "monitor": "JANUS interface"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-5",
+          "imageDescription": "Over-the-shoulder shot from behind the player as they examine various files and data on the computer screen, showing a sense of investigation and analysis.",
+          "displayText": "El jugador investiga anomalías.",
+          "narrativePurpose": "action",
+          "characters": [
+            "Jugador"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "player_position": "leaning forward",
+            "screen": "data visible, not readable"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-6",
+          "imageDescription": "A montage-style panel showing snippets of digital data: blurred dates, maps with highlighted locations, lines of code, and cryptic character strings, all overlaid on the computer screen.",
+          "displayText": "[FECHAS]\n[COORDENADAS]\n[CHECKSUMS]\n[CARACTERES]",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Oficina",
+          "continuity": {
+            "screen": "various data types",
+            "lighting": "monitor glow"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-7",
+          "imageDescription": "A close-up of the player’s hand moving between different terminals, each displaying a different piece of information, suggesting that each system is contributing to the investigation.",
+          "displayText": "Cada sistema produce una pieza.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Jugador"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "hands": "interacting with multiple terminals"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-8",
+          "imageDescription": "A tight shot of the computer screen showing a highlighted letter 'J' as a clue, with the player’s face reflected in the monitor.",
+          "displayText": "PISTA 1:\nJ",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Jugador"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "screen": "clue J visible",
+            "reflection": "player"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-9",
+          "imageDescription": "Another close-up of the screen, this time with the letter 'S' highlighted as a clue, the player’s fingers pausing over the keyboard.",
+          "displayText": "PISTA 2:\nS",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Jugador"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "screen": "clue S visible",
+            "hands": "hovering over keyboard"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-10",
+          "imageDescription": "A medium shot of the player reading a report on the screen, their expression tense as they process new information.",
+          "displayText": "PISTA 3:\nLas anomalías comenzaron después de Acheron.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Jugador"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "player_emotion": "tense",
+            "screen": "report visible"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-11",
+          "imageDescription": "A close-up of the player’s eyes narrowing as they notice a reference to 'protocolos de Unidad Cero' on the screen.",
+          "displayText": "PISTA 4:\nUtilizan protocolos de Unidad Cero.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Jugador"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "player_emotion": "focused",
+            "screen": "protocols reference"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-12",
+          "imageDescription": "A shot of the computer screen with a large, highlighted button labeled 'Solucionar' (unreadable), the player’s hand reaching toward it.",
+          "displayText": "[SOLUCIONAR]",
+          "narrativePurpose": "action",
+          "characters": [
+            "Jugador"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "hand": "reaching for button",
+            "screen": "button visible"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-13",
+          "imageDescription": "A split panel showing the player's concentrated face and the screen displaying the question prompt, but the text is blurred and unreadable.",
+          "displayText": "Pregunta:\n¿QUIÉN ES J.S.?",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Jugador"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "player_emotion": "concentrated",
+            "screen": "question prompt"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-14",
+          "imageDescription": "A close-up of the screen showing three selectable options, but the text is out of focus. The player's finger hovers over the second option.",
+          "displayText": "Opciones:\n[JANUS SYSTEM]\n[JUNE SATO]\n[JUNCTION SECURITY]",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Jugador"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "screen": "three options visible",
+            "hand": "hovering over option"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-15",
+          "imageDescription": "A shot of the player clicking on the second option, their expression decisive.",
+          "displayText": "Respuesta:\nJUNE SATO",
+          "narrativePurpose": "action",
+          "characters": [
+            "Jugador"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "player_emotion": "decisive",
+            "screen": "selection made"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-16",
+          "imageDescription": "A tight shot of the monitor, the screen glowing brightly and illuminating the player’s shocked face as they read the result. The actual text is not visible.",
+          "displayText": "Pantalla:\nJUNE SATO\nFALLECIDA",
+          "narrativePurpose": "cliffhanger",
+          "characters": [
+            "Jugador"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "screen": "result displayed",
+            "player_emotion": "shocked"
+          }
+        },
+        {
+          "id": "epilogo-js-panel-17",
+          "imageDescription": "A new angle showing the player startled as a new message appears on the screen, the word 'MIRROR' reflected in their eyes.",
+          "displayText": "MIRROR:\n—Existe más información.",
+          "narrativePurpose": "cliffhanger",
+          "characters": [
+            "Jugador"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "screen": "new message",
+            "player_emotion": "startled"
+          }
+        }
+      ],
+      "bridgeFromPrevious": "MIRROR revela la anomalía J.S. y Adrian investiga su origen.",
+      "characterIds": [
+        "adrian",
+        "mirror",
+        "june"
+      ],
+      "objects": [
+        {
+          "name": "Sistemas con anomalía J.S.",
+          "examineText": "Computadora y unidad JANUS mostrando caracteres y datos extraños.",
+          "interactText": "Permite analizar las pistas y deducir la identidad de J.S."
+        }
+      ],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "tercera-superviviente",
+      "title": "La tercera superviviente",
+      "summary": "Adrian y MIRROR reconstruyen el mensaje de June Sato a través de fotografías y objetos codificados. Descubren que June está viva, infiltrada y utilizando JANUS para comunicarse. El jugador deduce que las coordenadas representan una ruta.",
+      "sourceText": "IMAGEN A.\n\nJune frente a computadora.\n\nIMAGEN B.\n\nOtra instalación.\n\nJune.\n\nIMAGEN C.\n\nOtra.\n\nJune.\n\nEstá viva.\n\n**JUNE SATO — SUPERVIVIENTE CONFIRMADA**\n\nPero algo cambia entre fotografías.\n\nHotspots:\n\n[VASO]\n\n[CABLE]\n\n[TORNILLOS]\n\n[HERRAMIENTA]\n\nLos objetos utilizan códigos de entrenamiento de Unidad Cero.\n\nEl jugador debe ordenar las fotografías.\n\nMensaje 1:\n\n**ESTOY VIVA**\n\nMás imágenes.\n\nMensaje 2:\n\n**JANUS NO TERMINÓ CON VOSS**\n\nMás imágenes.\n\nMensaje 3:\n\n**NO ME SAQUEN**\n\nMIRROR:\n\n—Existe otra secuencia.\n\nÚltima imagen.\n\nResolver.\n\nMensaje:\n\n**ENTREN**\n\nSilencio.\n\nAdrian:\n\n—No quiere que la rescatemos.\n\nMIRROR:\n\n—Las coordenadas tampoco indican una localización permanente.\n\nEl jugador recibe un último objetivo:\n\n**Determina qué representan las coordenadas.**\n\nTres grupos.\n\nTres instalaciones.\n\nTres fechas.\n\n[SOLUCIONAR]\n\nRespuesta:\n\n**UNA RUTA**\n\nMIRROR:\n\n—Correcto.\n\n—Las coordenadas muestran cómo trasladan a June.\n\nAdrian:\n\n—Lleva tres años infiltrándose desde dentro.\n\nMIRROR:\n\n—Y utilizando JANUS para comunicarse.\n\nTodos los antiguos:\n\n**J.S.**\n\naparecen brevemente.\n\nDesde el principio June estuvo hablando con nosotros.",
+      "panels": [
+        {
+          "id": "tercera-superviviente-panel-1",
+          "imageDescription": "A young woman, June, sits in front of a glowing computer screen in a dimly lit room, her face illuminated by the monitor's light. The atmosphere is tense and focused.",
+          "displayText": "June frente a computadora.",
+          "narrativePurpose": "establishing",
+          "characters": [
+            "June"
+          ],
+          "location": "Sala de computadoras",
+          "continuity": {
+            "lighting": "luz azulada de la pantalla sobre el rostro de June",
+            "June_position": "sentada frente al monitor"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-2",
+          "imageDescription": "A different, industrial-looking facility interior. No people are visible, only machinery and cold lighting.",
+          "displayText": "Otra instalación.",
+          "narrativePurpose": "transition",
+          "characters": [],
+          "location": "Instalación desconocida",
+          "continuity": {
+            "lighting": "fría, industrial",
+            "empty_space": "sin personas"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-3",
+          "imageDescription": "June appears in this new facility, standing and observing her surroundings with cautious determination.",
+          "displayText": "June.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "June"
+          ],
+          "location": "Instalación desconocida",
+          "continuity": {
+            "June_position": "de pie, mirando alrededor",
+            "lighting": "industrial"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-4",
+          "imageDescription": "Yet another facility, visually distinct from the previous ones, with different architecture and equipment. No one is visible.",
+          "displayText": "Otra.",
+          "narrativePurpose": "transition",
+          "characters": [],
+          "location": "Otra instalación desconocida",
+          "continuity": {
+            "architecture": "diferente a la anterior",
+            "lighting": "neutra"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-5",
+          "imageDescription": "June is present in this third facility, her expression showing a mix of exhaustion and resilience.",
+          "displayText": "June.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "June"
+          ],
+          "location": "Otra instalación desconocida",
+          "continuity": {
+            "June_expression": "agotada pero resistente",
+            "lighting": "neutra"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-6",
+          "imageDescription": "Close-up of June's face, her eyes wide with realization and hope.",
+          "displayText": "Está viva.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "June"
+          ],
+          "location": "Instalación desconocida",
+          "continuity": {
+            "June_expression": "sorprendida y esperanzada"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-7",
+          "imageDescription": "A computer screen glows, casting light on June's face as she reads a message. The screen itself is turned away from the viewer, so the text is not legible.",
+          "displayText": "JUNE SATO — SUPERVIVIENTE CONFIRMADA",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "June"
+          ],
+          "location": "Sala de computadoras",
+          "continuity": {
+            "monitor_angle": "pantalla de espaldas al espectador",
+            "June_expression": "alivio"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-8",
+          "imageDescription": "A sequence of photographs laid out on a table. Between each photo, subtle changes are visible: a glass, a cable, some screws, and a tool appear or move positions.",
+          "displayText": "Pero algo cambia entre fotografías.\n\nHotspots:\n\n[VASO]\n\n[CABLE]\n\n[TORNILLOS]\n\n[HERRAMIENTA]",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Mesa de trabajo",
+          "continuity": {
+            "objetos": "vaso, cable, tornillos, herramienta en diferentes posiciones entre fotos"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-9",
+          "imageDescription": "Close-up of the objects (glass, cable, screws, tool) arranged on the table. June's hand hovers above them, as if about to interact.",
+          "displayText": "Los objetos utilizan códigos de entrenamiento de Unidad Cero.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "June"
+          ],
+          "location": "Mesa de trabajo",
+          "continuity": {
+            "objetos": "en primer plano",
+            "June_mano": "sobre los objetos"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-10",
+          "imageDescription": "A series of photographs are spread out, and a player's hand (POV) is seen moving them, trying to arrange them in order.",
+          "displayText": "El jugador debe ordenar las fotografías.",
+          "narrativePurpose": "action",
+          "characters": [],
+          "location": "Mesa de trabajo",
+          "continuity": {
+            "fotos": "desordenadas, mano interactuando"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-11",
+          "imageDescription": "June's face illuminated by the computer screen, her eyes fixed on a new message that she just received. The screen is turned away from the viewer.",
+          "displayText": "Mensaje 1:\n\nESTOY VIVA",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "June"
+          ],
+          "location": "Sala de computadoras",
+          "continuity": {
+            "monitor_angle": "pantalla de espaldas al espectador",
+            "June_expression": "esperanza"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-12",
+          "imageDescription": "A rapid succession of images: different angles of June in the facility, each one showing her in slightly different positions and emotional states.",
+          "displayText": "Más imágenes.",
+          "narrativePurpose": "transition",
+          "characters": [
+            "June"
+          ],
+          "location": "Instalación desconocida",
+          "continuity": {
+            "June": "en diferentes posiciones",
+            "ambiente": "igual"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-13",
+          "imageDescription": "June looks at the computer screen with a tense expression, as if reading something alarming. The screen's light reflects in her eyes.",
+          "displayText": "Mensaje 2:\n\nJANUS NO TERMINÓ CON VOSS",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "June"
+          ],
+          "location": "Sala de computadoras",
+          "continuity": {
+            "June_expression": "tensa, preocupada",
+            "monitor_angle": "de espaldas"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-14",
+          "imageDescription": "Another sequence of images: June moving through corridors, glancing over her shoulder, the environment becoming more oppressive.",
+          "displayText": "Más imágenes.",
+          "narrativePurpose": "transition",
+          "characters": [
+            "June"
+          ],
+          "location": "Corredores de la instalación",
+          "continuity": {
+            "June": "en movimiento",
+            "ambiente": "cada vez más opresivo"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-15",
+          "imageDescription": "June sits in a corner, hugging her knees, her face determined but vulnerable. The glow of a device nearby suggests she's waiting for a response.",
+          "displayText": "Mensaje 3:\n\nNO ME SAQUEN",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "June"
+          ],
+          "location": "Rincón de la instalación",
+          "continuity": {
+            "June_postura": "sentada, abrazando las rodillas",
+            "dispositivo": "cerca, iluminando"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-16",
+          "imageDescription": "A darkened screen in the facility flickers to life, reflecting June's face. The reflection is distorted, suggesting a new message is coming.",
+          "displayText": "MIRROR:\n\n—Existe otra secuencia.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "June"
+          ],
+          "location": "Sala de computadoras",
+          "continuity": {
+            "pantalla": "encendida, reflejo distorsionado",
+            "June_expression": "atenta"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-17",
+          "imageDescription": "A final photograph is placed on the table, June's hand hovering above it, hesitating.",
+          "displayText": "Última imagen.\n\nResolver.",
+          "narrativePurpose": "cliffhanger",
+          "characters": [
+            "June"
+          ],
+          "location": "Mesa de trabajo",
+          "continuity": {
+            "foto": "última foto sobre la mesa",
+            "June_mano": "dudando"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-18",
+          "imageDescription": "June looks at the computer screen, her face illuminated by the message she just received. The room is silent and tense.",
+          "displayText": "Mensaje:\n\nENTREN\n\nSilencio.",
+          "narrativePurpose": "cliffhanger",
+          "characters": [
+            "June"
+          ],
+          "location": "Sala de computadoras",
+          "continuity": {
+            "June_expression": "sorprendida",
+            "ambiente": "silencioso"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-19",
+          "imageDescription": "Adrian, a serious-looking man, stands in a dimly lit control room, reacting with concern to the latest message. He looks towards a monitor off-screen.",
+          "displayText": "Adrian:\n\n—No quiere que la rescatemos.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Sala de control",
+          "continuity": {
+            "Adrian_expression": "preocupado",
+            "iluminación": "tenue"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-20",
+          "imageDescription": "A sleek, high-tech interface glows in a dark room. The faint silhouette of MIRROR (an AI or operator) is visible, their presence suggested by a reflection or shadow.",
+          "displayText": "MIRROR:\n\n—Las coordenadas tampoco indican una localización permanente.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "MIRROR"
+          ],
+          "location": "Sala de control",
+          "continuity": {
+            "interfaz": "tecnológica, moderna",
+            "MIRROR": "silueta o reflejo"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-21",
+          "imageDescription": "A computer screen displays a map with three sets of coordinates, but the actual numbers are blurred or out of focus. Adrian and MIRROR are both present, studying the screen.",
+          "displayText": "El jugador recibe un último objetivo:\n\nDETERMINA QUÉ REPRESENTAN LAS COORDENADAS.\n\nTres grupos.\n\nTres instalaciones.\n\nTres fechas.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "Adrian",
+            "MIRROR"
+          ],
+          "location": "Sala de control",
+          "continuity": {
+            "pantalla": "mapa con coordenadas desenfocadas",
+            "Adrian_MIRROR": "mirando la pantalla"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-22",
+          "imageDescription": "A close-up of the blurred map, with lines connecting the three locations, suggesting a path or route. No text is readable.",
+          "displayText": "[SOLUCIONAR]\n\nRespuesta:\n\nUNA RUTA",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Sala de control",
+          "continuity": {
+            "mapa": "líneas conectando ubicaciones"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-23",
+          "imageDescription": "MIRROR's silhouette nods in approval, the interface glowing slightly brighter.",
+          "displayText": "MIRROR:\n\n—Correcto.\n\n—Las coordenadas muestran cómo trasladan a June.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "MIRROR"
+          ],
+          "location": "Sala de control",
+          "continuity": {
+            "interfaz": "más brillante",
+            "MIRROR": "silueta aprobando"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-24",
+          "imageDescription": "Adrian, now with a look of realization, turns to MIRROR, gesturing towards the screen.",
+          "displayText": "Adrian:\n\n—Lleva tres años infiltrándose desde dentro.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Adrian",
+            "MIRROR"
+          ],
+          "location": "Sala de control",
+          "continuity": {
+            "Adrian_expression": "realización",
+            "MIRROR": "presente"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-25",
+          "imageDescription": "MIRROR, seen from behind, faces the glowing interface, as if addressing Adrian.",
+          "displayText": "MIRROR:\n\n—Y utilizando JANUS para comunicarse.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "MIRROR"
+          ],
+          "location": "Sala de control",
+          "continuity": {
+            "MIRROR": "de espaldas",
+            "interfaz": "activa"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-26",
+          "imageDescription": "A montage: brief, ghostly images of all the old 'J.S.' signatures or avatars from previous communications, flickering in and out of view.",
+          "displayText": "Todos los antiguos:\n\nJ.S.\naparecen brevemente.",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Varias ubicaciones virtuales",
+          "continuity": {
+            "J.S.": "apariciones fantasmales, fugaces"
+          }
+        },
+        {
+          "id": "tercera-superviviente-panel-27",
+          "imageDescription": "June, illuminated by the computer screen, looks directly at the viewer, her expression resolute. The implication is that she has been communicating all along.",
+          "displayText": "Desde el principio June estuvo hablando con nosotros.",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "June"
+          ],
+          "location": "Sala de computadoras",
+          "continuity": {
+            "June_expression": "resuelta",
+            "iluminación": "pantalla"
+          }
+        }
+      ],
+      "bridgeFromPrevious": "Se confirma que June Sato es la tercera superviviente y está enviando mensajes.",
+      "characterIds": [
+        "adrian",
+        "mirror",
+        "june"
+      ],
+      "objects": [
+        {
+          "name": "Fotografías de June",
+          "examineText": "Secuencia de imágenes de June en distintas instalaciones.",
+          "interactText": "Permite ordenar las imágenes y descifrar los mensajes ocultos."
+        }
+      ],
+      "minigame": {
+        "template": "chronological-order",
+        "reason": "El jugador debe ordenar fotografías y objetos para reconstruir el mensaje de June."
+      },
+      "reviewStatus": "pending",
+      "scriptKind": null
+    },
+    {
+      "id": "continuidad-final",
+      "title": "Continuidad",
+      "summary": "Epílogo cinematográfico donde Adrian inicia el caso CONTINUIDAD sobre June Sato. Se muestra a June infiltrada, comunicándose en secreto y manteniendo vivo el misterio para la siguiente entrega.",
+      "sourceText": "Oficina.\n\nAdrian observa la fotografía de Unidad Cero.\n\n—MIRROR.\n\n—Nuevo caso.\n\n—Nombre.\n\nAdrian observa a June en el monitor.\n\n—Sato.\n\nPantalla:\n\n**CASO 008**\n\n**CONTINUIDAD**\n\nNegro.\n\nUna habitación desconocida.\n\nJune frente a una computadora.\n\nEn pantalla:\n\n**JANUS // CONTINUITY**\n\nSe escucha una voz fuera de cuadro:\n\n—¿Encontraron la anomalía?\n\nJune:\n\n—No.\n\nLa persona abandona la habitación.\n\nJune espera.\n\nIntroduce silenciosamente:\n\n**ZERO**\n\nLa palabra desaparece.\n\nJune sonríe apenas.\n\nNEGRO.",
+      "panels": [
+        {
+          "id": "continuidad-final-panel-1",
+          "imageDescription": "A dimly lit office. Adrian sits at a desk, intently examining a printed photograph labeled 'Unidad Cero' (the label is turned away from the viewer, so the text is not readable). Papers and a computer monitor are on the desk.",
+          "displayText": "Adrian observa la fotografía de Unidad Cero.",
+          "narrativePurpose": "establishing",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "lighting": "tenue",
+            "Adrian_position": "sentado en el escritorio",
+            "photograph_orientation": "etiqueta no visible"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-2",
+          "imageDescription": "Close-up of Adrian's face as he speaks, his gaze focused and intense. The office background is blurred.",
+          "displayText": "—MIRROR.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "lighting": "tenue",
+            "Adrian_expression": "concentrado"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-3",
+          "imageDescription": "Medium shot of Adrian at his desk, looking at his computer monitor. The screen glows, illuminating his face.",
+          "displayText": "—Nuevo caso.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "lighting": "tenue",
+            "monitor_glow": "ilumina el rostro de Adrian"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-4",
+          "imageDescription": "Same setting. Adrian leans forward slightly, as if prompting for more information.",
+          "displayText": "—Nombre.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "Adrian"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "lighting": "tenue",
+            "Adrian_posture": "inclinándose hacia adelante"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-5",
+          "imageDescription": "Adrian's point of view: a computer monitor showing a live video feed of June, who appears on the screen. The monitor's glow is reflected in Adrian's eyes.",
+          "displayText": "Adrian observa a June en el monitor.",
+          "narrativePurpose": "character_intro",
+          "characters": [
+            "Adrian",
+            "June"
+          ],
+          "location": "Oficina",
+          "continuity": {
+            "monitor": "mostrando a June",
+            "Adrian": "mirando la pantalla"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-6",
+          "imageDescription": "Close-up of June's face on the monitor, her expression neutral but alert.",
+          "displayText": "—Sato.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "June"
+          ],
+          "location": "En el monitor (Oficina de Adrian)",
+          "continuity": {
+            "June_expression": "neutral",
+            "monitor_view": "primer plano de June"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-7",
+          "imageDescription": "A computer screen, viewed from an angle so the text is not readable, but the screen is clearly displaying something important. The room is dark except for the glow of the monitor.",
+          "displayText": "Pantalla:\n\nCASO 008\n\nCONTINUIDAD",
+          "narrativePurpose": "revelation",
+          "characters": [],
+          "location": "Oficina",
+          "continuity": {
+            "monitor": "pantalla importante, texto ilegible"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-8",
+          "imageDescription": "A completely black frame.",
+          "displayText": "Negro.",
+          "narrativePurpose": "transition",
+          "characters": [],
+          "location": "Desconocido",
+          "continuity": {
+            "frame": "completamente negro"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-9",
+          "imageDescription": "A sparse, unfamiliar room with minimal furniture. June sits alone at a desk, facing a computer. The lighting is cold and clinical.",
+          "displayText": "Una habitación desconocida.\n\nJune frente a una computadora.",
+          "narrativePurpose": "establishing",
+          "characters": [
+            "June"
+          ],
+          "location": "Habitación desconocida",
+          "continuity": {
+            "lighting": "fría",
+            "June": "sentada frente a la computadora"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-10",
+          "imageDescription": "Close-up of June's computer screen, viewed from behind her shoulder so the text is blurred and unreadable, but the interface looks official and technical.",
+          "displayText": "En pantalla:\n\nJANUS // CONTINUITY",
+          "narrativePurpose": "revelation",
+          "characters": [
+            "June"
+          ],
+          "location": "Habitación desconocida",
+          "continuity": {
+            "pantalla": "texto ilegible, interfaz técnica"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-11",
+          "imageDescription": "A shadowy figure stands in the doorway behind June, their face obscured. June remains seated, not turning around.",
+          "displayText": "Se escucha una voz fuera de cuadro:\n\n—¿Encontraron la anomalía?",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "June",
+            "Voz fuera de cuadro"
+          ],
+          "location": "Habitación desconocida",
+          "continuity": {
+            "figura": "en la puerta, rostro no visible",
+            "June": "de espaldas, sentada"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-12",
+          "imageDescription": "June turns her head slightly toward the door, her expression reserved.",
+          "displayText": "June:\n\n—No.",
+          "narrativePurpose": "dialogue",
+          "characters": [
+            "June"
+          ],
+          "location": "Habitación desconocida",
+          "continuity": {
+            "June_expression": "reservada",
+            "puerta": "figura aún presente"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-13",
+          "imageDescription": "The shadowy figure exits the room, leaving June alone. The door is left slightly ajar.",
+          "displayText": "La persona abandona la habitación.",
+          "narrativePurpose": "action",
+          "characters": [
+            "June",
+            "Voz fuera de cuadro"
+          ],
+          "location": "Habitación desconocida",
+          "continuity": {
+            "puerta": "entreabierta",
+            "June": "sola"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-14",
+          "imageDescription": "June sits alone in silence, glancing at the door to make sure she's alone.",
+          "displayText": "June espera.",
+          "narrativePurpose": "reaction",
+          "characters": [
+            "June"
+          ],
+          "location": "Habitación desconocida",
+          "continuity": {
+            "June": "mirando hacia la puerta",
+            "ambiente": "silencioso"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-15",
+          "imageDescription": "Close-up of June's hands typing on the keyboard, the screen's glow lighting her face. The screen is turned away from the viewer so the text is not readable.",
+          "displayText": "Introduce silenciosamente:\n\nZERO",
+          "narrativePurpose": "action",
+          "characters": [
+            "June"
+          ],
+          "location": "Habitación desconocida",
+          "continuity": {
+            "pantalla": "no visible para el espectador",
+            "June": "tecleando"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-16",
+          "imageDescription": "June's face illuminated by the monitor, watching as something changes on the screen. Her expression shifts to a subtle, satisfied smile.",
+          "displayText": "La palabra desaparece.\n\nJune sonríe apenas.",
+          "narrativePurpose": "reaction",
+          "characters": [
+            "June"
+          ],
+          "location": "Habitación desconocida",
+          "continuity": {
+            "June_expression": "sonrisa leve",
+            "pantalla": "fuera de campo"
+          }
+        },
+        {
+          "id": "continuidad-final-panel-17",
+          "imageDescription": "A completely black frame.",
+          "displayText": "NEGRO.",
+          "narrativePurpose": "transition",
+          "characters": [],
+          "location": "Desconocido",
+          "continuity": {
+            "frame": "completamente negro"
+          }
+        }
+      ],
+      "bridgeFromPrevious": "Tras descubrir la ruta de June, Adrian inicia un nuevo caso.",
+      "characterIds": [
+        "adrian",
+        "june",
+        "mirror"
+      ],
+      "objects": [],
+      "minigame": null,
+      "reviewStatus": "pending",
+      "scriptKind": null
+    }
+  ]
+}

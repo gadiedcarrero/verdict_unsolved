@@ -1,0 +1,243 @@
+[
+  {
+    "id": "gray",
+    "name": "character.gray.name",
+    "portrait": "portraits/gray.png",
+    "description": "A man in his mid-40s to early 50s, short grey hair, a stern face lined with fatigue. Always in a wheelchair, wearing a dark suit and a light shirt, with a focused expression and an analytical gaze.",
+    "expressions": {
+      "alegre": {
+        "path": "portraits/gray-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/gray-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/gray-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/gray-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/gray-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/gray-triste.png",
+        "description": ""
+      }
+    },
+    "variants": {
+      "en-su-silla-de-ruedas": {
+        "label": "En su silla de ruedas",
+        "description": "Full body, seated upright in a wheelchair, wearing a dark suit and a light shirt. Hands resting calmly on the armrests, facing forward, entire figure visible from the front.",
+        "body": "characters/gray-en-su-silla-de-ruedas.png",
+        "expressions": {}
+      },
+      "en-su-silla-de-ruedas-traje-oscuro": {
+        "label": "En su silla de ruedas, traje oscuro",
+        "description": "Full body, seated upright in a wheelchair, hands resting on the armrests, wearing a dark suit and a light shirt, facing forward.",
+        "body": "characters/gray-en-su-silla-de-ruedas-traje-oscuro.png",
+        "expressions": {}
+      }
+    },
+    "voices": {},
+    "capabilities": [],
+    "color": "#3a6ea5"
+  },
+  {
+    "id": "adrian",
+    "name": "character.adrian.name",
+    "portrait": "portraits/adrian.png",
+    "description": "A man around 40, athletic build, short dark hair and a few days of stubble. Wearing functional field clothing or smart casual, standing upright with an intense gaze.",
+    "expressions": {
+      "alegre": {
+        "path": "portraits/adrian-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/adrian-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/adrian-molesto.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/adrian-asombrado.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/adrian-asustado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/adrian-triste.png",
+        "description": ""
+      }
+    },
+    "variants": {
+      "de-pie-ropa-funcional": {
+        "label": "De pie, ropa funcional",
+        "description": "Full body, standing upright facing forward, arms relaxed at sides. Wearing functional field clothing or smart casual outfit, such as a fitted jacket, shirt, and sturdy pants. Neutral stance, entire figure visible from the front.",
+        "body": "characters/adrian-de-pie-ropa-funcional.png",
+        "expressions": {}
+      }
+    },
+    "voices": {},
+    "capabilities": [],
+    "color": "#3a6ea5"
+  },
+  {
+    "id": "wraith",
+    "name": "character.wraith.name",
+    "portrait": "portraits/wraith.png",
+    "description": "A tall, powerfully built figure dressed entirely in black, in close-fitting tactical clothing. Wears an opaque mask covering the whole face, dark gloves and boots, no visible features, poised and ready to act.",
+    "expressions": {},
+    "variants": {
+      "de-pie-enmascarado": {
+        "label": "De pie, enmascarado",
+        "description": "Full body, standing upright, facing forward, arms slightly bent and ready at the sides, wearing close-fitting black tactical clothing, opaque full-face mask, dark gloves and boots, entire figure visible from head to toe.",
+        "body": "characters/wraith-de-pie-enmascarado.png",
+        "expressions": {}
+      }
+    },
+    "voices": {},
+    "capabilities": [],
+    "color": "#3a6ea5"
+  },
+  {
+    "id": "evelyn",
+    "name": "character.evelyn.name",
+    "portrait": "portraits/evelyn.png",
+    "description": "A woman in her early 30s, dark brown hair tied back, sharp features and light eyes. Wearing field gear, a tactical jacket and dark trousers, with a determined expression.",
+    "expressions": {
+      "alegre": {
+        "path": "portraits/evelyn-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/evelyn-serio.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/evelyn-triste.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/evelyn-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/evelyn-asombrado.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/evelyn-molesto.png",
+        "description": ""
+      }
+    },
+    "variants": {
+      "de-pie-con-equipo-tactico": {
+        "label": "De pie, con equipo táctico",
+        "description": "Standing upright, full body, facing forward, arms relaxed at the sides. Wearing field gear including a tactical jacket and dark trousers. The pose is neutral but ready, suggesting determination.",
+        "body": "characters/evelyn-de-pie-con-equipo-tactico.png",
+        "expressions": {}
+      }
+    },
+    "voices": {},
+    "capabilities": [],
+    "color": "#b13d6f"
+  },
+  {
+    "id": "iris",
+    "name": "character.iris.name",
+    "portrait": null,
+    "description": "A woman whose face is partly hidden by shadow or pixelation, dark hair worn loose, in a long coat and unobtrusive clothing. Seen on a video call, only part of her face and her determined eyes are visible.",
+    "expressions": {},
+    "variants": {},
+    "voices": {},
+    "capabilities": [],
+    "color": "#b13d6f"
+  },
+  {
+    "id": "mirror",
+    "name": "character.mirror.name",
+    "portrait": null,
+    "description": "An abstract digital interface, rendered as glowing blue iconography, geometric lines and floating on-screen elements. It has no physical body and no human face.",
+    "expressions": {},
+    "variants": {},
+    "voices": {},
+    "capabilities": [],
+    "color": "#00b8d9"
+  },
+  {
+    "id": "june",
+    "name": "character.june.name",
+    "portrait": null,
+    "description": "A young woman around 30, East Asian features, short black hair, rectangular glasses. Wearing technical or lab clothing, a light jacket over a pale t-shirt.",
+    "expressions": {},
+    "variants": {},
+    "voices": {},
+    "capabilities": [],
+    "color": "#e67e22"
+  },
+  {
+    "id": "elias",
+    "name": "character.elias.name",
+    "portrait": null,
+    "description": "A man around 50, grey hair combed back, a trimmed beard, angular face. Wearing a dark suit and tie, with an authoritative bearing and a calculating gaze.",
+    "expressions": {},
+    "variants": {},
+    "voices": {},
+    "capabilities": [],
+    "color": "#6c3483"
+  },
+  {
+    "id": "theo",
+    "name": "character.theo.name",
+    "portrait": null,
+    "description": "A man around 30, fair skin, short messy blond hair, a square jaw. Wearing a dark tactical uniform over a black t-shirt, with a serious expression.",
+    "expressions": {},
+    "variants": {},
+    "voices": {},
+    "capabilities": [],
+    "color": "#27ae60"
+  },
+  {
+    "id": "marcus",
+    "name": "character.marcus.name",
+    "portrait": null,
+    "description": "A man around 35, dark skin, a strong build, very short hair and a neatly trimmed beard. Wearing tactical clothing and a bulletproof vest, standing firmly.",
+    "expressions": {},
+    "variants": {},
+    "voices": {},
+    "capabilities": [],
+    "color": "#e74c3c"
+  },
+  {
+    "id": "lena",
+    "name": "character.lena.name",
+    "portrait": null,
+    "description": "A woman in her late 20s, fair skin, straight blonde hair to the shoulders, delicate features and light eyes. Wearing simple clothes, a pale sweater and a light jacket.",
+    "expressions": {},
+    "variants": {},
+    "voices": {},
+    "capabilities": [],
+    "color": "#f7ca18"
+  },
+  {
+    "id": "daniel",
+    "name": "character.daniel.name",
+    "portrait": null,
+    "description": "A man in his early 30s, fair skin, short brown hair, light stubble. Wearing an office shirt and trousers, with an ID badge hanging around his neck.",
+    "expressions": {},
+    "variants": {},
+    "voices": {},
+    "capabilities": [],
+    "color": "#2980b9"
+  }
+]
