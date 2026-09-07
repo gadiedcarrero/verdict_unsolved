@@ -61,6 +61,16 @@ export function BodyVariantFields({
         </p>
       )}
 
+      {/* Sin esto la sección se ve como un formulario que no hace nada: los
+          botones de generar aparecen recién dentro de cada pose, y no hay
+          ninguna hasta que se agregue la primera. */}
+      {variants.length === 0 && (
+        <p className="mb-1 text-[9px] text-graphite-600">
+          Agregá una pose acá abajo (Gray en su silla, Wraith de pie…) y después vas a poder generarle el cuerpo y
+          sus gestos.
+        </p>
+      )}
+
       {variants.map(([variantId, variant]) => {
         const bodyGenId = `${character.id}:${variantId}`;
         return (
