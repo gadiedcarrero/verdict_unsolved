@@ -59,6 +59,21 @@ import sharp from 'sharp';
 // número a bajar; si las expresiones vuelven a salir todas iguales, a subir.
 const IDENTITY_START_AT = 0.25;
 
+/**
+ * Cuánto se deja cambiar la imagen al editarla (ver img2imgWorkflow).
+ *
+ * Cambiar de expresión es un cambio ESTRUCTURAL de la cara —ojos muy abiertos,
+ * boca estirada, cejas arriba—, no un retoque de textura. Con 0.45 el
+ * resultado salía casi idéntico al retrato base: conservaba perfecto la
+ * identidad, el encuadre y la ropa, pero la cara apenas se movía y "asustado"
+ * quedaba igual de sereno que el original.
+ *
+ * Si una expresión sale demasiado tímida, subilo; si el personaje empieza a
+ * cambiar de cara o de edad entre expresiones, bajalo. Es el único número que
+ * hay que calibrar contra el checkpoint que se esté usando.
+ */
+const EDIT_STRENGTH = 0.6;
+
 const NEGATIVE_PROMPT =
   'lowres, bad anatomy, bad hands, extra fingers, missing fingers, deformed, mutated, blurry, ' +
   '(watermark:1.3), (text:1.5), (letters:1.4), (words:1.4), (writing:1.4), (readable text:1.5), ' +
@@ -104,9 +119,8 @@ export type ComfyUIGenerateOptions = {
     | { mode: 'face'; bytes: Buffer }
     | { mode: 'subject'; bytes: Buffer[] }
     /** Retoca ESTA imagen en vez de generar una parecida (ver
-     * img2imgWorkflow). `strength` es cuánto se la deja cambiar: 0.45 mueve
-     * una expresión sin tocar el resto, más alto empieza a reinventar la
-     * cara, más bajo casi no cambia nada. */
+     * img2imgWorkflow). Sin esto se usa EDIT_STRENGTH, que es el valor
+     * calibrado para cambiar una expresión sin perder al personaje. */
     | { mode: 'edit'; bytes: Buffer; strength?: number }
     | undefined;
 };
@@ -369,7 +383,7 @@ export async function generateComfyUIImage(opts: ComfyUIGenerateOptions): Promis
     let workflow: ComfyWorkflow;
     if (opts.reference?.mode === 'edit') {
       const refName = await uploadReferenceImage(baseUrl, opts.reference.bytes);
-      workflow = img2imgWorkflow(shared, refName, opts.reference.strength ?? 0.45, seed);
+      workflow = img2imgWorkflow(shared, refName, opts.reference.strength ?? EDIT_STRENGTH, seed);
     } else if (opts.reference?.mode === 'face') {
       const refName = await uploadReferenceImage(baseUrl, opts.reference.bytes);
       workflow = instantIdWorkflow(shared, refName, seed);
