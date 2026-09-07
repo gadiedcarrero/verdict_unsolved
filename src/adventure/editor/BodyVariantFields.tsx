@@ -40,6 +40,27 @@ export function BodyVariantFields({
 }): JSX.Element {
   const [label, setLabel] = useState('');
   const [description, setDescription] = useState('');
+  const [proposing, setProposing] = useState(false);
+  const [proposeError, setProposeError] = useState<string | null>(null);
+
+  // Rellena el formulario en vez de crear la pose directamente: lo que la IA
+  // propone es un borrador, y el autor tiene que poder corregirlo antes de
+  // gastar una generación de imagen en él.
+  async function propose(): Promise<void> {
+    setProposing(true);
+    setProposeError(null);
+    try {
+      const result = await window.api.proposeBodyPose(character.description);
+      if (!result.ok) {
+        setProposeError(result.error);
+        return;
+      }
+      setLabel(result.label);
+      setDescription(result.description);
+    } finally {
+      setProposing(false);
+    }
+  }
 
   const variants = Object.entries(character.variants);
   const hasPortrait = Boolean(character.portrait);
@@ -66,8 +87,8 @@ export function BodyVariantFields({
           ninguna hasta que se agregue la primera. */}
       {variants.length === 0 && (
         <p className="mb-1 text-[9px] text-graphite-600">
-          Agregá una pose acá abajo (Gray en su silla, Wraith de pie…) y después vas a poder generarle el cuerpo y
-          sus gestos.
+          Agregá una pose acá abajo —o dejá que la proponga desde el guion— y después vas a poder generarle el
+          cuerpo y sus gestos. Los gestos (conversando, riendo…) no hay que describirlos: salen solos.
         </p>
       )}
 
@@ -152,6 +173,16 @@ export function BodyVariantFields({
           placeholder="Cómo se ve de cuerpo entero, en inglés (seated in a wheelchair, dark suit, hands resting on the armrests...)"
           className="mb-1 w-full resize-none rounded border border-graphite-800 bg-graphite-950 px-1.5 py-0.5 text-[9px] text-graphite-200 outline-none focus:border-amber-accent"
         />
+        <button
+          type="button"
+          onClick={() => void propose()}
+          disabled={proposing || !character.description.trim()}
+          title="Saca la pose de la descripción que el desglose ya hizo del personaje."
+          className="mb-1 w-full rounded border border-graphite-700 px-1.5 py-0.5 text-[9px] tracking-widest text-graphite-400 uppercase transition-colors hover:border-amber-accent hover:text-amber-accent disabled:opacity-40"
+        >
+          {proposing ? 'Proponiendo...' : '✨ Proponer pose desde el guion'}
+        </button>
+        {proposeError && <p className="mb-1 text-[8px] text-red-400">{proposeError}</p>}
         <button
           type="button"
           onClick={create}

@@ -56,6 +56,7 @@ const api: DesktopApi = {
       expressionKey,
       referenceImagePath,
     ),
+  proposeBodyPose: (description) => ipcRenderer.invoke('ai:propose-body-pose', description),
   flipCharacterPortrait: (gameId, relativePath) =>
     ipcRenderer.invoke('ai:flip-character-portrait', gameId, relativePath),
   editImage: (gameId, relativePath, instruction, referenceImages) =>

@@ -309,7 +309,61 @@ async function generateCharacterImage(
   return requestImageBytesNanoBanana(config.falApiKey, prompt, dataUri, style);
 }
 
+const BODY_POSE_SYSTEM_PROMPT = `Sos parte del pipeline de NarraDOS. Te doy la descripción visual de un personaje, tal como la sacó del guion, y devolvés la POSE de cuerpo entero con la que ese personaje aparece en escena.
+
+Devolvés JSON: {"label": "...", "description": "..."}
+
+- "label": nombre corto EN ESPAÑOL para que el autor la reconozca en el editor ("En su silla de ruedas", "De pie, enmascarado").
+- "description": EN INGLÉS, para un generador de imágenes. Describí SOLO la pose del cuerpo, la ropa y el encuadre: cómo está parado o sentado, qué hace con los brazos, qué lleva puesto, y que se vea la figura entera de frente.
+
+**No repitas edad, pelo, cara ni rasgos.** Esa parte llega por otro lado (el retrato del personaje se manda como imagen de referencia), y repetirla en el texto compite contra esa imagen en vez de apoyarse en ella.
+
+Si la descripción dice que el personaje está siempre en silla de ruedas, la pose es sentado en la silla. Si lleva máscara, la máscara va en la pose. Si no dice nada de postura, proponé una pose neutra de pie, de frente, brazos relajados.
+
+Devolvé ÚNICAMENTE el objeto JSON.`;
+
 export function registerCharacterArtHandlers(): void {
+  // Proponer la pose de cuerpo entero a partir de lo que el guion ya dijo del
+  // personaje: la descripción suele traerla ("always in a wheelchair", "wears
+  // an opaque mask"), así que pedírsela al autor a mano era hacerle reescribir
+  // algo que la IA ya había leído.
+  ipcMain.handle('ai:propose-body-pose', async (_event, description: unknown) => {
+    if (typeof description !== 'string' || !description.trim()) {
+      return { ok: false, error: 'El personaje todavía no tiene descripción visual.' };
+    }
+    const config = await getStoredAiIntegrationsConfig();
+    if (!config.openaiApiKey) {
+      return { ok: false, error: 'Falta la API key de OpenAI en Ajustes → Integraciones IA.' };
+    }
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${config.openaiApiKey}` },
+        body: JSON.stringify({
+          model: 'gpt-4.1',
+          temperature: 0.3,
+          max_tokens: 500,
+          response_format: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: BODY_POSE_SYSTEM_PROMPT },
+            { role: 'user', content: description.trim() },
+          ],
+        }),
+      });
+      if (!response.ok) return { ok: false, error: await formatApiError('OpenAI', response) };
+      const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) return { ok: false, error: 'OpenAI no devolvió contenido.' };
+      const parsed = JSON.parse(content) as { label?: unknown; description?: unknown };
+      if (typeof parsed.label !== 'string' || typeof parsed.description !== 'string') {
+        return { ok: false, error: 'La respuesta no tiene la forma esperada.' };
+      }
+      return { ok: true, label: parsed.label, description: parsed.description };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
   ipcMain.handle(
     'ai:generate-character-portrait',
     async (

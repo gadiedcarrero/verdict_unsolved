@@ -152,6 +152,13 @@ export type DesktopApi = {
      * una instrucción de edición. Null = usar `prompt` para todos. */
     descriptivePrompt?: string | null,
   ) => Promise<PortraitSaveResult>;
+  /** Propone la pose de cuerpo entero (etiqueta en español + descripción en
+   * inglés para el generador) a partir de la descripción visual que el
+   * desglose ya sacó del guion — "always in a wheelchair" ya está escrito ahí,
+   * no hace falta que el autor lo reescriba. */
+  proposeBodyPose: (
+    description: string,
+  ) => Promise<{ ok: true; label: string; description: string } | { ok: false; error: string }>;
   /** Cuerpo entero de una variante del personaje, para ponerlo EN la escena
    * (ver `CharacterVariant` en schemas.ts) — hermano de
    * `generateCharacterPortrait`, que sigue siendo el busto del círculo de
