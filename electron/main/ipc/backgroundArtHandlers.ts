@@ -127,25 +127,35 @@ async function generateNanoBanana(
   return { ok: true, bytes: Buffer.from(await imageResponse.arrayBuffer()) };
 }
 
-// OpenAI no tiene un equivalente directo a mandar VARIAS imágenes de
-// referencia numeradas como Nano Banana (`images.edit` acepta una imagen
-// base + máscara, no una lista con nombres) — con un solo personaje
-// elegido, esa imagen ancla la identidad; con varios, solo la del primero
-// se usa como base y el resto queda solo en la descripción de texto (peor
-// consistencia que Nano Banana para escenas con más de un personaje).
+// gpt-image-1 SÍ acepta varias imágenes de referencia en /images/edits
+// (campo repetido `image[]`), igual que Nano Banana. Antes acá se mandaba
+// solo `referenceEntries[0]`, y como esa imagen es la BASE que se edita, un
+// panel con cinco personajes se generaba partiendo del busto del primero de
+// la lista: la escena entera quedaba anclada a esa persona y el resto existía
+// solo como texto. Con cuatro hombres y una mujer, eso dibujaba a la mujer
+// como uno más de ellos.
 async function generateOpenAI(
   apiKey: string,
   prompt: string,
   referenceEntries: (CharacterReference & { bytes: Buffer })[],
 ): Promise<GenerateResult> {
+  // Numeradas y con su descripción, como en Nano Banana: sin decir cuál
+  // imagen es cuál personaje, varias referencias se mezclan en una identidad
+  // sola. La descripción va igual aunque haya retrato — es lo único que
+  // transporta género, edad y etnia si el parecido se diluye.
+  const referenceList = referenceEntries
+    .map((c, i) => `Reference image ${i + 1} = ${c.name}${c.description ? ` (${c.description})` : ''}.`)
+    .join(' ');
   const fullPrompt = referenceEntries.length
-    ? `${referenceEntries.map((c) => `${c.name}${c.description ? ` (${c.description})` : ''}`).join(', ')} appear in this scene, matching their reference image likeness. Scene: ${prompt.trim()}\n\n${BACKGROUND_STYLE_PROMPT}`
+    ? `${referenceList} Use each character's reference image likeness for that named character wherever they appear. Scene: ${prompt.trim()}\n\n${BACKGROUND_STYLE_PROMPT}`
     : `${prompt.trim()}\n\n${BACKGROUND_STYLE_PROMPT}`;
   let response: Response;
   if (referenceEntries.length > 0) {
     const form = new FormData();
     form.append('model', 'gpt-image-1');
-    form.append('image', new Blob([new Uint8Array(referenceEntries[0]!.bytes)], { type: 'image/png' }), 'reference.png');
+    referenceEntries.forEach((c, i) => {
+      form.append('image[]', new Blob([new Uint8Array(c.bytes)], { type: 'image/png' }), `reference-${i + 1}.png`);
+    });
     form.append('prompt', fullPrompt);
     form.append('size', '1536x1024');
     form.append('quality', 'high');
