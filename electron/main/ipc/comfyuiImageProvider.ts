@@ -287,6 +287,14 @@ function ipAdapterWorkflow(
       image: imgRef,
       weight: 0.45,
       weight_type: 'linear',
+      // OJO: promedia todas las referencias en UNA identidad, que después se
+      // aplica a la imagen entera. IP-Adapter no sabe asignarle la cara A a
+      // la persona A y la B a la persona B — no hay tal cosa. Con un grupo
+      // mixto el promedio arrastra a todos hacia el rasgo dominante (cuatro
+      // hombres y una mujer dibujaban a la mujer como varón), así que lo que
+      // distingue a cada personaje tiene que ir en el TEXTO del prompt, no
+      // confiarse a las referencias. Con muchos personajes conviene mandar
+      // pocas referencias, o ninguna, y describirlos.
       combine_embeds: 'average',
       start_at: 0.3,
       end_at: 0.85,

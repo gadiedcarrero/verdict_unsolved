@@ -194,7 +194,19 @@ async function generateComfyUI(
     // anterior). Al final, el estilo quedaba diluido y cada panel salía con
     // el suyo. Nano Banana y gpt-image-1 no tienen ese problema, así que ahí
     // se deja el orden natural, que se lee mejor.
-    const fullPrompt = `${BACKGROUND_STYLE_PROMPT}\n\n${prompt.trim()}`;
+    // Quiénes son, con su descripción, igual que en los otros proveedores.
+    // Faltaba: acá solo llegaba el prompt del panel, que nombra a la gente
+    // ("Adrian, Evelyn, Theo, Marcus y June") sin decir nada de ellos. Los
+    // retratos van por IP-Adapter, pero ese camino no transporta género, edad
+    // ni etnia: los promedia (ver combine_embeds en comfyuiImageProvider), y
+    // en un grupo de cuatro hombres y una mujer el promedio la dibujaba a
+    // ella como varón. Lo que la identifica tiene que estar en el TEXTO.
+    const cast = referenceEntries
+      .map((entry) => `${entry.name}${entry.description ? ` (${entry.description})` : ''}`)
+      .join('. ');
+    const fullPrompt = cast
+      ? `${BACKGROUND_STYLE_PROMPT}\n\n${cast}.\n\n${prompt.trim()}`
+      : `${BACKGROUND_STYLE_PROMPT}\n\n${prompt.trim()}`;
     const bytes = await generateComfyUIImage({
       baseUrl: config.comfyuiBaseUrl,
       checkpoint: config.comfyuiCheckpoint,
