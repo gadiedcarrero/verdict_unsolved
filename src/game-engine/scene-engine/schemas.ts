@@ -418,6 +418,15 @@ export const SceneBackgroundSchema = z.object({
    * project_dialogue_audio_elevenlabs) — el campo queda aparte a propósito
    * para no tener que migrar nada cuando eso se construya. */
   caption: z.string().optional(),
+  /** Sonido que suena al mostrarse este panel, relativo a
+   * assets/games/<juego>/ — un golpe, una explosión, lluvia. Suena una vez al
+   * entrar al panel, no en bucle: lo que necesita un fondo de cine es el
+   * acento puntual, y un loop por panel se cortaría en cada transición. */
+  soundPath: z.string().nullable().default(null),
+  /** Volumen de ese sonido, 0 a 1. Un portazo y una lluvia de fondo no se
+   * mezclan al mismo nivel, y normalizar los archivos a mano es trabajo que
+   * el editor puede evitar. */
+  soundVolume: z.number().min(0).max(1).default(1),
   /** Zonas interactivas propias de ESTE fondo puntual — no de la escena
    * entera. Antes vivían en `Scene.hotspots`, compartidas por todos los
    * fondos de la escena; eso impedía cosas como "al apagar la luz aparece

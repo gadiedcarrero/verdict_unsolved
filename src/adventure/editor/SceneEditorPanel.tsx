@@ -227,6 +227,11 @@ function BackgroundThumb({
   title,
   durationMs,
   generationPrompt,
+  soundPath,
+  soundVolume,
+  onSoundUpload,
+  onSoundChange,
+  onSoundVolumeChange,
   backgroundColor,
   imageWidthPercent,
   caption,
@@ -250,6 +255,12 @@ function BackgroundThumb({
   durationMs: number | undefined;
   /** El prompt con el que se generó esta imagen, si se generó con IA. */
   generationPrompt: string | undefined;
+  /** Sonido que suena al mostrarse este panel, o null. */
+  soundPath: string | null;
+  soundVolume: number;
+  onSoundUpload: (file: File) => void;
+  onSoundChange: (path: string | null) => void;
+  onSoundVolumeChange: (volume: number) => void;
   backgroundColor: string | undefined;
   imageWidthPercent: number | undefined;
   caption: string | undefined;
@@ -276,6 +287,7 @@ function BackgroundThumb({
    * — la edición con IA quedó en un botón aparte para no pisarse. */
   onSelectForZones: () => void;
 }): JSX.Element {
+  const soundInputRef = useRef<HTMLInputElement>(null);
   // "Guardar cambios" recarga la página entera ~400ms después de escribir el
   // archivo (ver reloadAfterSave en AdventureRuntime.tsx) — ese margen le
   // alcanza casi siempre a Vite/Electron para notar los .json, pero un fondo
@@ -438,6 +450,50 @@ function BackgroundThumb({
               precargar el formulario al regenerar, así que para saber qué se
               había pedido había que abrir el JSON a mano.
               Plegado por default: es largo y estas tarjetas van en fila. */}
+          {/* Un acento por panel: el portazo, la explosión, la lluvia. Va
+              junto al caption porque son las dos capas que acompañan a la
+              imagen — lo que se lee y lo que se oye. */}
+          <div className="mt-0.5 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => soundInputRef.current?.click()}
+              className="rounded border border-graphite-800 px-1.5 py-0.5 text-[8px] tracking-widest text-graphite-500 uppercase hover:border-amber-accent hover:text-amber-accent"
+            >
+              {soundPath ? '♪ cambiar' : '♪ sonido'}
+            </button>
+            {soundPath && (
+              <>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={soundVolume}
+                  onChange={(event) => onSoundVolumeChange(Number(event.target.value))}
+                  title={`Volumen ${Math.round(soundVolume * 100)}%`}
+                  className="h-1 w-10 accent-amber-accent"
+                />
+                <button
+                  type="button"
+                  onClick={() => onSoundChange(null)}
+                  className="text-[8px] text-graphite-500 hover:text-red-400"
+                >
+                  ✕
+                </button>
+              </>
+            )}
+            <input
+              ref={soundInputRef}
+              type="file"
+              accept="audio/*"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) onSoundUpload(file);
+                event.target.value = '';
+              }}
+            />
+          </div>
           {generationPrompt && (
             <details className="mt-0.5">
               <summary className="cursor-pointer text-[8px] tracking-widest text-graphite-500 uppercase hover:text-amber-accent">
@@ -755,6 +811,9 @@ function BackgroundsSection({
   scene,
   characters,
   strings,
+  onBackgroundSoundUpload,
+  onBackgroundSoundChange,
+  onBackgroundSoundVolumeChange,
   uploading,
   generatingBackground,
   backgroundGenError,
@@ -793,6 +852,9 @@ function BackgroundsSection({
   onGeneratePendingPanel: (prompt: string, caption: string) => void;
   onRemoveBackground: (bgId: string) => void;
   onDurationChange: (bgId: string, durationMs: number) => void;
+  onBackgroundSoundUpload: (bgId: string, file: File) => void;
+  onBackgroundSoundChange: (bgId: string, path: string | null) => void;
+  onBackgroundSoundVolumeChange: (bgId: string, volume: number) => void;
   onBackgroundColorChange: (bgId: string, color: string | undefined) => void;
   onImageWidthChange: (bgId: string, widthPercent: number | undefined) => void;
   onCaptionChange: (bgId: string, caption: string) => void;
@@ -835,6 +897,11 @@ function BackgroundsSection({
             label={`BG ${index + 1}`}
             durationMs={bg.durationMs}
             generationPrompt={bg.generationPrompt}
+            soundPath={bg.soundPath}
+            soundVolume={bg.soundVolume}
+            onSoundUpload={(file) => onBackgroundSoundUpload(bg.id, file)}
+            onSoundChange={(path) => onBackgroundSoundChange(bg.id, path)}
+            onSoundVolumeChange={(volume) => onBackgroundSoundVolumeChange(bg.id, volume)}
             backgroundColor={bg.backgroundColor}
             imageWidthPercent={bg.imageWidthPercent}
             caption={bg.caption}
@@ -2320,6 +2387,9 @@ export function SceneEditorPanel({
   onGeneratePendingPanel,
   onRemoveBackground,
   onBackgroundDurationChange,
+  onBackgroundSoundUpload,
+  onBackgroundSoundChange,
+  onBackgroundSoundVolumeChange,
   onBackgroundColorChange,
   onBackgroundImageWidthChange,
   onBackgroundCaptionChange,
@@ -2391,6 +2461,9 @@ export function SceneEditorPanel({
   onGeneratePendingPanel: (prompt: string, caption: string) => void;
   onRemoveBackground: (bgId: string) => void;
   onBackgroundDurationChange: (bgId: string, durationMs: number) => void;
+  onBackgroundSoundUpload: (bgId: string, file: File) => void;
+  onBackgroundSoundChange: (bgId: string, path: string | null) => void;
+  onBackgroundSoundVolumeChange: (bgId: string, volume: number) => void;
   onBackgroundColorChange: (bgId: string, color: string | undefined) => void;
   onBackgroundImageWidthChange: (bgId: string, widthPercent: number | undefined) => void;
   onBackgroundCaptionChange: (bgId: string, caption: string) => void;
@@ -2504,6 +2577,9 @@ export function SceneEditorPanel({
           <BackgroundsSection
             gameId={gameId}
             scene={scene}
+            onBackgroundSoundUpload={onBackgroundSoundUpload}
+            onBackgroundSoundChange={onBackgroundSoundChange}
+            onBackgroundSoundVolumeChange={onBackgroundSoundVolumeChange}
             characters={characters}
             strings={strings}
             uploading={uploadingBackground}

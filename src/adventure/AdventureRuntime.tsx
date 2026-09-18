@@ -30,6 +30,7 @@ import type {
   PolygonPoint,
   Scene,
   SceneAction,
+  SceneBackground,
   SceneKind,
   SceneLayer,
   SiteSettings,
@@ -1166,7 +1167,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
           const current = prev ?? base;
           return {
             ...current,
-            backgrounds: [...current.backgrounds, { id: bgId, assetPath: result.path, hotspots: [], layers: [] }],
+            backgrounds: [...current.backgrounds, { id: bgId, assetPath: result.path, soundPath: null, soundVolume: 1, hotspots: [], layers: [] }],
           };
         });
       } else {
@@ -1212,6 +1213,8 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 id: bgId,
                 assetPath: result.path,
                 caption,
+                soundPath: null,
+                soundVolume: 1,
                 hotspots: [],
                 layers: [],
                 generationPrompt: prompt,
@@ -1295,6 +1298,34 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     const base = editedScene ?? baseScene;
     if (!base) return;
     setEditedScene({ ...base, backgrounds: base.backgrounds.filter((bg) => bg.id !== bgId) });
+  }
+
+  function patchBackground(bgId: string, patch: Partial<SceneBackground>): void {
+    setEditedScene((prev) => {
+      const current = prev ?? baseScene;
+      if (!current) return prev;
+      return {
+        ...current,
+        backgrounds: current.backgrounds.map((bg) => (bg.id === bgId ? { ...bg, ...patch } : bg)),
+      };
+    });
+  }
+
+  async function uploadBackgroundSound(bgId: string, file: File): Promise<void> {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'mp3';
+    try {
+      const buffer = new Uint8Array(await file.arrayBuffer());
+      const result = await window.api.saveSceneSound(gameId, `${base.id}-${bgId}`, ext, buffer);
+      if (result.ok) {
+        patchBackground(bgId, { soundPath: result.path });
+      } else {
+        setSaveMessage(`Error subiendo sonido: ${result.error}`);
+      }
+    } catch (error) {
+      setSaveMessage(`Error subiendo sonido: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   function updateBackgroundDuration(bgId: string, durationMs: number): void {
@@ -2668,6 +2699,9 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                   onGeneratePendingPanel={(prompt, caption) => void generatePendingPanelBackground(prompt, caption)}
                   onRemoveBackground={removeBackground}
                   onBackgroundDurationChange={updateBackgroundDuration}
+                  onBackgroundSoundUpload={(bgId, file) => void uploadBackgroundSound(bgId, file)}
+                  onBackgroundSoundChange={(bgId, path) => patchBackground(bgId, { soundPath: path })}
+                  onBackgroundSoundVolumeChange={(bgId, volume) => patchBackground(bgId, { soundVolume: volume })}
                   onBackgroundColorChange={updateBackgroundColor}
                   backgroundCacheBust={portraitCacheBust}
                   editingBackgroundPath={editingImagePath}

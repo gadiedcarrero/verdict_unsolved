@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type JSX } from 'react';
 import type { Scene, SiteSettings } from '../game-engine/scene-engine/schemas';
 import { cursorCssValue } from './cursorCss';
 import { useAdventureRuntimeStore } from './adventureRuntime.store';
+import { gameAssetUrl } from './gameAssetUrl';
 import { PlaceholderLayer } from './PlaceholderLayer';
 import { useStageSize } from './useStageSize';
 
@@ -61,6 +62,24 @@ export function CinematicScene({
     return () => window.clearTimeout(timer);
   }, [index, current, backgrounds.length, scene.onCinematicComplete, runActions]);
 
+  // El sonido del panel se dispara al cambiar de panel, no en el render: un
+  // re-render por otra causa no debe volver a golpear el mismo efecto.
+  useEffect(() => {
+    if (!current?.soundPath) return;
+    const audio = new Audio(gameAssetUrl(gameId, current.soundPath));
+    audio.volume = current.soundVolume;
+    // Un navegador puede rechazar la reproducción (política de autoplay hasta
+    // que haya una interacción). Que no suene un golpe no puede tumbar la
+    // cinemática, así que se ignora en silencio.
+    void audio.play().catch(() => {});
+    return () => {
+      // Cortar al salir del panel: si no, dos sonidos largos se superponen
+      // cuando los paneles duran menos que el audio.
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, [current?.id, current?.soundPath, current?.soundVolume, gameId]);
+
   return (
     <div ref={containerRef} className="flex h-screen w-screen items-center justify-center bg-graphite-950">
       <div
@@ -73,14 +92,29 @@ export function CinematicScene({
             className="absolute inset-0 transition-opacity duration-500 ease-out"
             style={{ opacity: visible ? 1 : 0 }}
           >
-            <PlaceholderLayer
-              gameId={gameId}
-              assetPath={current.assetPath}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
+            {/* Sin imagen = panel de color sólido: los rótulos del guion
+                ("Pantalla negra", "TRES AÑOS DESPUÉS") son color con texto
+                encima, no una imagen que generar. */}
+            <div className="absolute inset-0" style={{ backgroundColor: current.backgroundColor ?? '#000' }} />
+            {current.assetPath.trim() && (
+              <PlaceholderLayer
+                gameId={gameId}
+                assetPath={current.assetPath}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            )}
+            {/* Subtítulo de película, no un cartel: texto centrado abajo, sin
+                recuadro ni fondo. La caja opaca de antes tapaba parte de la
+                imagen y hacía que la narración se leyera como interfaz del
+                juego en vez de como la voz que cuenta lo que pasa. La sombra
+                dura es lo que lo mantiene legible sobre cualquier fondo, que
+                es para lo que el cine la usa. */}
             {current.caption && (
-              <div className="absolute inset-x-0 bottom-0 flex justify-center p-6">
-                <p className="max-w-2xl rounded border border-graphite-700 bg-graphite-900/95 p-4 text-center text-sm leading-relaxed text-graphite-100 shadow-2xl backdrop-blur">
+              <div className="absolute inset-x-0 bottom-0 flex justify-center px-8 pb-[8%]">
+                <p
+                  className="max-w-3xl text-center text-xl leading-snug font-medium whitespace-pre-line text-white"
+                  style={{ textShadow: '0 2px 6px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,1)' }}
+                >
                   {current.caption}
                 </p>
               </div>

@@ -13,6 +13,8 @@ const api: DesktopApi = {
   saveSiteSettings: (gameId, settings) => ipcRenderer.invoke('scene-editor:save-site-settings', gameId, settings),
   saveCharacterPortrait: (gameId, characterId, ext, data, expressionKey) =>
     ipcRenderer.invoke('scene-editor:save-portrait', gameId, characterId, ext, data, expressionKey),
+  saveSceneSound: (gameId, fileId, ext, data) =>
+    ipcRenderer.invoke('scene-editor:save-sound', gameId, fileId, ext, data),
   saveSceneBackground: (gameId, fileId, ext, data) =>
     ipcRenderer.invoke('scene-editor:save-background', gameId, fileId, ext, data),
   generateBackground: (gameId, fileId, prompt, characters) =>

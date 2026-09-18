@@ -39,6 +39,9 @@ function portraitsDir(gameId: string): string {
 function backgroundsDir(gameId: string): string {
   return `${assetsDir(gameId)}/backgrounds`;
 }
+function soundsDir(gameId: string): string {
+  return `${assetsDir(gameId)}/sounds`;
+}
 function cursorsDir(gameId: string): string {
   return `${assetsDir(gameId)}/cursors`;
 }
@@ -153,6 +156,35 @@ export function registerSceneEditorHandlers(): void {
       return { ok: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
+
+  // Mismo criterio que los fondos: el archivo se copia a la carpeta de assets
+  // del juego y lo que se guarda en la escena es la ruta relativa, así el
+  // proyecto sigue siendo autocontenido y se puede mover o borrar entero.
+  ipcMain.handle(
+    'scene-editor:save-sound',
+    async (_event, gameId: unknown, fileId: unknown, ext: unknown, data: unknown) => {
+      if (app.isPackaged) {
+        return { ok: false, error: 'El editor visual solo funciona corriendo "pnpm dev".' };
+      }
+      if (!isValidId(gameId) || !isValidId(fileId)) {
+        return { ok: false, error: 'Id inválido.' };
+      }
+      if (typeof ext !== 'string' || !EXT_PATTERN.test(ext)) {
+        return { ok: false, error: `Extensión inválida: ${String(ext)}` };
+      }
+      if (!(data instanceof Uint8Array)) {
+        return { ok: false, error: 'Archivo inválido.' };
+      }
+      try {
+        await mkdir(join(app.getAppPath(), soundsDir(gameId)), { recursive: true });
+        const relativePath = `sounds/${fileId}.${ext.toLowerCase()}`;
+        await writeFile(join(app.getAppPath(), assetsDir(gameId), relativePath), data);
+        return { ok: true, path: relativePath };
+      } catch (error) {
+        return { ok: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    },
+  );
 
   ipcMain.handle(
     'scene-editor:save',

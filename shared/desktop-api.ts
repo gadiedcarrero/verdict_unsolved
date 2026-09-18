@@ -68,6 +68,10 @@ export type DesktopApi = {
     data: Uint8Array,
     expressionKey: string | null,
   ) => Promise<PortraitSaveResult>;
+  /** Solo funciona en `pnpm dev` — copia un archivo de sonido a
+   * assets/games/<gameId>/sounds/ y devuelve la ruta relativa a guardar en
+   * `background.soundPath`. */
+  saveSceneSound: (gameId: string, fileId: string, ext: string, data: Uint8Array) => Promise<BackgroundSaveResult>;
   /** Solo funciona en `pnpm dev` — sube un fondo a assets/games/<gameId>/backgrounds/
    * y devuelve la ruta relativa a guardar en `scene.backgrounds`. */
   saveSceneBackground: (
