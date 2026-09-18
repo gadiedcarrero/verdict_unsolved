@@ -52,6 +52,25 @@ function EmptyScreenHint({ prompt }: { prompt: string }): JSX.Element | null {
   );
 }
 
+// Un generador de imagen no cuenta: "five ID photos" compite contra el prior
+// visual de una grilla simétrica y gana la grilla — salen seis celdas y la
+// sexta se rellena repitiendo una cara. Decir la DISPOSICIÓN ("in a single
+// row", "side by side") funciona mucho mejor que insistir con el número,
+// porque describe una forma en vez de pedir una cuenta.
+const COUNT_RISK_PATTERN =
+  /\b(two|three|four|five|six|seven|eight|nine|ten|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+\w*\s*(people|persons|figures|men|women|characters|photos|portraits|files|folders|doors|screens|monitors|personas|figuras|fotos|retratos|expedientes|puertas|pantallas)\b/i;
+
+function CountRiskHint({ prompt }: { prompt: string }): JSX.Element | null {
+  if (!COUNT_RISK_PATTERN.test(prompt)) return null;
+  return (
+    <p className="mb-2 text-[9px] text-amber-accent/80">
+      ⚠ Esta descripción pide una cantidad exacta. Los generadores de imagen no cuentan: suelen poner uno de más o
+      de menos, y rellenan el sobrante repitiendo a alguien. Ayuda describir la disposición en vez del número —
+      "en una sola fila", "uno al lado del otro", "tres arriba y dos abajo" — y nombrar a cada uno.
+    </p>
+  );
+}
+
 function TextRiskHint({ prompt }: { prompt: string }): JSX.Element | null {
   if (!READABLE_TEXT_RISK_PATTERN.test(prompt)) return null;
   return (
@@ -484,6 +503,7 @@ function GenerateBackgroundForm({
       />
       <TextRiskHint prompt={prompt} />
       <EmptyScreenHint prompt={prompt} />
+      <CountRiskHint prompt={prompt} />
       {characters.length > 0 && (
         <div className="mb-2">
           <p className="mb-1 text-[8px] tracking-widest text-graphite-500 uppercase">
@@ -584,6 +604,7 @@ function RegenerateBackgroundForm({
       />
       <TextRiskHint prompt={prompt} />
       <EmptyScreenHint prompt={prompt} />
+      <CountRiskHint prompt={prompt} />
       {characters.length > 0 && (
         <div className="mb-2">
           <p className="mb-1 text-[8px] tracking-widest text-graphite-500 uppercase">
@@ -693,6 +714,7 @@ function PendingPanelQueue({
       />
       <TextRiskHint prompt={prompt} />
       <EmptyScreenHint prompt={prompt} />
+      <CountRiskHint prompt={prompt} />
       <textarea
         value={caption}
         onChange={(event) => setCaption(event.target.value)}
