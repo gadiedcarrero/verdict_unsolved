@@ -28,6 +28,7 @@ import type {
   MinigameOutcomeAction,
   MinigameTemplate,
   PolygonPoint,
+  AudioClip,
   Scene,
   SceneAction,
   SceneBackground,
@@ -46,6 +47,8 @@ import { CharacterHud } from './CharacterHud';
 import { InventoryBar } from './InventoryBar';
 import { SceneTimerBar } from './SceneTimerBar';
 import { CluePanel } from './CluePanel';
+import { SceneTimeline } from './editor/SceneTimeline';
+import { ScenePlayer } from './editor/ScenePlayer';
 import { DeductionPanel } from './DeductionPanel';
 import { DialogueOverlay } from './DialogueOverlay';
 import { InvestigationHud } from './InvestigationHud';
@@ -282,6 +285,11 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
   const [backgroundGenError, setBackgroundGenError] = useState<string | null>(null);
   const [creatingScene, setCreatingScene] = useState(false);
   const [showIntegrations, setShowIntegrations] = useState(false);
+  // Sub-pestañas del panel derecho, al estilo de un editor de video: editar
+  // la imagen, montar el sonido contra la línea de tiempo, o ver el resultado.
+  const [stageTab, setStageTab] = useState<'edit' | 'sound' | 'play'>('edit');
+  const [playheadMs, setPlayheadMs] = useState(0);
+  const [playing, setPlaying] = useState(false);
 
   const [editedCharacters, setEditedCharacters] = useState<Character[] | null>(null);
   const [pendingCharacterStrings, setPendingCharacterStrings] = useState<Record<string, string>>({});
@@ -1311,6 +1319,71 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
   }
 
+  /** Mide cuánto dura un audio antes de subirlo, para poder dibujar el clip a
+   * escala en la pista. Sin esto todos los clips se verían del mismo ancho y
+   * la línea de tiempo dejaría de decir la verdad. */
+  function audioDurationMs(file: File): Promise<number> {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const audio = new Audio(url);
+      const done = (ms: number): void => {
+        URL.revokeObjectURL(url);
+        resolve(ms);
+      };
+      audio.addEventListener('loadedmetadata', () => done(Math.round(audio.duration * 1000)));
+      // Un archivo que el navegador no sabe medir igual se puede agregar y
+      // mover: se dibuja con el ancho mínimo.
+      audio.addEventListener('error', () => done(0));
+    });
+  }
+
+  async function addAudioClip(file: File, startMs: number): Promise<void> {
+    const base = editedScene ?? baseScene;
+    if (!base) return;
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'mp3';
+    const clipId = uniqueId(slugify(file.name.replace(/\.[^.]+$/, '')), new Set(base.audioTrack.map((c) => c.id)));
+    try {
+      const durationMs = await audioDurationMs(file);
+      const buffer = new Uint8Array(await file.arrayBuffer());
+      const result = await window.api.saveSceneSound(gameId, `${base.id}-${clipId}`, ext, buffer);
+      if (!result.ok) {
+        setSaveMessage(`Error subiendo audio: ${result.error}`);
+        return;
+      }
+      setEditedScene((prev) => {
+        const current = prev ?? base;
+        return {
+          ...current,
+          audioTrack: [
+            ...current.audioTrack,
+            { id: clipId, path: result.path, label: file.name, startMs, durationMs, volume: 1 },
+          ],
+        };
+      });
+    } catch (error) {
+      setSaveMessage(`Error subiendo audio: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  function patchAudioClip(clipId: string, patch: Partial<AudioClip>): void {
+    setEditedScene((prev) => {
+      const current = prev ?? baseScene;
+      if (!current) return prev;
+      return {
+        ...current,
+        audioTrack: current.audioTrack.map((clip) => (clip.id === clipId ? { ...clip, ...patch } : clip)),
+      };
+    });
+  }
+
+  function removeAudioClip(clipId: string): void {
+    setEditedScene((prev) => {
+      const current = prev ?? baseScene;
+      if (!current) return prev;
+      return { ...current, audioTrack: current.audioTrack.filter((clip) => clip.id !== clipId) };
+    });
+  }
+
   async function uploadBackgroundSound(bgId: string, file: File): Promise<void> {
     const base = editedScene ?? baseScene;
     if (!base) return;
@@ -1573,6 +1646,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       kind,
       backgrounds: [],
       items: [],
+      audioTrack: [],
       dialogueNodes: {},
       introSkippable: true,
       cinematicTransition: 'fade',
@@ -1621,6 +1695,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       kind: breakdownScene?.scriptKind === 'interactiva' ? 'standard' : 'cinematica',
       backgrounds: [],
       items: [],
+      audioTrack: [],
       dialogueNodes: {},
       introSkippable: true,
       cinematicTransition: 'fade',
@@ -2912,8 +2987,68 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
               resizingSidebar ? 'bg-amber-accent' : ''
             }`}
           />
-          <div className="min-w-0 flex-1">
-            {editorTab === 'characters' ? (
+          <div className="flex min-w-0 flex-1 flex-col">
+            {/* Tres vistas del mismo escenario, como en un editor de video:
+                qué hay en la imagen, cuándo suena cada cosa, y cómo queda.
+                Solo en la pestaña de escena — en Personajes o Ajustes el
+                panel derecho muestra otra cosa. */}
+            {editorTab === 'scene' && (
+              <div className="flex shrink-0 border-b border-graphite-800">
+                {(
+                  [
+                    ['edit', 'Edición'],
+                    ['sound', 'Sonido'],
+                    ['play', 'Play'],
+                  ] as const
+                ).map(([tab, label]) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => {
+                      setStageTab(tab);
+                      // Salir de Play corta la reproducción: dejarla sonando
+                      // debajo de otra pestaña es audio sin nada que lo
+                      // explique en pantalla.
+                      if (tab !== 'play') setPlaying(false);
+                    }}
+                    className={`px-4 py-1.5 text-[10px] tracking-widest uppercase transition-colors ${
+                      stageTab === tab
+                        ? 'bg-amber-accent text-graphite-950'
+                        : 'text-graphite-400 hover:text-amber-accent'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="min-h-0 flex-1">
+            {editorTab === 'scene' && displayScene && stageTab === 'sound' ? (
+              <SceneTimeline
+                gameId={gameId}
+                scene={displayScene}
+                playheadMs={playheadMs}
+                selectedBackgroundId={displayScene.backgrounds.length ? (getEditingBackgroundId(displayScene) ?? null) : null}
+                backgroundCacheBust={portraitCacheBust}
+                onSeek={setPlayheadMs}
+                // Clickear un panel en la pista es elegirlo para editar, igual
+                // que clickear su miniatura en la lista de la izquierda.
+                onSelectBackground={setEditingZonesBackgroundId}
+                onAddClip={(file, startMs) => void addAudioClip(file, startMs)}
+                onMoveClip={(clipId, startMs) => patchAudioClip(clipId, { startMs })}
+                onRemoveClip={removeAudioClip}
+                onClipVolumeChange={(clipId, volume) => patchAudioClip(clipId, { volume })}
+              />
+            ) : editorTab === 'scene' && displayScene && stageTab === 'play' ? (
+              <ScenePlayer
+                gameId={gameId}
+                scene={displayScene}
+                playheadMs={playheadMs}
+                playing={playing}
+                onPlayheadChange={setPlayheadMs}
+                onPlayingChange={setPlaying}
+              />
+            ) : editorTab === 'characters' ? (
               <div className="flex h-full w-full items-center justify-center bg-graphite-950 p-10">
                 {previewedPortrait ? (
                   <img
@@ -3068,6 +3203,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 Sin escenas — creá una desde el panel
               </div>
             )}
+            </div>
           </div>
         </div>
       ) : displayScene?.kind === 'intro' ? (

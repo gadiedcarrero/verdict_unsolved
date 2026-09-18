@@ -627,6 +627,30 @@ export const SceneTimerSchema = z.object({
   onExpire: z.array(SceneActionSchema).default([]),
 });
 
+/**
+ * Un clip en la pista de audio de la escena, posicionado en el tiempo como en
+ * un editor de video.
+ *
+ * Vive en la escena y no en el panel a propósito: pegado a un panel, un sonido
+ * no puede empezar antes de que el panel aparezca, seguir sonando en el
+ * siguiente, ni solaparse con otro. Una lluvia que corre bajo cuatro paneles y
+ * un portazo encima de ella son dos clips en una pista, no propiedades de una
+ * imagen.
+ */
+export const AudioClipSchema = z.object({
+  id: z.string(),
+  /** Ruta dentro de assets/games/<juego>/ (sounds/...). */
+  path: z.string(),
+  /** Nombre legible para la pista — el del archivo, salvo que se renombre. */
+  label: z.string().default(''),
+  /** Milisegundo de la escena en el que arranca. */
+  startMs: z.number().min(0).default(0),
+  /** Cuánto dura el archivo, para dibujar el clip a escala. Se mide al
+   * subirlo; 0 mientras no se sepa (se dibuja con un ancho mínimo). */
+  durationMs: z.number().min(0).default(0),
+  volume: z.number().min(0).max(1).default(1),
+});
+
 const SceneObjectSchema = z.object({
   id: z.string(),
   /** Nombre legible para el editor (ej. "Oficina de Gray") — el `id` sigue
@@ -666,6 +690,10 @@ const SceneObjectSchema = z.object({
    * sigue el que venía. El jugador puede cambiar al que quiera de los
    * desbloqueados: esto fija con cuál empieza, no lo encierra. */
   activeCharacterId: z.string().optional(),
+  /** Pista de audio de la escena, en el tiempo (ver `AudioClipSchema`).
+   * `SceneBackground.soundPath` sigue existiendo para el caso simple de un
+   * acento pegado a un panel; esto es para todo lo demás. */
+  audioTrack: z.array(AudioClipSchema).default([]),
   /** Cuenta regresiva mientras se juega esta escena (ver `SceneTimerSchema`).
    * Ausente = sin límite de tiempo, que es el caso normal. */
   timer: SceneTimerSchema.optional(),
@@ -878,6 +906,7 @@ export type Condition = z.infer<typeof ConditionSchema>;
 export type Clue = z.infer<typeof ClueSchema>;
 export type Item = z.infer<typeof ItemSchema>;
 export type SceneTimer = z.infer<typeof SceneTimerSchema>;
+export type AudioClip = z.infer<typeof AudioClipSchema>;
 export type Deduction = z.infer<typeof DeductionSchema>;
 export type Investigation = z.infer<typeof InvestigationSchema>;
 export type Comparison = z.infer<typeof ComparisonSchema>;
