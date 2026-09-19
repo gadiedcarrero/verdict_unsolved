@@ -535,6 +535,13 @@ function migrateLegacySceneFields(raw: unknown): unknown {
   let r = raw as Record<string, unknown>;
   r = migrateLegacySceneArrayField(r, 'hotspots');
   r = migrateLegacySceneArrayField(r, 'layers');
+  // `audioTrack` (una sola pista, lista de clips) → `audioTracks` (varias).
+  // Escenas guardadas con el modelo de una pista siguen cargando: sus clips
+  // pasan a ser la primera pista en vez de perderse.
+  if (Array.isArray(r['audioTrack']) && !r['audioTracks']) {
+    const { audioTrack, ...rest } = r;
+    r = { ...rest, audioTracks: [{ id: 'audio-1', label: 'Audio', loop: false, muted: false, clips: audioTrack }] };
+  }
   return r;
 }
 
@@ -651,6 +658,27 @@ export const AudioClipSchema = z.object({
   volume: z.number().min(0).max(1).default(1),
 });
 
+/**
+ * Una pista de audio: varias en paralelo, como en un editor de video.
+ *
+ * Con una sola pista, dos sonidos simultáneos se pisan visualmente aunque
+ * suenen bien — y montar una escena es sobre todo ver qué se superpone con
+ * qué. Separar ambiente, efectos y música es lo que hace legible la mezcla.
+ */
+export const AudioTrackSchema = z.object({
+  id: z.string(),
+  /** Para qué es esta pista ("Ambiente", "Efectos", "Música"). */
+  label: z.string().default(''),
+  /** Sus clips se repiten mientras dure la escena, en vez de sonar una vez.
+   * Es lo que hace una cama de lluvia o de música que no hay que estirar a
+   * mano cada vez que se agrega un panel. */
+  loop: z.boolean().default(false),
+  /** Silenciada: se conserva en la escena pero no suena. Probar una mezcla
+   * sacando una capa no debería obligar a borrarla y volver a subirla. */
+  muted: z.boolean().default(false),
+  clips: z.array(AudioClipSchema).default([]),
+});
+
 const SceneObjectSchema = z.object({
   id: z.string(),
   /** Nombre legible para el editor (ej. "Oficina de Gray") — el `id` sigue
@@ -690,10 +718,10 @@ const SceneObjectSchema = z.object({
    * sigue el que venía. El jugador puede cambiar al que quiera de los
    * desbloqueados: esto fija con cuál empieza, no lo encierra. */
   activeCharacterId: z.string().optional(),
-  /** Pista de audio de la escena, en el tiempo (ver `AudioClipSchema`).
+  /** Pistas de audio de la escena, en paralelo (ver `AudioTrackSchema`).
    * `SceneBackground.soundPath` sigue existiendo para el caso simple de un
    * acento pegado a un panel; esto es para todo lo demás. */
-  audioTrack: z.array(AudioClipSchema).default([]),
+  audioTracks: z.array(AudioTrackSchema).default([]),
   /** Cuenta regresiva mientras se juega esta escena (ver `SceneTimerSchema`).
    * Ausente = sin límite de tiempo, que es el caso normal. */
   timer: SceneTimerSchema.optional(),
@@ -907,6 +935,7 @@ export type Clue = z.infer<typeof ClueSchema>;
 export type Item = z.infer<typeof ItemSchema>;
 export type SceneTimer = z.infer<typeof SceneTimerSchema>;
 export type AudioClip = z.infer<typeof AudioClipSchema>;
+export type AudioTrack = z.infer<typeof AudioTrackSchema>;
 export type Deduction = z.infer<typeof DeductionSchema>;
 export type Investigation = z.infer<typeof InvestigationSchema>;
 export type Comparison = z.infer<typeof ComparisonSchema>;

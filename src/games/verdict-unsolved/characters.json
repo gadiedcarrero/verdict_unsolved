@@ -155,10 +155,42 @@
   {
     "id": "iris",
     "name": "character.iris.name",
-    "portrait": null,
+    "portrait": "portraits/iris.png",
     "description": "A woman whose face is partly hidden by shadow or pixelation, dark hair worn loose, in a long coat and unobtrusive clothing. Seen on a video call, only part of her face and her determined eyes are visible.",
-    "expressions": {},
-    "variants": {},
+    "expressions": {
+      "molesto": {
+        "path": "portraits/iris-molesto.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/iris-serio.png",
+        "description": ""
+      },
+      "alegre": {
+        "path": "portraits/iris-alegre.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/iris-asombrado.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/iris-asustado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/iris-triste.png",
+        "description": ""
+      }
+    },
+    "variants": {
+      "de-pie-rostro-oculto": {
+        "label": "De pie, rostro oculto",
+        "description": "Full body, standing facing forward, wearing a long coat and plain, unobtrusive clothing. Arms relaxed at sides. Pose is neutral, with a subtle sense of determination. The figure is seen from the front, entire body visible.",
+        "body": "characters/iris-de-pie-rostro-oculto.png",
+        "expressions": {}
+      }
+    },
     "voices": {},
     "capabilities": [],
     "color": "#b13d6f"
@@ -166,7 +198,7 @@
   {
     "id": "mirror",
     "name": "character.mirror.name",
-    "portrait": null,
+    "portrait": "portraits/mirror.png",
     "description": "An abstract digital interface, rendered as glowing blue iconography, geometric lines and floating on-screen elements. It has no physical body and no human face.",
     "expressions": {},
     "variants": {},
@@ -177,10 +209,42 @@
   {
     "id": "june",
     "name": "character.june.name",
-    "portrait": null,
+    "portrait": "portraits/june.png",
     "description": "A young woman around 30, East Asian features, short black hair, rectangular glasses. Wearing technical or lab clothing, a light jacket over a pale t-shirt.",
-    "expressions": {},
-    "variants": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/june-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/june-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/june-molesto.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/june-asombrado.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/june-asustado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/june-triste.png",
+        "description": ""
+      }
+    },
+    "variants": {
+      "de-pie-ropa-de-laboratorio": {
+        "label": "De pie, ropa de laboratorio",
+        "description": "Standing upright, facing forward, arms relaxed at sides. Wearing technical or lab clothing, a light jacket over a pale t-shirt. Full body, frontal view.",
+        "body": "characters/june-de-pie-ropa-de-laboratorio.png",
+        "expressions": {}
+      }
+    },
     "voices": {},
     "capabilities": [],
     "color": "#e67e22"
@@ -188,10 +252,42 @@
   {
     "id": "elias",
     "name": "character.elias.name",
-    "portrait": null,
+    "portrait": "portraits/elias.png",
     "description": "A man around 50, grey hair combed back, a trimmed beard, angular face. Wearing a dark suit and tie, with an authoritative bearing and a calculating gaze.",
-    "expressions": {},
-    "variants": {},
+    "expressions": {
+      "serio": {
+        "path": "portraits/elias-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/elias-molesto.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/elias-triste.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/elias-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/elias-asombrado.png",
+        "description": ""
+      },
+      "alegre": {
+        "path": "portraits/elias-alegre.png",
+        "description": ""
+      }
+    },
+    "variants": {
+      "de-pie-traje-oscuro": {
+        "label": "De pie, traje oscuro",
+        "description": "Full body, standing upright with an authoritative posture, arms relaxed at sides, wearing a dark suit and tie, facing forward.",
+        "body": "characters/elias-de-pie-traje-oscuro.png",
+        "expressions": {}
+      }
+    },
     "voices": {},
     "capabilities": [],
     "color": "#6c3483"
@@ -199,10 +295,42 @@
   {
     "id": "theo",
     "name": "character.theo.name",
-    "portrait": null,
+    "portrait": "portraits/theo.png",
     "description": "A man around 30, fair skin, short messy blond hair, a square jaw. Wearing a dark tactical uniform over a black t-shirt, with a serious expression.",
-    "expressions": {},
-    "variants": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/theo-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/theo-serio.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/theo-triste.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/theo-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/theo-asombrado.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/theo-molesto.png",
+        "description": ""
+      }
+    },
+    "variants": {
+      "de-pie-uniforme-tactico": {
+        "label": "De pie, uniforme táctico",
+        "description": "Full body, standing upright facing forward, arms relaxed at sides, wearing a dark tactical uniform over a black t-shirt, boots visible, neutral stance.",
+        "body": "characters/theo-de-pie-uniforme-tactico.png",
+        "expressions": {}
+      }
+    },
     "voices": {},
     "capabilities": [],
     "color": "#27ae60"
@@ -210,10 +338,42 @@
   {
     "id": "marcus",
     "name": "character.marcus.name",
-    "portrait": null,
+    "portrait": "portraits/marcus.png",
     "description": "A man around 35, dark skin, a strong build, very short hair and a neatly trimmed beard. Wearing tactical clothing and a bulletproof vest, standing firmly.",
-    "expressions": {},
-    "variants": {},
+    "expressions": {
+      "asustado": {
+        "path": "portraits/marcus-asustado.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/marcus-molesto.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/marcus-triste.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/marcus-serio.png",
+        "description": ""
+      },
+      "alegre": {
+        "path": "portraits/marcus-alegre.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/marcus-asombrado.png",
+        "description": ""
+      }
+    },
+    "variants": {
+      "de-pie-ropa-tactica": {
+        "label": "De pie, ropa táctica",
+        "description": "Full body, standing firmly facing forward, arms relaxed at sides, wearing tactical clothing and a bulletproof vest.",
+        "body": "characters/marcus-de-pie-ropa-tactica.png",
+        "expressions": {}
+      }
+    },
     "voices": {},
     "capabilities": [],
     "color": "#e74c3c"
@@ -221,10 +381,42 @@
   {
     "id": "lena",
     "name": "character.lena.name",
-    "portrait": null,
+    "portrait": "portraits/lena.png",
     "description": "A woman in her late 20s, fair skin, straight blonde hair to the shoulders, delicate features and light eyes. Wearing simple clothes, a pale sweater and a light jacket.",
-    "expressions": {},
-    "variants": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/lena-alegre.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/lena-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/lena-molesto.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/lena-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/lena-asombrado.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/lena-triste.png",
+        "description": ""
+      }
+    },
+    "variants": {
+      "de-pie-ropa-sencilla": {
+        "label": "De pie, ropa sencilla",
+        "description": "Standing upright, facing forward, arms relaxed at the sides. Wearing a pale sweater and a light jacket, simple full-length clothing. Full body, neutral pose.",
+        "body": "characters/lena-de-pie-ropa-sencilla.png",
+        "expressions": {}
+      }
+    },
     "voices": {},
     "capabilities": [],
     "color": "#f7ca18"
@@ -232,10 +424,42 @@
   {
     "id": "daniel",
     "name": "character.daniel.name",
-    "portrait": null,
+    "portrait": "portraits/daniel.png",
     "description": "A man in his early 30s, fair skin, short brown hair, light stubble. Wearing an office shirt and trousers, with an ID badge hanging around his neck.",
-    "expressions": {},
-    "variants": {},
+    "expressions": {
+      "alegre": {
+        "path": "portraits/daniel-alegre.png",
+        "description": ""
+      },
+      "asustado": {
+        "path": "portraits/daniel-asustado.png",
+        "description": ""
+      },
+      "asombrado": {
+        "path": "portraits/daniel-asombrado.png",
+        "description": ""
+      },
+      "serio": {
+        "path": "portraits/daniel-serio.png",
+        "description": ""
+      },
+      "molesto": {
+        "path": "portraits/daniel-molesto.png",
+        "description": ""
+      },
+      "triste": {
+        "path": "portraits/daniel-triste.png",
+        "description": ""
+      }
+    },
+    "variants": {
+      "de-pie-con-credencial": {
+        "label": "De pie, con credencial",
+        "description": "Standing upright, facing forward, arms relaxed at his sides. Wearing an office shirt and trousers, with an ID badge hanging around his neck. Full body, front view.",
+        "body": "characters/daniel-de-pie-con-credencial.png",
+        "expressions": {}
+      }
+    },
     "voices": {},
     "capabilities": [],
     "color": "#2980b9"

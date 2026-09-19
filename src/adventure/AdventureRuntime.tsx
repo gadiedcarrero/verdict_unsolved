@@ -29,6 +29,7 @@ import type {
   MinigameTemplate,
   PolygonPoint,
   AudioClip,
+  AudioTrack,
   Scene,
   SceneAction,
   SceneBackground,
@@ -1337,11 +1338,12 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
     });
   }
 
-  async function addAudioClip(file: File, startMs: number): Promise<void> {
+  async function addAudioClip(trackId: string, file: File, startMs: number): Promise<void> {
     const base = editedScene ?? baseScene;
     if (!base) return;
     const ext = file.name.split('.').pop()?.toLowerCase() ?? 'mp3';
-    const clipId = uniqueId(slugify(file.name.replace(/\.[^.]+$/, '')), new Set(base.audioTrack.map((c) => c.id)));
+    const takenIds = new Set(base.audioTracks.flatMap((track) => track.clips.map((clip) => clip.id)));
+    const clipId = uniqueId(slugify(file.name.replace(/\.[^.]+$/, '')), takenIds);
     try {
       const durationMs = await audioDurationMs(file);
       const buffer = new Uint8Array(await file.arrayBuffer());
@@ -1350,37 +1352,57 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
         setSaveMessage(`Error subiendo audio: ${result.error}`);
         return;
       }
-      setEditedScene((prev) => {
-        const current = prev ?? base;
-        return {
-          ...current,
-          audioTrack: [
-            ...current.audioTrack,
-            { id: clipId, path: result.path, label: file.name, startMs, durationMs, volume: 1 },
-          ],
-        };
-      });
+      patchAudioTrack(trackId, (track) => ({
+        clips: [...track.clips, { id: clipId, path: result.path, label: file.name, startMs, durationMs, volume: 1 }],
+      }));
     } catch (error) {
       setSaveMessage(`Error subiendo audio: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
-  function patchAudioClip(clipId: string, patch: Partial<AudioClip>): void {
+  function patchAudioTrack(trackId: string, patch: (track: AudioTrack) => Partial<AudioTrack>): void {
     setEditedScene((prev) => {
       const current = prev ?? baseScene;
       if (!current) return prev;
       return {
         ...current,
-        audioTrack: current.audioTrack.map((clip) => (clip.id === clipId ? { ...clip, ...patch } : clip)),
+        audioTracks: current.audioTracks.map((track) =>
+          track.id === trackId ? { ...track, ...patch(track) } : track,
+        ),
       };
     });
   }
 
-  function removeAudioClip(clipId: string): void {
+  function patchAudioClip(trackId: string, clipId: string, patch: Partial<AudioClip>): void {
+    patchAudioTrack(trackId, (track) => ({
+      clips: track.clips.map((clip) => (clip.id === clipId ? { ...clip, ...patch } : clip)),
+    }));
+  }
+
+  function removeAudioClip(trackId: string, clipId: string): void {
+    patchAudioTrack(trackId, (track) => ({ clips: track.clips.filter((clip) => clip.id !== clipId) }));
+  }
+
+  function addAudioTrack(): void {
     setEditedScene((prev) => {
       const current = prev ?? baseScene;
       if (!current) return prev;
-      return { ...current, audioTrack: current.audioTrack.filter((clip) => clip.id !== clipId) };
+      const id = uniqueId('audio', new Set(current.audioTracks.map((track) => track.id)));
+      return {
+        ...current,
+        audioTracks: [
+          ...current.audioTracks,
+          { id, label: `Pista ${current.audioTracks.length + 1}`, loop: false, muted: false, clips: [] },
+        ],
+      };
+    });
+  }
+
+  function removeAudioTrack(trackId: string): void {
+    setEditedScene((prev) => {
+      const current = prev ?? baseScene;
+      if (!current) return prev;
+      return { ...current, audioTracks: current.audioTracks.filter((track) => track.id !== trackId) };
     });
   }
 
@@ -1646,7 +1668,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       kind,
       backgrounds: [],
       items: [],
-      audioTrack: [],
+      audioTracks: [],
       dialogueNodes: {},
       introSkippable: true,
       cinematicTransition: 'fade',
@@ -1695,7 +1717,7 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
       kind: breakdownScene?.scriptKind === 'interactiva' ? 'standard' : 'cinematica',
       backgrounds: [],
       items: [],
-      audioTrack: [],
+      audioTracks: [],
       dialogueNodes: {},
       introSkippable: true,
       cinematicTransition: 'fade',
@@ -3034,10 +3056,13 @@ export function AdventureRuntime({ gameId, onExit }: { gameId: string; onExit: (
                 // Clickear un panel en la pista es elegirlo para editar, igual
                 // que clickear su miniatura en la lista de la izquierda.
                 onSelectBackground={setEditingZonesBackgroundId}
-                onAddClip={(file, startMs) => void addAudioClip(file, startMs)}
-                onMoveClip={(clipId, startMs) => patchAudioClip(clipId, { startMs })}
+                onAddClip={(trackId, file, startMs) => void addAudioClip(trackId, file, startMs)}
+                onMoveClip={(trackId, clipId, startMs) => patchAudioClip(trackId, clipId, { startMs })}
                 onRemoveClip={removeAudioClip}
-                onClipVolumeChange={(clipId, volume) => patchAudioClip(clipId, { volume })}
+                onClipVolumeChange={(trackId, clipId, volume) => patchAudioClip(trackId, clipId, { volume })}
+                onAddTrack={addAudioTrack}
+                onRemoveTrack={removeAudioTrack}
+                onTrackChange={(trackId, patch) => patchAudioTrack(trackId, () => patch)}
               />
             ) : editorTab === 'scene' && displayScene && stageTab === 'play' ? (
               <ScenePlayer

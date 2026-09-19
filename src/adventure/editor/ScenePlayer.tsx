@@ -53,26 +53,34 @@ export function ScenePlayer({
 
   // Audio: cada clip suena mientras la cabeza esté dentro de él, y se
   // posiciona donde corresponda — así saltar a la mitad de la escena hace
-  // sonar la lluvia desde su mitad, no desde el principio.
+  // sonar la lluvia desde su mitad, no desde el principio. El offset lo
+  // calcula clipsAt, que es también quien sabe dar la vuelta en las pistas
+  // en loop (una cama de ambiente suena toda la escena aunque el archivo
+  // dure ocho segundos).
   useEffect(() => {
     const audios = audiosRef.current;
-    const sounding = new Set(clipsAt(scene, playheadMs).map((clip) => clip.id));
+    const sounding = new Map(clipsAt(scene, playheadMs).map((entry) => [entry.clip.id, entry]));
 
-    for (const clip of scene.audioTrack) {
-      const shouldPlay = playing && sounding.has(clip.id);
-      let audio = audios.get(clip.id);
-      if (!audio) {
-        audio = new Audio(gameAssetUrl(gameId, clip.path));
-        audios.set(clip.id, audio);
+    for (const track of scene.audioTracks) {
+      for (const clip of track.clips) {
+        const entry = playing ? sounding.get(clip.id) : undefined;
+        let audio = audios.get(clip.id);
+        if (!audio) {
+          audio = new Audio(gameAssetUrl(gameId, clip.path));
+          audios.set(clip.id, audio);
+        }
+        audio.volume = clip.volume;
+        // `loop` nativo evita el silencio entre vueltas que deja reposicionar
+        // a mano desde el intervalo del reloj.
+        audio.loop = track.loop;
+        if (!entry) {
+          audio.pause();
+          continue;
+        }
+        const offset = entry.offsetMs / 1000;
+        if (Math.abs(audio.currentTime - offset) > 0.3) audio.currentTime = Math.max(0, offset);
+        if (audio.paused) void audio.play().catch(() => {});
       }
-      audio.volume = clip.volume;
-      if (!shouldPlay) {
-        audio.pause();
-        continue;
-      }
-      const offset = (playheadMs - clip.startMs) / 1000;
-      if (Math.abs(audio.currentTime - offset) > 0.3) audio.currentTime = Math.max(0, offset);
-      if (audio.paused) void audio.play().catch(() => {});
     }
   }, [scene, playheadMs, playing, gameId]);
 

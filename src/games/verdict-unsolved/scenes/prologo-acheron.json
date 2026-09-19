@@ -2,7 +2,276 @@
   "id": "prologo-acheron",
   "act": 1,
   "kind": "cinematica",
-  "backgrounds": [],
+  "backgrounds": [
+    {
+      "id": "bg-1",
+      "assetPath": "backgrounds/prologo-acheron-bg-1.png",
+      "caption": "",
+      "hotspots": [],
+      "generationPrompt": "A completely black screen, no visible details.\nLocation: Pantalla negra.\nContinuity details for this panel: lighting = none.",
+      "generationCharacterIds": [],
+      "layers": []
+    },
+    {
+      "id": "bg-2",
+      "assetPath": "backgrounds/prologo-acheron-bg-2.png",
+      "caption": "Lluvia.",
+      "hotspots": [],
+      "generationPrompt": "A dark exterior with heavy rain falling, water streaking down a window or camera lens.\nLocation: Exterior, noche lluviosa.\nContinuity details for this panel: weather = rain; time = night.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): lighting = none.",
+      "generationCharacterIds": [],
+      "layers": []
+    },
+    {
+      "id": "bg-3",
+      "assetPath": "backgrounds/prologo-acheron-bg-3.png",
+      "caption": "ACHERON SYSTEMS\nPLANTA 37\nTRES AÑOS ATRÁS",
+      "hotspots": [],
+      "generationPrompt": "A black screen with the faint reflection of rain, no readable text.\nLocation: Pantalla negra.\nContinuity details for this panel: transition = text overlay.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): weather = rain; time = night.",
+      "generationCharacterIds": [],
+      "layers": []
+    },
+    {
+      "id": "bg-4",
+      "assetPath": "backgrounds/prologo-acheron-bg-4.png",
+      "caption": "Cámaras de seguridad.",
+      "hotspots": [],
+      "generationPrompt": "A grid of security camera feeds showing industrial corridors and a control room.\nLocation: Sala de control, Planta 37.\nContinuity details for this panel: camera_feeds = multiple angles; lighting = fluorescent.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): transition = text overlay.",
+      "generationCharacterIds": [],
+      "layers": []
+    },
+    {
+      "id": "bg-5",
+      "assetPath": "backgrounds/prologo-acheron-bg-5.png",
+      "caption": "Cinco personas.",
+      "hotspots": [],
+      "generationPrompt": "Five people in a control room: Adrian, Evelyn, Theo, Marcus, and June, each at different workstations.\nLocation: Sala de control, Planta 37.\nContinuity details for this panel: positions = spread out; monitors = active.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): camera_feeds = multiple angles; lighting = fluorescent.",
+      "generationCharacterIds": [
+        "adrian",
+        "evelyn",
+        "theo",
+        "marcus",
+        "june"
+      ],
+      "layers": []
+    },
+    {
+      "id": "bg-6",
+      "assetPath": "backgrounds/prologo-acheron-bg-6.png",
+      "caption": "ADRIAN.",
+      "hotspots": [],
+      "generationPrompt": "Close-up of Adrian, a serious-looking man focused on his screen.\nLocation: Sala de control, Planta 37.\nContinuity details for this panel: Adrian_position = at workstation.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): positions = spread out; monitors = active.",
+      "generationCharacterIds": [
+        "adrian"
+      ],
+      "layers": []
+    },
+    {
+      "id": "bg-7",
+      "assetPath": "backgrounds/prologo-acheron-bg-7.png",
+      "caption": "EVELYN.",
+      "hotspots": [],
+      "generationPrompt": "Close-up of Evelyn, a woman with sharp features, glancing at her monitor.\nLocation: Sala de control, Planta 37.\nContinuity details for this panel: Evelyn_position = at workstation.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): Adrian_position = at workstation.",
+      "generationCharacterIds": [
+        "evelyn"
+      ],
+      "layers": []
+    },
+    {
+      "id": "bg-8",
+      "assetPath": "backgrounds/prologo-acheron-bg-8.png",
+      "caption": "THEO.",
+      "hotspots": [],
+      "generationPrompt": "Close-up of Theo, a young man with a tense expression, glancing toward a door.\nLocation: Sala de control, Planta 37.\nContinuity details for this panel: Theo_position = looking at door.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): Evelyn_position = at workstation.",
+      "generationCharacterIds": [
+        "theo"
+      ],
+      "layers": []
+    },
+    {
+      "id": "bg-9",
+      "assetPath": "backgrounds/prologo-acheron-bg-9.png",
+      "caption": "MARCUS.",
+      "hotspots": [],
+      "generationPrompt": "Close-up of Marcus, a muscular man, checking something on his tablet.\nLocation: Sala de control, Planta 37.\nContinuity details for this panel: Marcus_position = standing by table.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): Theo_position = looking at door.",
+      "generationCharacterIds": [
+        "marcus"
+      ],
+      "layers": []
+    },
+    {
+      "id": "bg-10",
+      "assetPath": "backgrounds/prologo-acheron-bg-10.png",
+      "caption": "JUNE.",
+      "hotspots": [],
+      "generationPrompt": "Close-up of June, a focused woman, working at a terminal.\nLocation: Sala de control, Planta 37.\nContinuity details for this panel: June_position = typing at terminal.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): Marcus_position = standing by table.",
+      "generationCharacterIds": [
+        "june"
+      ],
+      "layers": []
+    },
+    {
+      "id": "bg-11",
+      "assetPath": "backgrounds/prologo-acheron-bg-11.png",
+      "caption": "June trabaja frente a una terminal.\nEn pantalla: JANUS",
+      "hotspots": [],
+      "generationPrompt": "June at her terminal, the screen glows with the word 'JANUS' visible only as a blurred reflection on her face.\nLocation: Sala de control, Planta 37.\nContinuity details for this panel: screen = JANUS (blurred); June_focus = intense.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): June_position = typing at terminal.",
+      "generationCharacterIds": [
+        "june"
+      ],
+      "layers": []
+    },
+    {
+      "id": "bg-12",
+      "assetPath": "backgrounds/prologo-acheron-bg-12.png",
+      "caption": "Theo mira hacia una puerta.",
+      "hotspots": [],
+      "generationPrompt": "Theo glancing anxiously toward a heavy security door in the background.\nLocation: Sala de control, Planta 37.\nContinuity details for this panel: door = in background; Theo_gaze = tense.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): screen = JANUS (blurred); June_focus = intense.",
+      "generationCharacterIds": [
+        "theo"
+      ],
+      "layers": []
+    },
+    {
+      "id": "bg-13",
+      "assetPath": "backgrounds/prologo-acheron-bg-13.png",
+      "caption": "Una luz cambia de verde a rojo.",
+      "hotspots": [],
+      "generationPrompt": "Close-up of the security door panel as the indicator light shifts from green to red.\nLocation: Sala de control, Planta 37.\nContinuity details for this panel: door_light = red.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): door = in background; Theo_gaze = tense.",
+      "generationCharacterIds": [],
+      "layers": []
+    },
+    {
+      "id": "bg-14",
+      "assetPath": "backgrounds/prologo-acheron-bg-14.png",
+      "caption": "Adrian se gira.",
+      "hotspots": [],
+      "generationPrompt": "Adrian turning sharply in his chair, alarmed by the change.\nLocation: Sala de control, Planta 37.\nContinuity details for this panel: Adrian_motion = turning; lighting = emergency.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): door_light = red.",
+      "generationCharacterIds": [
+        "adrian"
+      ],
+      "layers": []
+    },
+    {
+      "id": "bg-15",
+      "assetPath": "backgrounds/prologo-acheron-bg-15.png",
+      "caption": "EXPLOSIÓN.",
+      "hotspots": [],
+      "generationPrompt": "A sudden explosion rocks the control room, debris and fire bursting inward.\nLocation: Sala de control, Planta 37.\nContinuity details for this panel: explosion = center; lighting = chaotic.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): Adrian_motion = turning; lighting = emergency.",
+      "generationCharacterIds": [],
+      "layers": []
+    },
+    {
+      "id": "bg-16",
+      "assetPath": "backgrounds/prologo-acheron-bg-16.png",
+      "caption": "Cambio de cámaras.\nFuego.",
+      "hotspots": [],
+      "generationPrompt": "Security camera feeds flicker and switch rapidly, showing fire and chaos in multiple rooms.\nLocation: Planta 37, varias áreas.\nContinuity details for this panel: camera_feeds = unstable; fire = visible.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): explosion = center; lighting = chaotic.",
+      "generationCharacterIds": [],
+      "layers": []
+    },
+    {
+      "id": "bg-17",
+      "assetPath": "backgrounds/prologo-acheron-bg-17.png",
+      "caption": "Estática.",
+      "hotspots": [],
+      "generationPrompt": "A camera feed dissolves into static, obscuring the view.\nLocation: Cámara de seguridad.\nContinuity details for this panel: static = full screen.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): camera_feeds = unstable; fire = visible.",
+      "generationCharacterIds": [],
+      "layers": []
+    },
+    {
+      "id": "bg-18",
+      "assetPath": "backgrounds/prologo-acheron-bg-18.png",
+      "caption": "Una puerta de emergencia abierta.\nUna figura arrastrándose.",
+      "hotspots": [],
+      "generationPrompt": "A smoke-filled corridor, an emergency door is open, and a figure is dragging themselves through.\nLocation: Pasillo de emergencia, Planta 37.\nContinuity details for this panel: door = open; figure = crawling; smoke = heavy.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): static = full screen.",
+      "generationCharacterIds": [],
+      "layers": []
+    },
+    {
+      "id": "bg-19",
+      "assetPath": "backgrounds/prologo-acheron-bg-19.png",
+      "caption": "Otra cámara.\nOtra figura.",
+      "hotspots": [],
+      "generationPrompt": "A different security camera angle shows another indistinct figure moving through the chaos.\nLocation: Otro pasillo, Planta 37.\nContinuity details for this panel: camera_angle = different; figure = obscured.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): door = open; figure = crawling; smoke = heavy.",
+      "generationCharacterIds": [],
+      "layers": []
+    },
+    {
+      "id": "bg-20",
+      "assetPath": "backgrounds/prologo-acheron-bg-20.png",
+      "caption": "NEGRO.",
+      "hotspots": [],
+      "generationPrompt": "A completely black screen, no visible details.\nLocation: Pantalla negra.\nContinuity details for this panel: lighting = none.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): camera_angle = different; figure = obscured.",
+      "generationCharacterIds": [],
+      "layers": []
+    },
+    {
+      "id": "bg-21",
+      "assetPath": "backgrounds/prologo-acheron-bg-21.png",
+      "caption": "CONEXIÓN PERDIDA",
+      "hotspots": [],
+      "generationPrompt": "A black screen with the faint glow of a lost connection warning, no readable text.\nLocation: Pantalla negra.\nContinuity details for this panel: overlay = warning.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): lighting = none.",
+      "generationCharacterIds": [],
+      "layers": []
+    },
+    {
+      "id": "bg-22",
+      "assetPath": "backgrounds/prologo-acheron-bg-22.png",
+      "caption": "Noticias.\nCINCO AGENTES MUERTOS EN INCIDENTE DE ACHERON SYSTEMS",
+      "hotspots": [],
+      "generationPrompt": "A TV news broadcast, anchor visible but the headline on the screen is blurred and unreadable.\nLocation: Pantalla de noticias.\nContinuity details for this panel: newsroom = dim; headline = blurred.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): overlay = warning.",
+      "generationCharacterIds": [],
+      "layers": []
+    },
+    {
+      "id": "bg-23",
+      "assetPath": "backgrounds/prologo-acheron-bg-23.png",
+      "caption": "ADRIAN CROSS.\nEVELYN MARLOWE.\nTHEO KADE.\nMARCUS WYNN.\nJUNE SATO.",
+      "hotspots": [],
+      "generationPrompt": "Close-ups of five ID photos on a blurred screen: Adrian, Evelyn, Theo, Marcus, and June, their names not readable.\nLocation: Pantalla de noticias.\nContinuity details for this panel: photos = ID style; names = not readable.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): newsroom = dim; headline = blurred.",
+      "generationCharacterIds": [
+        "adrian",
+        "evelyn",
+        "theo",
+        "marcus",
+        "june"
+      ],
+      "layers": []
+    },
+    {
+      "id": "bg-24",
+      "assetPath": "backgrounds/prologo-acheron-bg-24.png",
+      "caption": "Todos:\nFALLECIDOS",
+      "hotspots": [],
+      "generationPrompt": "The same five faces, now with somber expressions, their images fading out.\nLocation: Pantalla de noticias.\nContinuity details for this panel: photos = fading; mood = somber.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): photos = ID style; names = not readable.",
+      "generationCharacterIds": [
+        "adrian",
+        "evelyn",
+        "theo",
+        "marcus",
+        "june"
+      ],
+      "layers": []
+    },
+    {
+      "id": "bg-25",
+      "assetPath": "backgrounds/prologo-acheron-bg-25.png",
+      "caption": "Negro.",
+      "hotspots": [],
+      "generationPrompt": "A completely black screen, no visible details.\nLocation: Pantalla negra.\nContinuity details for this panel: lighting = none.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): photos = fading; mood = somber.",
+      "generationCharacterIds": [],
+      "layers": []
+    },
+    {
+      "id": "bg-26",
+      "assetPath": "backgrounds/prologo-acheron-bg-26.png",
+      "caption": "TRES AÑOS DESPUÉS",
+      "hotspots": [],
+      "generationPrompt": "A black screen with a faint ambient glow, suggesting the passage of time.\nLocation: Pantalla negra.\nContinuity details for this panel: transition = text overlay.\nKeep visual continuity with the previous panel in this same sequence (same room/characters/props unless the description above says otherwise): lighting = none.",
+      "generationCharacterIds": [],
+      "layers": []
+    }
+  ],
   "dialogueNodes": {},
   "items": [],
   "introSkippable": true,
